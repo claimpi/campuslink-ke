@@ -26,7 +26,11 @@ export default function HomePage(){
   const [uni,setUni]=useState('All')
   const [year,setYear]=useState('All Years')
 
+  const [announcements,setAnnouncements]=useState<any[]>([])
+
   useEffect(()=>{
+    createClient().from('announcements').select('*').order('created_at',{ascending:false}).limit(3)
+      .then(({data})=>{ if(data&&data.length>0) setAnnouncements(data) })
     createClient().from('profiles')
       .select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_top_student,interests')
       .order('is_featured',{ascending:false})
@@ -46,6 +50,17 @@ export default function HomePage(){
 
   return(
     <div style={{maxWidth:'1200px',margin:'0 auto',padding:'28px 20px'}}>
+
+      {/* Announcements */}
+      {announcements.map(a=>(
+        <div key={a.id} style={{background:'linear-gradient(135deg,#f97316,#ea580c)',borderRadius:'10px',padding:'12px 16px',marginBottom:'16px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px'}}>
+          <div>
+            <span style={{background:'rgba(255,255,255,0.25)',color:'#fff',fontSize:'10px',fontWeight:'700',padding:'2px 7px',borderRadius:'4px',marginRight:'8px',letterSpacing:'0.5px'}}>ANNOUNCEMENT</span>
+            <span style={{fontWeight:'700',color:'#fff',fontSize:'14px'}}>{a.title}</span>
+            {a.content&&<p style={{fontSize:'13px',color:'rgba(255,255,255,0.85)',marginTop:'2px'}}>{a.content}</p>}
+          </div>
+        </div>
+      ))}
 
       {/* Top bar */}
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'20px',flexWrap:'wrap',gap:'12px'}}>
