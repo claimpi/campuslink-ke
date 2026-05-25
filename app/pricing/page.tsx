@@ -108,7 +108,7 @@ export default function PricingPage(){
             ))}
           </div>
           <div style={{marginTop:'28px',padding:'16px',background:'#f8fafc',borderRadius:'12px',textAlign:'center',border:'1px solid #e2e8f0'}}>
-            <p style={{fontSize:'13px',color:'#64748b'}}>All payments via M-Pesa · Powered by Pesapal · Need help? WhatsApp <strong style={{color:'#0f172a'}}>0790166252</strong></p>
+            <p style={{fontSize:'13px',color:'#64748b'}}>All payments via M-Pesa · Powered by Pesapal</p>
           </div>
         </div>
       </div>
