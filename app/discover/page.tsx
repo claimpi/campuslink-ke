@@ -1,7 +1,8 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, Filter } from 'lucide-react'
 import StudentCard from '@/components/ui/StudentCard'
+import { supabase } from '@/lib/supabase'
 
 const MOCK_STUDENTS = [
   { id: '1', full_name: 'Amina Wanjiku', university: 'University of Nairobi', course: 'Computer Science', year_of_study: 2, interests: ['coding', 'AI'], is_premium: true, is_featured: true },
@@ -12,16 +13,41 @@ const MOCK_STUDENTS = [
   { id: '6', full_name: 'Felix Njoroge', university: 'Africa Nazarene University', course: 'Math', year_of_study: 2, interests: ['football', 'music'], is_top_student: true },
 ]
 
-const UNIVERSITIES = ['All Universities', 'University of Nairobi', 'Kenyatta University', 'Strathmore University', 'JKUAT', 'Moi University', 'Africa Nazarene University']
-const YEARS = ['All Years', '1', '2', '3', '4', '5']
+const UNIVERSITIES = ['All Universities', 'University of Nairobi', 'Kenyatta University', 'Strathmore University', 'JKUAT', 'Moi University', 'Africa Nazarene University', 'Meru University', 'Egerton University', 'Maseno University']
+const YEARS = ['All Years', '1', '2', '3', '4', '5', '6']
+
+type Student = {
+  id: string; full_name: string; university: string; course: string;
+  year_of_study: number; interests?: string[]; avatar_url?: string;
+  is_premium?: boolean; is_featured?: boolean; is_top_student?: boolean;
+}
 
 export default function DiscoverPage() {
+  const [students, setStudents] = useState<Student[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [university, setUniversity] = useState('All Universities')
   const [year, setYear] = useState('All Years')
 
-  const filtered = MOCK_STUDENTS.filter(s => {
-    const matchSearch = search === '' || s.full_name.toLowerCase().includes(search.toLowerCase()) || s.course.toLowerCase().includes(search.toLowerCase())
+  useEffect(() => {
+    async function loadStudents() {
+      try {
+        const { data, error } = await supabase.from('profiles').select('*').order('is_featured', { ascending: false }).order('is_premium', { ascending: false })
+        if (data && data.length > 0) {
+          setStudents(data)
+        } else {
+          setStudents(MOCK_STUDENTS as Student[])
+        }
+      } catch {
+        setStudents(MOCK_STUDENTS as Student[])
+      }
+      setLoading(false)
+    }
+    loadStudents()
+  }, [])
+
+  const filtered = students.filter(s => {
+    const matchSearch = search === '' || s.full_name.toLowerCase().includes(search.toLowerCase()) || s.course?.toLowerCase().includes(search.toLowerCase())
     const matchUni = university === 'All Universities' || s.university === university
     const matchYear = year === 'All Years' || String(s.year_of_study) === year
     return matchSearch && matchUni && matchYear
@@ -61,14 +87,21 @@ export default function DiscoverPage() {
         <div className="flex-1">
           <div className="relative mb-5">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search names, interests..."
-              className="w-full pl-9 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 bg-white shadow-sm text-sm"
-            />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search names, interests..." className="w-full pl-9 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 bg-white shadow-sm text-sm" />
           </div>
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {[1,2,3,4,5,6].map(i => (
+                <div key={i} className="bg-white rounded-2xl border border-gray-100 h-64 animate-pulse">
+                  <div className="h-8 bg-gray-100 rounded-t-2xl mb-4"></div>
+                  <div className="p-4 space-y-3">
+                    <div className="flex gap-3"><div className="w-14 h-14 bg-gray-200 rounded-full"></div><div className="flex-1 space-y-2"><div className="h-4 bg-gray-200 rounded w-3/4"></div><div className="h-3 bg-gray-100 rounded w-1/2"></div></div></div>
+                    <div className="h-3 bg-gray-100 rounded"></div><div className="h-3 bg-gray-100 rounded w-2/3"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="text-center py-20 text-gray-400">No students found. Try different filters.</div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
