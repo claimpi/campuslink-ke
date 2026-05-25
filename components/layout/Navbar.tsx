@@ -18,7 +18,7 @@ export default function Navbar() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
       if (user) {
-        supabase.from('profiles').select('full_name,is_premium,is_top_student').eq('user_id', user.id).single()
+        supabase.from('profiles').select('full_name,is_premium,is_top_student').eq('id', user.id).single()
           .then(({ data }) => setProfile(data))
       }
     })

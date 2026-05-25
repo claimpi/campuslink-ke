@@ -25,7 +25,7 @@ export default function EditProfilePage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-      const { data: profile } = await supabase.from('profiles').select('*').eq('user_id', user.id).single()
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
       if (profile) {
         setForm({
           full_name: profile.full_name || '',
@@ -55,11 +55,11 @@ export default function EditProfilePage() {
       full_name: form.full_name,
       university: form.university,
       course: form.course,
-      year_of_study: parseInt(form.year_of_study),
+      year_of_study: form.year_of_study,
       whatsapp_number: form.whatsapp_number,
       bio: form.bio,
       interests,
-    }).eq('user_id', user.id)
+    }).eq('id', user.id)
     if (error) { setError(error.message) } else { setSuccess(true); setTimeout(()=>setSuccess(false),3000) }
     setSaving(false)
   }

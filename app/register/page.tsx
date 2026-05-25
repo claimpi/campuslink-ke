@@ -42,11 +42,12 @@ export default function RegisterPage() {
       if (authData.user) {
         const interests = form.interests.split(',').map(i => i.trim()).filter(Boolean)
         const { error: profileError } = await supabase.from('profiles').insert([{
-          user_id: authData.user.id,
+          id: authData.user.id,
+          email: form.email,
           full_name: form.name,
           university: form.university,
           course: form.course,
-          year_of_study: parseInt(form.year),
+          year_of_study: form.year,
           whatsapp_number: form.whatsapp,
           bio: form.bio,
           interests,

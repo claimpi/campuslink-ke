@@ -20,7 +20,7 @@ export default function DashboardClient() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
       setUser(user)
-      const { data } = await supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle()
+      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
       setProfile(data)
       setLoading(false)
     }
