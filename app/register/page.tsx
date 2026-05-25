@@ -34,7 +34,7 @@ export default function RegisterPage() {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
-        options: { data: { full_name: form.name } }
+        options: { data: { full_name: form.name }, emailRedirectTo: 'https://campuslink-ke.vercel.app/auth/callback' }
       })
       if (authError) { setError(authError.message); setLoading(false); return }
 
