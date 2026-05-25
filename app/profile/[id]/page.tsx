@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-browser'
 
-function initials(n:string){return n?.split(' ').map((x:string)=>x[0]).join('').toUpperCase().slice(0,2)||'??'}
+function initials(n:string){return(n||'?').split(' ').map((x:string)=>x[0]).join('').toUpperCase().slice(0,2)}
 
 export default function ProfilePage(){
   const {id}=useParams()
@@ -12,9 +12,8 @@ export default function ProfilePage(){
   const [profile,setProfile]=useState<any>(null)
   const [currentUser,setCurrentUser]=useState<any>(null)
   const [loading,setLoading]=useState(true)
-  const [showUnlock,setShowUnlock]=useState(false)
-  const [unlocked,setUnlocked]=useState(false)
   const [paying,setPaying]=useState(false)
+  const [activePhoto,setActivePhoto]=useState<string|null>(null)
 
   useEffect(()=>{
     const sb=createClient()
@@ -22,7 +21,6 @@ export default function ProfilePage(){
     sb.from('profiles').select('*').eq('id',id as string).maybeSingle().then(({data})=>{
       setProfile(data)
       setLoading(false)
-      // increment views
       if(data) sb.from('profiles').update({profile_views:(data.profile_views||0)+1}).eq('id',id as string)
     })
   },[id])
@@ -34,70 +32,140 @@ export default function ProfilePage(){
       const sb=createClient()
       const {data:curr}=await sb.from('profiles').select('full_name,whatsapp_number').eq('id',currentUser.id).maybeSingle()
       const res=await fetch('/api/pesapal',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({userId:currentUser.id,userEmail:currentUser.email,userName:curr?.full_name||currentUser.email,phone:curr?.whatsapp_number||'',paymentType:'unlock',targetId:id})})
+        body:JSON.stringify({userId:currentUser.id,userEmail:currentUser.email,userName:curr?.full_name||currentUser.email,
+          phone:curr?.whatsapp_number||'',paymentType:'unlock',targetId:id})})
       const data=await res.json()
       if(data.redirectUrl) window.location.href=data.redirectUrl
-      else{alert('Payment failed: '+data.error);setPaying(false)}
-    }catch(e){alert('Something went wrong');setPaying(false)}
+      else{alert(data.error||'Payment failed');setPaying(false)}
+    }catch{alert('Something went wrong');setPaying(false)}
   }
 
-  if(loading) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',color:'#94a3b8'}}>Loading...</div>
-  if(!profile) return <div style={{textAlign:'center',padding:'80px',color:'#94a3b8'}}><p style={{fontSize:'18px',fontWeight:'600',color:'#374151'}}>Profile not found</p><Link href="/discover" style={{color:'#f97316',marginTop:'12px',display:'block'}}>Browse students</Link></div>
+  if(loading) return(
+    <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh'}}>
+      <div style={{width:'32px',height:'32px',border:'3px solid #e2e8f0',borderTop:'3px solid #f97316',borderRadius:'50%',animation:'spin 0.8s linear infinite'}}/>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  )
+
+  if(!profile) return(
+    <div style={{textAlign:'center',padding:'80px 20px'}}>
+      <p style={{fontSize:'18px',fontWeight:'700',color:'#0f172a',marginBottom:'8px'}}>Profile not found</p>
+      <Link href="/" style={{color:'#f97316',fontSize:'14px'}}>← Back to students</Link>
+    </div>
+  )
+
+  const photos = Array.isArray(profile.photos) ? profile.photos.filter(Boolean) : []
+  const interests = Array.isArray(profile.interests) ? profile.interests.filter(Boolean) : []
 
   return(
-    <div style={{maxWidth:'680px',margin:'0 auto',padding:'32px 20px'}}>
-      <Link href="/discover" style={{fontSize:'13px',color:'#64748b',marginBottom:'20px',display:'block'}}>← Back to students</Link>
+    <div style={{maxWidth:'780px',margin:'0 auto',padding:'28px 20px'}}>
+      <Link href="/" style={{fontSize:'13px',color:'#64748b',marginBottom:'20px',display:'inline-block'}}>← Back to students</Link>
 
-      <div style={{background:'#fff',borderRadius:'20px',border:'1px solid #e2e8f0',overflow:'hidden',boxShadow:'0 4px 20px rgba(0,0,0,0.06)'}}>
-        {/* Cover */}
-        <div style={{height:'100px',background:'linear-gradient(135deg,#f97316,#ea580c)',position:'relative'}}>
-          {profile.is_featured&&<span style={{position:'absolute',top:'12px',right:'12px',background:'rgba(255,255,255,0.2)',color:'#fff',fontSize:'11px',fontWeight:'700',padding:'4px 10px',borderRadius:'50px',backdropFilter:'blur(4px)'}}>FEATURED</span>}
-        </div>
+      <div style={{background:'#fff',borderRadius:'20px',border:'1px solid #e2e8f0',overflow:'hidden',boxShadow:'0 2px 12px rgba(0,0,0,0.06)'}}>
 
-        <div style={{padding:'0 24px 28px'}}>
-          {/* Avatar */}
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginTop:'-28px',marginBottom:'16px'}}>
-            {profile.avatar_url
-              ?<img src={profile.avatar_url} style={{width:'64px',height:'64px',borderRadius:'50%',objectFit:'cover',border:'3px solid #fff',boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}/>
-              :<div style={{width:'64px',height:'64px',borderRadius:'50%',background:profile.is_premium?'#f5f3ff':'#fff7ed',color:profile.is_premium?'#7c3aed':'#ea580c',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'800',fontSize:'20px',border:'3px solid #fff',boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>{initials(profile.full_name)}</div>
-            }
-            <div style={{display:'flex',gap:'6px',marginBottom:'4px'}}>
-              {profile.is_top_student&&<span style={{background:'#fff7ed',color:'#ea580c',fontSize:'11px',padding:'3px 8px',borderRadius:'50px',fontWeight:'700',border:'1px solid #fed7aa'}}>Top Student</span>}
-              {profile.is_premium&&<span style={{background:'#f5f3ff',color:'#7c3aed',fontSize:'11px',padding:'3px 8px',borderRadius:'50px',fontWeight:'700',border:'1px solid #ddd6fe'}}>Premium</span>}
+        {/* Top section */}
+        <div style={{display:'flex',gap:'0',flexWrap:'wrap'}}>
+          {/* Left: Avatar + basic info */}
+          <div style={{flex:'1',minWidth:'260px',padding:'28px'}}>
+            <div style={{display:'flex',gap:'16px',alignItems:'flex-start',marginBottom:'16px'}}>
+              {profile.avatar_url
+                ?<img src={profile.avatar_url} style={{width:'80px',height:'80px',borderRadius:'14px',objectFit:'cover',border:'1px solid #e2e8f0',flexShrink:0}}/>
+                :<div style={{width:'80px',height:'80px',borderRadius:'14px',background:'#f8fafc',color:'#94a3b8',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'24px',border:'1px solid #e2e8f0',flexShrink:0}}>{initials(profile.full_name)}</div>
+              }
+              <div style={{paddingTop:'4px'}}>
+                <h1 style={{fontSize:'20px',fontWeight:'800',color:'#0f172a',marginBottom:'5px',lineHeight:'1.2'}}>{profile.full_name}</h1>
+                <div style={{display:'flex',gap:'5px',flexWrap:'wrap'}}>
+                  {profile.is_top_student&&<span style={{background:'#fff7ed',color:'#ea580c',fontSize:'11px',padding:'3px 8px',borderRadius:'6px',fontWeight:'700',border:'1px solid #fed7aa'}}>Top Student</span>}
+                  {profile.is_premium&&<span style={{background:'#f5f3ff',color:'#7c3aed',fontSize:'11px',padding:'3px 8px',borderRadius:'6px',fontWeight:'700',border:'1px solid #ddd6fe'}}>Premium</span>}
+                  {profile.is_featured&&<span style={{background:'#fff7ed',color:'#f97316',fontSize:'11px',padding:'3px 8px',borderRadius:'6px',fontWeight:'700',border:'1px solid #fed7aa'}}>Featured</span>}
+                </div>
+              </div>
             </div>
+
+            {/* Details */}
+            <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'16px'}}>
+              {profile.course&&(
+                <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
+                  <span style={{fontSize:'12px',color:'#94a3b8',width:'60px',flexShrink:0}}>Course</span>
+                  <span style={{fontSize:'13px',color:'#374151',fontWeight:'500'}}>{profile.course}</span>
+                </div>
+              )}
+              {profile.university&&(
+                <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
+                  <span style={{fontSize:'12px',color:'#94a3b8',width:'60px',flexShrink:0}}>University</span>
+                  <span style={{fontSize:'13px',color:'#374151',fontWeight:'500'}}>{profile.university}</span>
+                </div>
+              )}
+              {profile.year_of_study&&(
+                <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
+                  <span style={{fontSize:'12px',color:'#94a3b8',width:'60px',flexShrink:0}}>Year</span>
+                  <span style={{fontSize:'13px',color:'#374151',fontWeight:'500'}}>Year {profile.year_of_study}</span>
+                </div>
+              )}
+            </div>
+
+            {interests.length>0&&(
+              <div style={{marginBottom:'16px'}}>
+                <p style={{fontSize:'12px',color:'#94a3b8',marginBottom:'7px',fontWeight:'600',textTransform:'uppercase',letterSpacing:'0.4px'}}>Interests</p>
+                <div style={{display:'flex',flexWrap:'wrap',gap:'5px'}}>
+                  {interests.map((i:string)=>(
+                    <span key={i} style={{background:'#f8fafc',color:'#475569',fontSize:'12px',padding:'4px 10px',borderRadius:'6px',border:'1px solid #e2e8f0'}}>{i}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <p style={{fontSize:'12px',color:'#cbd5e1'}}>{profile.profile_views||0} profile views</p>
           </div>
 
-          <h1 style={{fontSize:'22px',fontWeight:'800',color:'#0f172a',marginBottom:'4px'}}>{profile.full_name}</h1>
-          <p style={{fontSize:'14px',color:'#64748b',marginBottom:'2px'}}>{profile.course} · Year {profile.year_of_study}</p>
-          <p style={{fontSize:'14px',color:'#94a3b8',marginBottom:'16px'}}>{profile.university}</p>
+          {/* Right: Bio + Connect */}
+          <div style={{flex:'1',minWidth:'260px',padding:'28px',borderLeft:'1px solid #f1f5f9',background:'#fafafa'}}>
+            {profile.bio&&(
+              <div style={{marginBottom:'20px'}}>
+                <p style={{fontSize:'12px',color:'#94a3b8',marginBottom:'8px',fontWeight:'600',textTransform:'uppercase',letterSpacing:'0.4px'}}>About</p>
+                <p style={{fontSize:'14px',color:'#374151',lineHeight:'1.7'}}>{profile.bio}</p>
+              </div>
+            )}
 
-          {profile.bio&&<p style={{fontSize:'14px',color:'#374151',lineHeight:'1.7',marginBottom:'16px',padding:'14px',background:'#f8fafc',borderRadius:'10px'}}>{profile.bio}</p>}
-
-          {profile.interests&&profile.interests.length>0&&(
-            <div style={{display:'flex',flexWrap:'wrap',gap:'6px',marginBottom:'20px'}}>
-              {profile.interests.map((i:string)=><span key={i} style={{background:'#f1f5f9',color:'#475569',fontSize:'12px',padding:'4px 10px',borderRadius:'50px'}}>{i}</span>)}
-            </div>
-          )}
-
-          <p style={{fontSize:'12px',color:'#94a3b8',marginBottom:'20px'}}>{profile.profile_views||0} profile views</p>
-
-          {/* Unlock section */}
-          <div id="unlock" style={{background:'#f8fafc',borderRadius:'14px',border:'1px solid #e2e8f0',padding:'20px'}}>
-            <h3 style={{fontWeight:'700',color:'#0f172a',fontSize:'15px',marginBottom:'6px'}}>Connect on WhatsApp</h3>
-            <p style={{fontSize:'13px',color:'#64748b',marginBottom:'16px'}}>Pay KES 20 via M-Pesa to unlock this student's WhatsApp number and connect directly.</p>
-            {unlocked&&profile.whatsapp_number ? (
-              <a href={`https://wa.me/${profile.whatsapp_number.replace(/[^0-9]/g,'')}`} target="_blank" rel="noopener noreferrer"
-                style={{display:'block',background:'#16a34a',color:'#fff',padding:'13px',borderRadius:'10px',fontWeight:'700',fontSize:'15px',textAlign:'center'}}>
-                Open WhatsApp — {profile.whatsapp_number}
-              </a>
-            ):(
-              <button onClick={handleUnlock} disabled={paying} style={{width:'100%',background:paying?'#94a3b8':'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'13px',borderRadius:'10px',fontWeight:'700',fontSize:'15px',border:'none',cursor:paying?'not-allowed':'pointer',boxShadow:paying?'none':'0 4px 14px rgba(249,115,22,0.3)'}}>
+            {/* Connect box */}
+            <div style={{background:'#fff',border:'1px solid #e2e8f0',borderRadius:'14px',padding:'18px'}}>
+              <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px',marginBottom:'4px'}}>Connect on WhatsApp</p>
+              <p style={{fontSize:'12px',color:'#64748b',marginBottom:'14px',lineHeight:'1.5'}}>Pay KES 20 via M-Pesa to unlock this student's WhatsApp number.</p>
+              <button onClick={handleUnlock} disabled={paying}
+                style={{width:'100%',background:paying?'#94a3b8':'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'12px',borderRadius:'10px',fontWeight:'700',fontSize:'14px',border:'none',cursor:paying?'not-allowed':'pointer',boxShadow:paying?'none':'0 4px 12px rgba(249,115,22,0.3)'}}>
                 {paying?'Redirecting to M-Pesa...':'Unlock for KES 20'}
               </button>
-            )}
+              {!currentUser&&<p style={{fontSize:'11px',color:'#94a3b8',textAlign:'center',marginTop:'8px'}}>
+                <Link href="/login" style={{color:'#f97316',fontWeight:'600'}}>Sign in</Link> to connect
+              </p>}
+            </div>
           </div>
         </div>
+
+        {/* Photo gallery */}
+        {photos.length>0&&(
+          <div style={{padding:'0 28px 28px',borderTop:'1px solid #f1f5f9'}}>
+            <p style={{fontSize:'12px',color:'#94a3b8',marginBottom:'12px',fontWeight:'600',textTransform:'uppercase',letterSpacing:'0.4px',paddingTop:'20px'}}>Photos ({photos.length})</p>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:'8px'}}>
+              {photos.map((url:string,i:number)=>(
+                <div key={i} onClick={()=>setActivePhoto(url)} style={{aspectRatio:'1',borderRadius:'10px',overflow:'hidden',cursor:'pointer',border:'1px solid #e2e8f0'}}>
+                  <img src={url} style={{width:'100%',height:'100%',objectFit:'cover',transition:'transform 0.2s'}}
+                    onMouseEnter={e=>(e.currentTarget as HTMLImageElement).style.transform='scale(1.05)'}
+                    onMouseLeave={e=>(e.currentTarget as HTMLImageElement).style.transform='scale(1)'}/>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Lightbox */}
+      {activePhoto&&(
+        <div onClick={()=>setActivePhoto(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.9)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:300,padding:'20px',cursor:'pointer'}}>
+          <img src={activePhoto} style={{maxWidth:'90vw',maxHeight:'90vh',borderRadius:'12px',objectFit:'contain'}}/>
+          <button onClick={()=>setActivePhoto(null)} style={{position:'absolute',top:'20px',right:'20px',background:'rgba(255,255,255,0.15)',border:'none',borderRadius:'50%',width:'40px',height:'40px',color:'#fff',fontSize:'18px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+        </div>
+      )}
     </div>
   )
 }
