@@ -59,7 +59,6 @@ export default function EditProfilePage() {
       whatsapp_number: form.whatsapp_number,
       bio: form.bio,
       interests,
-      updated_at: new Date().toISOString(),
     }).eq('user_id', user.id)
     if (error) { setError(error.message) } else { setSuccess(true); setTimeout(()=>setSuccess(false),3000) }
     setSaving(false)

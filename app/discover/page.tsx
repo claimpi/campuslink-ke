@@ -2,24 +2,24 @@
 import { useState, useEffect } from 'react'
 import { Search, Filter } from 'lucide-react'
 import StudentCard from '@/components/ui/StudentCard'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase-browser'
 
-const MOCK_STUDENTS = [
-  { id: '1', full_name: 'Amina Wanjiku', university: 'University of Nairobi', course: 'Computer Science', year_of_study: 2, interests: ['coding', 'AI'], is_premium: true, is_featured: true },
-  { id: '2', full_name: 'Brian Ochieng', university: 'Kenyatta University', course: 'Business Administration', year_of_study: 3, interests: ['football', 'chess'], is_top_student: true },
-  { id: '3', full_name: 'Catherine Muthoni', university: 'Strathmore University', course: 'Law', year_of_study: 1, interests: ['reading', 'debate'] },
-  { id: '4', full_name: 'Dennis Kipchoge', university: 'JKUAT', course: 'Mechanical Engineering', year_of_study: 4, interests: ['robotics', 'sports'], is_premium: true },
-  { id: '5', full_name: 'Esther Akinyi', university: 'Moi University', course: 'Medicine', year_of_study: 5, interests: ['health', 'research'] },
-  { id: '6', full_name: 'Felix Njoroge', university: 'Africa Nazarene University', course: 'Math', year_of_study: 2, interests: ['football', 'music'], is_top_student: true },
+const MOCK = [
+  { id:'1', full_name:'Amina Wanjiku', university:'University of Nairobi', course:'Computer Science', year_of_study:2, interests:['coding','AI'], is_premium:true, is_featured:true },
+  { id:'2', full_name:'Brian Ochieng', university:'Kenyatta University', course:'Business Administration', year_of_study:3, interests:['football','chess'], is_top_student:true },
+  { id:'3', full_name:'Catherine Muthoni', university:'Strathmore University', course:'Law', year_of_study:1, interests:['reading','debate'] },
+  { id:'4', full_name:'Dennis Kipchoge', university:'JKUAT', course:'Mechanical Engineering', year_of_study:4, interests:['robotics','sports'], is_premium:true },
+  { id:'5', full_name:'Esther Akinyi', university:'Moi University', course:'Medicine', year_of_study:5, interests:['health','research'] },
+  { id:'6', full_name:'Felix Njoroge', university:'Africa Nazarene University', course:'Math', year_of_study:2, interests:['football','music'], is_top_student:true },
 ]
 
-const UNIVERSITIES = ['All Universities', 'University of Nairobi', 'Kenyatta University', 'Strathmore University', 'JKUAT', 'Moi University', 'Africa Nazarene University', 'Meru University', 'Egerton University', 'Maseno University']
-const YEARS = ['All Years', '1', '2', '3', '4', '5', '6']
+const UNIVERSITIES = ['All Universities','University of Nairobi','Kenyatta University','Strathmore University','JKUAT','Moi University','Africa Nazarene University','Maseno University','Egerton University','Technical University of Kenya','Dedan Kimathi University','Multimedia University']
+const YEARS = ['All Years','1','2','3','4','5','6']
 
 type Student = {
-  id: string; full_name: string; university: string; course: string;
-  year_of_study: number; interests?: string[]; avatar_url?: string;
-  is_premium?: boolean; is_featured?: boolean; is_top_student?: boolean;
+  id:string; full_name:string; university:string; course:string;
+  year_of_study:number; interests?:string[]; avatar_url?:string;
+  is_premium?:boolean; is_featured?:boolean; is_top_student?:boolean;
 }
 
 export default function DiscoverPage() {
@@ -30,82 +30,106 @@ export default function DiscoverPage() {
   const [year, setYear] = useState('All Years')
 
   useEffect(() => {
-    async function loadStudents() {
+    async function load() {
       try {
-        const { data, error } = await supabase.from('profiles').select('*').order('is_featured', { ascending: false }).order('is_premium', { ascending: false })
-        if (data && data.length > 0) {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id,full_name,university,course,year_of_study,interests,avatar_url,is_premium,is_featured,is_top_student')
+          .order('is_featured', { ascending: false })
+          .order('is_premium', { ascending: false })
+        if (!error && data && data.length > 0) {
           setStudents(data)
         } else {
-          setStudents(MOCK_STUDENTS as Student[])
+          setStudents(MOCK as Student[])
         }
       } catch {
-        setStudents(MOCK_STUDENTS as Student[])
+        setStudents(MOCK as Student[])
       }
       setLoading(false)
     }
-    loadStudents()
+    load()
   }, [])
 
   const filtered = students.filter(s => {
-    const matchSearch = search === '' || s.full_name.toLowerCase().includes(search.toLowerCase()) || s.course?.toLowerCase().includes(search.toLowerCase())
+    const q = search.toLowerCase()
+    const matchSearch = !q || s.full_name?.toLowerCase().includes(q) || s.course?.toLowerCase().includes(q) || (s.interests||[]).some(i=>i.toLowerCase().includes(q))
     const matchUni = university === 'All Universities' || s.university === university
     const matchYear = year === 'All Years' || String(s.year_of_study) === year
     return matchSearch && matchUni && matchYear
   })
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-extrabold text-gray-900 mb-1">Browse Students</h1>
-      <p className="text-gray-500 mb-6">Found {filtered.length} students.</p>
+  const sel = {width:'100%',border:'1.5px solid #e5e7eb',borderRadius:'12px',padding:'10px 14px',fontSize:'14px',outline:'none',background:'white',cursor:'pointer'}
 
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Sidebar Filters */}
-        <aside className="w-full md:w-64 shrink-0">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-5">
-            <div className="flex items-center gap-2 font-semibold text-gray-700">
-              <Filter size={16} /> Filters
+  return (
+    <div style={{maxWidth:'1200px',margin:'0 auto',padding:'32px 16px'}}>
+      <h1 style={{fontSize:'28px',fontWeight:'900',color:'#111827',marginBottom:'4px'}}>Browse Students</h1>
+      <p style={{color:'#9ca3af',marginBottom:'28px',fontSize:'14px'}}>Found {filtered.length} students across Kenyan universities</p>
+
+      <div style={{display:'flex',gap:'24px',flexWrap:'wrap'}}>
+        {/* Sidebar */}
+        <aside style={{width:'220px',flexShrink:0}}>
+          <div style={{background:'white',borderRadius:'18px',border:'1px solid #f3f4f6',padding:'20px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',position:'sticky',top:'80px'}}>
+            <div style={{display:'flex',alignItems:'center',gap:'6px',fontWeight:'700',color:'#374151',marginBottom:'18px',fontSize:'14px'}}>
+              <Filter size={15}/> Filters
             </div>
-            <div>
-              <label className="text-sm font-medium text-orange-500 mb-1 block">University</label>
-              <select value={university} onChange={e => setUniversity(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-400">
-                {UNIVERSITIES.map(u => <option key={u}>{u}</option>)}
+            <div style={{marginBottom:'14px'}}>
+              <label style={{fontSize:'12px',fontWeight:'600',color:'#f97316',display:'block',marginBottom:'6px'}}>UNIVERSITY</label>
+              <select value={university} onChange={e=>setUniversity(e.target.value)} style={sel}
+                onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e5e7eb'}>
+                {UNIVERSITIES.map(u=><option key={u}>{u}</option>)}
               </select>
             </div>
-            <div>
-              <label className="text-sm font-medium text-orange-500 mb-1 block">Year of Study</label>
-              <select value={year} onChange={e => setYear(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-400">
-                {YEARS.map(y => <option key={y}>{y}</option>)}
+            <div style={{marginBottom:'18px'}}>
+              <label style={{fontSize:'12px',fontWeight:'600',color:'#f97316',display:'block',marginBottom:'6px'}}>YEAR OF STUDY</label>
+              <select value={year} onChange={e=>setYear(e.target.value)} style={sel}>
+                {YEARS.map(y=><option key={y}>{y}</option>)}
               </select>
             </div>
-            <button onClick={() => { setUniversity('All Universities'); setYear('All Years'); setSearch('') }} className="w-full text-sm text-orange-500 border border-orange-200 py-2 rounded-xl hover:bg-orange-50 transition-all">
+            <button onClick={()=>{setUniversity('All Universities');setYear('All Years');setSearch('')}}
+              style={{width:'100%',border:'1.5px solid #fed7aa',color:'#f97316',background:'white',padding:'9px',borderRadius:'10px',fontSize:'13px',fontWeight:'600',cursor:'pointer'}}>
               Clear Filters
             </button>
           </div>
         </aside>
 
         {/* Main */}
-        <div className="flex-1">
-          <div className="relative mb-5">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search names, interests..." className="w-full pl-9 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-400 bg-white shadow-sm text-sm" />
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{position:'relative',marginBottom:'20px'}}>
+            <Search size={16} style={{position:'absolute',left:'14px',top:'50%',transform:'translateY(-50%)',color:'#9ca3af'}}/>
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search names, course, interests..."
+              style={{width:'100%',paddingLeft:'42px',paddingRight:'16px',paddingTop:'12px',paddingBottom:'12px',border:'1.5px solid #e5e7eb',borderRadius:'14px',fontSize:'14px',outline:'none',background:'white',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',boxSizing:'border-box'}}
+              onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e5e7eb'} />
           </div>
+
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {[1,2,3,4,5,6].map(i => (
-                <div key={i} className="bg-white rounded-2xl border border-gray-100 h-64 animate-pulse">
-                  <div className="h-8 bg-gray-100 rounded-t-2xl mb-4"></div>
-                  <div className="p-4 space-y-3">
-                    <div className="flex gap-3"><div className="w-14 h-14 bg-gray-200 rounded-full"></div><div className="flex-1 space-y-2"><div className="h-4 bg-gray-200 rounded w-3/4"></div><div className="h-3 bg-gray-100 rounded w-1/2"></div></div></div>
-                    <div className="h-3 bg-gray-100 rounded"></div><div className="h-3 bg-gray-100 rounded w-2/3"></div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))',gap:'16px'}}>
+              {[1,2,3,4,5,6].map(i=>(
+                <div key={i} style={{background:'white',borderRadius:'20px',border:'1px solid #f3f4f6',overflow:'hidden',height:'280px'}}>
+                  <div style={{height:'32px',background:'#f3f4f6',animation:'pulse 1.5s infinite'}}/>
+                  <div style={{padding:'16px',display:'flex',flexDirection:'column',gap:'10px'}}>
+                    <div style={{display:'flex',gap:'12px'}}>
+                      <div style={{width:'48px',height:'48px',borderRadius:'50%',background:'#f3f4f6'}}/>
+                      <div style={{flex:1,display:'flex',flexDirection:'column',gap:'6px'}}>
+                        <div style={{height:'14px',background:'#f3f4f6',borderRadius:'6px',width:'70%'}}/>
+                        <div style={{height:'10px',background:'#f3f4f6',borderRadius:'6px',width:'40%'}}/>
+                      </div>
+                    </div>
+                    <div style={{height:'10px',background:'#f3f4f6',borderRadius:'6px'}}/>
+                    <div style={{height:'10px',background:'#f3f4f6',borderRadius:'6px',width:'80%'}}/>
                   </div>
                 </div>
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-20 text-gray-400">No students found. Try different filters.</div>
+            <div style={{textAlign:'center',padding:'60px 20px',color:'#9ca3af'}}>
+              <div style={{fontSize:'48px',marginBottom:'12px'}}>🔍</div>
+              <p style={{fontSize:'16px',fontWeight:'600',color:'#374151',marginBottom:'4px'}}>No students found</p>
+              <p style={{fontSize:'14px'}}>Try different search terms or filters</p>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filtered.map(s => <StudentCard key={s.id} {...s} />)}
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))',gap:'16px'}}>
+              {filtered.map(s=><StudentCard key={s.id} {...s}/>)}
             </div>
           )}
         </div>
