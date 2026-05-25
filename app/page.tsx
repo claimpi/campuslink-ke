@@ -1,123 +1,137 @@
 import Link from 'next/link'
-import { Users, MessageCircle, Star, Zap, Crown, ArrowRight, CheckCircle } from 'lucide-react'
 
-const MOCK_STUDENTS = [
-  { id: '1', name: 'Amina Wanjiku', university: 'University of Nairobi', course: 'Computer Science', year: 2, is_premium: true, is_featured: true },
-  { id: '2', name: 'Brian Ochieng', university: 'Kenyatta University', course: 'Business Admin', year: 3, is_top: true },
-  { id: '3', name: 'Catherine Muthoni', university: 'Strathmore University', course: 'Law', year: 1 },
-  { id: '4', name: 'Dennis Kipchoge', university: 'JKUAT', course: 'Mechanical Engineering', year: 4, is_premium: true },
+const s = {
+  hero: {background:'linear-gradient(135deg,#fff7ed 0%,#ffffff 50%,#faf5ff 100%)',padding:'72px 16px 80px',textAlign:'center' as const},
+  badge: {display:'inline-flex',alignItems:'center',gap:'6px',background:'#fff7ed',border:'1px solid #fed7aa',color:'#ea580c',padding:'6px 16px',borderRadius:'50px',fontSize:'13px',fontWeight:'600',marginBottom:'24px'},
+  h1: {fontSize:'clamp(32px,6vw,60px)',fontWeight:'900',color:'#111827',lineHeight:'1.1',marginBottom:'20px'},
+  orange: {color:'#f97316'},
+  sub: {fontSize:'18px',color:'#6b7280',maxWidth:'580px',margin:'0 auto 36px',lineHeight:'1.6'},
+  btnPrimary: {display:'inline-flex',alignItems:'center',gap:'8px',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'white',padding:'14px 32px',borderRadius:'50px',fontWeight:'700',fontSize:'16px',textDecoration:'none',boxShadow:'0 8px 24px rgba(249,115,22,0.4)',transition:'transform 0.2s'},
+  btnOutline: {display:'inline-flex',alignItems:'center',gap:'8px',border:'2px solid #f97316',color:'#f97316',padding:'14px 32px',borderRadius:'50px',fontWeight:'700',fontSize:'16px',textDecoration:'none',transition:'all 0.2s'},
+  statNum: {fontSize:'28px',fontWeight:'900',color:'#f97316'},
+  statLabel: {fontSize:'13px',color:'#9ca3af',marginTop:'2px'},
+  sectionTitle: {fontSize:'clamp(22px,4vw,30px)',fontWeight:'800',color:'#111827',marginBottom:'8px'},
+  card: {background:'white',borderRadius:'20px',boxShadow:'0 4px 24px rgba(0,0,0,0.07)',border:'1px solid #f3f4f6',overflow:'hidden',transition:'all 0.3s'},
+}
+
+const STUDENTS = [
+  {id:'1',name:'Amina Wanjiku',uni:'University of Nairobi',course:'Computer Science',year:2,badge:'FEATURED',badgeColor:'#8b5cf6',initials:'AW',avatarBg:'#ede9fe',textColor:'#7c3aed'},
+  {id:'2',name:'Brian Ochieng',uni:'Kenyatta University',course:'Business Admin',year:3,badge:'TOP STUDENT',badgeColor:'#f97316',initials:'BO',avatarBg:'#fff7ed',textColor:'#ea580c'},
+  {id:'3',name:'Catherine Muthoni',uni:'Strathmore University',course:'Law',year:1,initials:'CM',avatarBg:'#f0fdf4',textColor:'#16a34a'},
+  {id:'4',name:'Dennis Kipchoge',uni:'JKUAT',course:'Mech. Engineering',year:4,initials:'DK',avatarBg:'#eff6ff',textColor:'#2563eb',isPremium:true},
 ]
 
-function getInitials(name: string) {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2)
-}
+const FEATURES = [
+  {emoji:'👥',title:'Student Profiles',desc:'Build your campus identity with photos, bio, course, and interests.',bg:'#fff7ed'},
+  {emoji:'💬',title:'WhatsApp Groups',desc:'Discover and join verified groups for your university and course.',bg:'#f0fdf4'},
+  {emoji:'⭐',title:'Get Featured',desc:'Appear on the homepage and top search results for just KES 200.',bg:'#fefce8'},
+  {emoji:'👑',title:'Premium',desc:'Unlimited unlocks, analytics, and premium badge — KES 199/month.',bg:'#faf5ff'},
+  {emoji:'🔓',title:'Unlock Contacts',desc:'Access WhatsApp numbers of students you want to connect with.',bg:'#eff6ff'},
+  {emoji:'✅',title:'Verified Groups',desc:'Every group is reviewed and verified by our admin team.',bg:'#f0fdfa'},
+]
 
 export default function HomePage() {
   return (
-    <div>
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-orange-50 via-white to-purple-50 py-16 px-4">
-        <div className="max-w-5xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 px-4 py-1.5 rounded-full text-sm font-medium mb-6">
-            <Zap size={14} /> Kenya's #1 Student Network
-          </div>
-          <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 mb-5 leading-tight">
-            Connect with Students<br />
-            <span className="text-orange-500">Across Kenya</span>
+    <div style={{minHeight:'100vh'}}>
+      {/* HERO */}
+      <section style={s.hero}>
+        <div style={{maxWidth:'860px',margin:'0 auto'}}>
+          <div style={s.badge}>⚡ Kenya's #1 Student Network</div>
+          <h1 style={s.h1}>
+            Connect with Students<br/>
+            <span style={s.orange}>Across Kenya</span>
           </h1>
-          <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-            Find study partners, join WhatsApp groups, unlock contacts, and build your campus network — all in one place.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/register" className="gradient-orange text-white px-8 py-3.5 rounded-full font-bold text-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
-              Join Free <ArrowRight size={18} />
-            </Link>
-            <Link href="/discover" className="border-2 border-orange-500 text-orange-500 px-8 py-3.5 rounded-full font-bold text-lg hover:bg-orange-50 transition-all">
-              Browse Students
-            </Link>
+          <p style={s.sub}>Find study partners, join WhatsApp groups, unlock contacts, and build your campus network — all in one place.</p>
+          <div style={{display:'flex',gap:'16px',justifyContent:'center',flexWrap:'wrap',marginBottom:'56px'}}>
+            <Link href="/register" style={s.btnPrimary}>Join Free →</Link>
+            <Link href="/discover" style={s.btnOutline}>Browse Students</Link>
           </div>
-
-          {/* Stats */}
-          <div className="flex flex-wrap justify-center gap-8 mt-12">
-            {[['500+', 'Students'], ['50+', 'Universities'], ['200+', 'WhatsApp Groups'], ['1K+', 'Connections']].map(([n, l]) => (
-              <div key={l} className="text-center">
-                <div className="text-2xl font-extrabold text-orange-500">{n}</div>
-                <div className="text-sm text-gray-500">{l}</div>
+          <div style={{display:'flex',justifyContent:'center',gap:'48px',flexWrap:'wrap'}}>
+            {[['500+','Students'],['50+','Universities'],['200+','WA Groups'],['1K+','Connections']].map(([n,l])=>(
+              <div key={l} style={{textAlign:'center'}}>
+                <div style={s.statNum}>{n}</div>
+                <div style={s.statLabel}>{l}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Featured Students */}
-      <section className="max-w-7xl mx-auto px-4 py-14">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2"><Star className="text-orange-500" size={22} /> Featured Students</h2>
-          <Link href="/discover" className="text-orange-500 hover:underline text-sm font-medium flex items-center gap-1">View all <ArrowRight size={14} /></Link>
+      {/* FEATURED STUDENTS */}
+      <section style={{maxWidth:'1200px',margin:'0 auto',padding:'64px 16px'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'28px'}}>
+          <div>
+            <h2 style={s.sectionTitle}>⭐ Featured Students</h2>
+            <p style={{color:'#9ca3af',fontSize:'14px'}}>Top students on CampusLink KE</p>
+          </div>
+          <Link href="/discover" style={{color:'#f97316',fontSize:'14px',fontWeight:'600',textDecoration:'none'}}>View all →</Link>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {MOCK_STUDENTS.map(s => (
-            <div key={s.id} className={`bg-white rounded-2xl shadow-md overflow-hidden border card-hover ${s.is_featured ? 'border-purple-200' : s.is_top ? 'border-orange-200' : 'border-gray-100'}`}>
-              {s.is_top && <div className="gradient-orange text-white text-xs font-bold text-center py-1.5">⭐ TOP STUDENT</div>}
-              {s.is_featured && <div className="gradient-purple text-white text-xs font-bold text-center py-1.5">✨ FEATURED</div>}
-              <div className="p-4">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-base font-bold mb-3 ${s.is_premium ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-600'}`}>
-                  {getInitials(s.name)}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))',gap:'20px'}}>
+          {STUDENTS.map(st=>(
+            <div key={st.id} style={{...s.card}}>
+              {st.badge && (
+                <div style={{background:st.badgeColor,color:'white',fontSize:'11px',fontWeight:'700',textAlign:'center',padding:'7px',letterSpacing:'0.5px'}}>
+                  {st.badge === 'FEATURED' ? '✨' : '⭐'} {st.badge}
                 </div>
-                <h3 className="font-semibold text-gray-900 text-sm">{s.name}</h3>
-                <p className="text-xs text-gray-500 mt-0.5">{s.course}</p>
-                <p className="text-xs text-gray-400">{s.university}</p>
-                <div className="flex gap-1 mt-2">
-                  <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">Y{s.year}</span>
-                  {s.is_premium && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Premium</span>}
+              )}
+              <div style={{padding:'20px'}}>
+                <div style={{display:'flex',gap:'14px',alignItems:'flex-start',marginBottom:'14px'}}>
+                  <div style={{width:'52px',height:'52px',borderRadius:'50%',background:st.avatarBg,color:st.textColor,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'800',fontSize:'16px',flexShrink:0,border:`2px solid ${st.avatarBg}`}}>
+                    {st.initials}
+                  </div>
+                  <div>
+                    <div style={{fontWeight:'700',color:'#111827',fontSize:'15px',lineHeight:'1.3'}}>{st.name}</div>
+                    <div style={{display:'flex',gap:'6px',marginTop:'6px',flexWrap:'wrap'}}>
+                      <span style={{background:'#fff7ed',color:'#ea580c',fontSize:'11px',padding:'2px 8px',borderRadius:'50px',fontWeight:'600'}}>Y{st.year}</span>
+                      {st.isPremium && <span style={{background:'#faf5ff',color:'#7c3aed',fontSize:'11px',padding:'2px 8px',borderRadius:'50px',fontWeight:'600'}}>👑 Premium</span>}
+                    </div>
+                  </div>
                 </div>
-                <Link href={`/profile/${s.id}`} className="mt-3 block text-center text-xs bg-orange-500 text-white py-1.5 rounded-lg hover:bg-orange-600 transition-all font-medium">View Profile</Link>
+                <div style={{fontSize:'13px',color:'#6b7280',marginBottom:'4px'}}>📚 {st.course}</div>
+                <div style={{fontSize:'13px',color:'#9ca3af',marginBottom:'16px'}}>📍 {st.uni}</div>
+                <Link href={`/profile/${st.id}`} style={{display:'block',textAlign:'center',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'white',padding:'9px',borderRadius:'10px',fontSize:'13px',fontWeight:'600',textDecoration:'none'}}>
+                  View Profile
+                </Link>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Features */}
-      <section className="bg-white py-14 px-4">
-        <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-10">Everything You Need to Connect</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { icon: Users, title: 'Student Profiles', desc: 'Create your profile, add your course, university, and interests.', color: 'bg-orange-100 text-orange-600' },
-              { icon: MessageCircle, title: 'WhatsApp Groups', desc: 'Discover and join verified WhatsApp groups for your university.', color: 'bg-green-100 text-green-600' },
-              { icon: Star, title: 'Get Featured', desc: 'Appear on the homepage and top search results for just KES 200.', color: 'bg-yellow-100 text-yellow-600' },
-              { icon: Crown, title: 'Premium Membership', desc: 'Unlimited unlocks, premium badge, analytics — KES 199/month.', color: 'bg-purple-100 text-purple-600' },
-              { icon: Zap, title: 'Unlock Contacts', desc: 'Access WhatsApp numbers of students you want to connect with.', color: 'bg-blue-100 text-blue-600' },
-              { icon: CheckCircle, title: 'Verified Groups', desc: 'All groups are verified by our admin team for quality.', color: 'bg-teal-100 text-teal-600' },
-            ].map(({ icon: Icon, title, desc, color }) => (
-              <div key={title} className="p-6 rounded-2xl border border-gray-100 hover:shadow-md transition-all text-left">
-                <div className={`w-11 h-11 rounded-xl ${color} flex items-center justify-center mb-4`}><Icon size={20} /></div>
-                <h3 className="font-semibold text-gray-900 mb-1">{title}</h3>
-                <p className="text-sm text-gray-500">{desc}</p>
+      {/* FEATURES */}
+      <section style={{background:'#f9fafb',padding:'64px 16px'}}>
+        <div style={{maxWidth:'1100px',margin:'0 auto',textAlign:'center'}}>
+          <h2 style={{...s.sectionTitle,marginBottom:'4px'}}>Everything You Need to Connect</h2>
+          <p style={{color:'#9ca3af',fontSize:'15px',marginBottom:'40px'}}>Built specifically for Kenyan university students</p>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:'16px'}}>
+            {FEATURES.map(f=>(
+              <div key={f.title} style={{background:'white',borderRadius:'16px',padding:'24px',border:'1px solid #f3f4f6',textAlign:'left',boxShadow:'0 2px 8px rgba(0,0,0,0.04)'}}>
+                <div style={{width:'44px',height:'44px',borderRadius:'12px',background:f.bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'22px',marginBottom:'14px'}}>{f.emoji}</div>
+                <div style={{fontWeight:'700',color:'#111827',marginBottom:'6px',fontSize:'15px'}}>{f.title}</div>
+                <div style={{fontSize:'13px',color:'#6b7280',lineHeight:'1.6'}}>{f.desc}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing preview */}
-      <section className="py-14 px-4 bg-gradient-to-br from-orange-50 to-purple-50">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Simple, Transparent Pricing</h2>
-          <p className="text-gray-500 mb-10">All payments via M-Pesa to <strong>0790166252</strong></p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      {/* PRICING PREVIEW */}
+      <section style={{padding:'64px 16px',background:'linear-gradient(135deg,#fff7ed,#faf5ff)'}}>
+        <div style={{maxWidth:'900px',margin:'0 auto',textAlign:'center'}}>
+          <h2 style={{...s.sectionTitle,marginBottom:'4px'}}>Simple, Transparent Pricing</h2>
+          <p style={{color:'#9ca3af',fontSize:'14px',marginBottom:'40px'}}>All payments via M-Pesa to <strong style={{color:'#111827'}}>0790166252</strong></p>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:'20px'}}>
             {[
-              { name: 'Top Student', price: 'KES 100', period: 'One-Time', color: 'border-orange-300 bg-orange-50', badge: '⭐' },
-              { name: 'Premium', price: 'KES 199', period: 'Per Month', color: 'border-purple-400 bg-purple-50 scale-105 shadow-xl', badge: '👑' },
-              { name: 'Featured', price: 'KES 200', period: 'One-Time', color: 'border-blue-300 bg-blue-50', badge: '✨' },
-            ].map(p => (
-              <div key={p.name} className={`rounded-2xl border-2 p-6 ${p.color} transition-all`}>
-                <div className="text-3xl mb-2">{p.badge}</div>
-                <h3 className="font-bold text-lg text-gray-900">{p.name}</h3>
-                <div className="text-3xl font-extrabold text-gray-900 my-3">{p.price}</div>
-                <p className="text-sm text-gray-500 mb-4">{p.period}</p>
-                <Link href="/pricing" className="block text-center gradient-orange text-white py-2 rounded-xl font-medium text-sm hover:opacity-90 transition-all">Get Started</Link>
+              {name:'Top Student',price:'KES 100',period:'One-Time',emoji:'⭐',border:'#fed7aa',bg:'#fff7ed'},
+              {name:'Premium',price:'KES 199',period:'Per Month',emoji:'👑',border:'#c4b5fd',bg:'#faf5ff',featured:true},
+              {name:'Featured',price:'KES 200',period:'One-Time',emoji:'✨',border:'#bfdbfe',bg:'#eff6ff'},
+            ].map(p=>(
+              <div key={p.name} style={{background:'white',borderRadius:'20px',border:`2px solid ${p.border}`,padding:'28px 20px',boxShadow:p.featured?'0 12px 40px rgba(139,92,246,0.2)':'0 4px 16px rgba(0,0,0,0.06)',transform:p.featured?'scale(1.03)':'scale(1)'}}>
+                <div style={{fontSize:'32px',marginBottom:'8px'}}>{p.emoji}</div>
+                <div style={{fontWeight:'800',fontSize:'16px',color:'#111827',marginBottom:'8px'}}>{p.name}</div>
+                <div style={{fontSize:'32px',fontWeight:'900',color:'#111827',marginBottom:'2px'}}>{p.price}</div>
+                <div style={{fontSize:'13px',color:'#9ca3af',marginBottom:'20px'}}>{p.period}</div>
+                <Link href="/pricing" style={{display:'block',textAlign:'center',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'white',padding:'10px',borderRadius:'12px',fontSize:'13px',fontWeight:'700',textDecoration:'none'}}>Get Started</Link>
               </div>
             ))}
           </div>
@@ -125,13 +139,12 @@ export default function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="py-14 px-4 text-center">
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl font-extrabold text-gray-900 mb-4">Ready to Join the Network?</h2>
-          <p className="text-gray-500 mb-8">Join hundreds of Kenyan students already connecting on CampusLink KE.</p>
-          <Link href="/register" className="gradient-orange text-white px-10 py-4 rounded-full font-bold text-lg shadow-lg hover:shadow-xl transition-all inline-flex items-center gap-2">
-            Create Free Account <ArrowRight size={18} />
-          </Link>
+      <section style={{padding:'72px 16px',textAlign:'center',background:'white'}}>
+        <div style={{maxWidth:'600px',margin:'0 auto'}}>
+          <div style={{fontSize:'48px',marginBottom:'16px'}}>🎓</div>
+          <h2 style={{fontSize:'clamp(24px,4vw,36px)',fontWeight:'900',color:'#111827',marginBottom:'12px'}}>Ready to Join the Network?</h2>
+          <p style={{color:'#6b7280',fontSize:'16px',marginBottom:'32px'}}>Join hundreds of Kenyan students already connecting on CampusLink KE.</p>
+          <Link href="/register" style={s.btnPrimary}>Create Free Account →</Link>
         </div>
       </section>
     </div>

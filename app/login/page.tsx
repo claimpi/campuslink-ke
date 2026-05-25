@@ -6,26 +6,32 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
-        <div className="text-center mb-8">
-          <div className="w-12 h-12 gradient-orange rounded-xl flex items-center justify-center text-white font-bold text-lg mx-auto mb-3">CL</div>
-          <h1 className="text-2xl font-extrabold text-gray-900">Welcome Back</h1>
-          <p className="text-gray-500 text-sm mt-1">Sign in to CampusLink KE</p>
+    <div style={{minHeight:'85vh',display:'flex',alignItems:'center',justifyContent:'center',padding:'24px',background:'linear-gradient(135deg,#fff7ed,#faf5ff)'}}>
+      <div style={{width:'100%',maxWidth:'420px',background:'white',borderRadius:'24px',boxShadow:'0 20px 60px rgba(0,0,0,0.1)',padding:'40px',border:'1px solid #f3f4f6'}}>
+        <div style={{textAlign:'center',marginBottom:'32px'}}>
+          <div style={{width:'52px',height:'52px',background:'linear-gradient(135deg,#f97316,#ea580c)',borderRadius:'14px',display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontWeight:'900',fontSize:'18px',margin:'0 auto 14px',boxShadow:'0 8px 20px rgba(249,115,22,0.35)'}}>CL</div>
+          <h1 style={{fontSize:'26px',fontWeight:'900',color:'#111827',marginBottom:'4px'}}>Welcome Back</h1>
+          <p style={{color:'#9ca3af',fontSize:'14px'}}>Sign in to CampusLink KE</p>
         </div>
-        <div className="space-y-4">
+        <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Email</label>
-            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="your@email.com" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400" />
+            <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'6px'}}>Email Address</label>
+            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="your@email.com"
+              style={{width:'100%',border:'1.5px solid #e5e7eb',borderRadius:'12px',padding:'12px 16px',fontSize:'14px',outline:'none',boxSizing:'border-box',transition:'border-color 0.2s'}}
+              onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e5e7eb'} />
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Password</label>
-            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400" />
+            <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'6px'}}>Password</label>
+            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••"
+              style={{width:'100%',border:'1.5px solid #e5e7eb',borderRadius:'12px',padding:'12px 16px',fontSize:'14px',outline:'none',boxSizing:'border-box'}}
+              onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e5e7eb'} />
           </div>
-          <button className="w-full gradient-orange text-white py-3 rounded-xl font-semibold text-sm hover:opacity-90 transition-all shadow-md">Sign In</button>
+          <button style={{width:'100%',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'white',padding:'13px',borderRadius:'12px',fontWeight:'700',fontSize:'15px',border:'none',cursor:'pointer',boxShadow:'0 6px 16px rgba(249,115,22,0.35)',marginTop:'4px'}}>
+            Sign In
+          </button>
         </div>
-        <p className="text-center text-sm text-gray-500 mt-6">
-          Don't have an account? <Link href="/register" className="text-orange-500 font-medium hover:underline">Join Free</Link>
+        <p style={{textAlign:'center',fontSize:'14px',color:'#9ca3af',marginTop:'24px'}}>
+          Don't have an account? <Link href="/register" style={{color:'#f97316',fontWeight:'700',textDecoration:'none'}}>Join Free</Link>
         </p>
       </div>
     </div>

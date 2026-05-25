@@ -1,86 +1,51 @@
 import Link from 'next/link'
-import { MapPin, BookOpen, MessageCircle, Star, Crown, Zap } from 'lucide-react'
-import { getInitials } from '@/lib/utils'
 
 type Props = {
-  id: string
-  full_name: string
-  university: string
-  course: string
-  year_of_study: number
-  interests?: string[]
-  avatar_url?: string
-  is_premium?: boolean
-  is_featured?: boolean
-  is_top_student?: boolean
+  id: string; full_name: string; university: string; course: string;
+  year_of_study: number; interests?: string[]; avatar_url?: string;
+  is_premium?: boolean; is_featured?: boolean; is_top_student?: boolean;
 }
 
-export default function StudentCard({
-  id, full_name, university, course, year_of_study,
-  interests = [], avatar_url, is_premium, is_featured, is_top_student
-}: Props) {
-  return (
-    <div className={`relative bg-white rounded-2xl shadow-md card-hover overflow-hidden border ${is_featured ? 'border-purple-200' : is_top_student ? 'border-orange-200' : 'border-gray-100'}`}>
-      {/* Top banner */}
-      {is_top_student && (
-        <div className="gradient-orange text-white text-xs font-bold text-center py-1.5 flex items-center justify-center gap-1">
-          <Star size={12} fill="white" /> TOP STUDENT
-        </div>
-      )}
-      {is_featured && !is_top_student && (
-        <div className="gradient-purple text-white text-xs font-bold text-center py-1.5 flex items-center justify-center gap-1">
-          <Zap size={12} fill="white" /> FEATURED
-        </div>
-      )}
+function getInitials(name: string) { return name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) }
 
-      <div className="p-5">
-        {/* Avatar */}
-        <div className="flex items-start gap-4 mb-4">
-          <div className={`w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold shrink-0 ${is_premium ? 'bg-purple-100 text-purple-600 ring-2 ring-purple-400' : 'bg-orange-100 text-orange-600'}`}>
-            {avatar_url ? <img src={avatar_url} alt={full_name} className="w-full h-full rounded-full object-cover" /> : getInitials(full_name)}
+export default function StudentCard({ id, full_name, university, course, year_of_study, interests=[], is_premium, is_featured, is_top_student }: Props) {
+  const bannerBg = is_top_student ? 'linear-gradient(135deg,#f97316,#ea580c)' : is_featured ? 'linear-gradient(135deg,#8b5cf6,#7c3aed)' : null
+  const bannerText = is_top_student ? '⭐ TOP STUDENT' : is_featured ? '✨ FEATURED' : null
+  const borderColor = is_featured ? '#c4b5fd' : is_top_student ? '#fed7aa' : '#f3f4f6'
+  return (
+    <div style={{background:'white',borderRadius:'20px',border:`1px solid ${borderColor}`,boxShadow:'0 4px 20px rgba(0,0,0,0.07)',overflow:'hidden',transition:'all 0.3s'}}
+      onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.transform='translateY(-4px)';(e.currentTarget as HTMLElement).style.boxShadow='0 16px 40px rgba(0,0,0,0.12)'}}
+      onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.transform='translateY(0)';(e.currentTarget as HTMLElement).style.boxShadow='0 4px 20px rgba(0,0,0,0.07)'}}>
+      {bannerBg && (
+        <div style={{background:bannerBg,color:'white',fontSize:'11px',fontWeight:'700',textAlign:'center',padding:'7px',letterSpacing:'0.5px'}}>{bannerText}</div>
+      )}
+      <div style={{padding:'20px'}}>
+        <div style={{display:'flex',gap:'14px',alignItems:'flex-start',marginBottom:'14px'}}>
+          <div style={{width:'52px',height:'52px',borderRadius:'50%',background:is_premium?'#ede9fe':'#fff7ed',color:is_premium?'#7c3aed':'#ea580c',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'800',fontSize:'16px',flexShrink:0,border:is_premium?'2px solid #c4b5fd':'2px solid #fed7aa'}}>
+            {getInitials(full_name)}
           </div>
-          <div>
-            <h3 className="font-semibold text-gray-900 leading-tight">{full_name}</h3>
-            <div className="flex flex-wrap gap-1.5 mt-1.5">
-              <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">Year {year_of_study}</span>
-              {is_premium && (
-                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
-                  <Crown size={10} /> Premium
-                </span>
-              )}
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontWeight:'700',color:'#111827',fontSize:'15px',lineHeight:'1.3',marginBottom:'6px'}}>{full_name}</div>
+            <div style={{display:'flex',gap:'5px',flexWrap:'wrap'}}>
+              <span style={{background:'#fff7ed',color:'#ea580c',fontSize:'11px',padding:'2px 8px',borderRadius:'50px',fontWeight:'600',whiteSpace:'nowrap'}}>Year {year_of_study}</span>
+              {is_premium && <span style={{background:'#faf5ff',color:'#7c3aed',fontSize:'11px',padding:'2px 8px',borderRadius:'50px',fontWeight:'600'}}>👑 Premium</span>}
             </div>
           </div>
         </div>
-
-        {/* Info */}
-        <div className="space-y-1.5 mb-3">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <BookOpen size={14} className="text-orange-400" />
-            <span className="truncate">{course}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <MapPin size={14} className="text-orange-400" />
-            <span className="truncate">{university}</span>
-          </div>
-        </div>
-
-        {/* Interests */}
+        <div style={{fontSize:'13px',color:'#6b7280',marginBottom:'4px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>📚 {course}</div>
+        <div style={{fontSize:'13px',color:'#9ca3af',marginBottom:'14px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>📍 {university}</div>
         {interests.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-4">
-            {interests.slice(0, 3).map((i) => (
-              <span key={i} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{i}</span>
+          <div style={{display:'flex',gap:'5px',flexWrap:'wrap',marginBottom:'14px'}}>
+            {interests.slice(0,3).map(i=>(
+              <span key={i} style={{background:'#f9fafb',color:'#6b7280',fontSize:'11px',padding:'3px 8px',borderRadius:'50px',border:'1px solid #e5e7eb'}}>{i}</span>
             ))}
           </div>
         )}
-
-        {/* Actions */}
-        <div className="flex gap-2">
-          <Link href={`/profile/${id}`} className="flex-1 text-center text-sm border border-gray-200 text-gray-700 py-2 rounded-xl hover:border-orange-300 hover:text-orange-600 transition-all font-medium">
-            View
-          </Link>
-          <button className="flex-1 flex items-center justify-center gap-1.5 text-sm bg-green-500 hover:bg-green-600 text-white py-2 rounded-xl transition-all font-medium">
-            <MessageCircle size={14} /> Chat
-          </button>
+        <div style={{display:'flex',gap:'8px'}}>
+          <Link href={`/profile/${id}`} style={{flex:1,textAlign:'center',border:'1.5px solid #e5e7eb',color:'#374151',padding:'9px',borderRadius:'10px',fontSize:'13px',fontWeight:'600',textDecoration:'none',transition:'all 0.2s'}}>View</Link>
+          <a href="https://wa.me/254790166252" target="_blank" rel="noopener noreferrer" style={{flex:1,textAlign:'center',background:'#22c55e',color:'white',padding:'9px',borderRadius:'10px',fontSize:'13px',fontWeight:'600',textDecoration:'none',display:'flex',alignItems:'center',justifyContent:'center',gap:'5px'}}>
+            💬 Chat
+          </a>
         </div>
       </div>
     </div>
