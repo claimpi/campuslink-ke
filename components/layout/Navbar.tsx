@@ -32,7 +32,7 @@ export default function Navbar() {
     router.push('/');router.refresh()
   }
 
-  const links = [{href:'/discover',label:'Students'},{href:'/groups',label:'Groups'},{href:'/pricing',label:'Pricing'}]
+  const links = [{href:'/discover',label:'Students'},{href:'/groups',label:'Groups'},{href:'/pricing',label:'Pricing'},{href:'/admin/login',label:'Admin'}]
 
   return(
     <>
