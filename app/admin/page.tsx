@@ -1,204 +1,205 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Users, Crown, Star, Zap, Clock, Trash2, ExternalLink, CheckCircle, XCircle, RefreshCw } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase-browser'
+import { useRouter } from 'next/navigation'
 
-type Student = { id: string; full_name: string; course: string; university: string; is_top_student: boolean; is_premium: boolean; is_featured: boolean; year_of_study: number }
-type Request = { id: string; full_name?: string; type: string; amount: number; status: string; user_id: string }
+type Tab = 'students'|'payments'|'groups'|'announce'
 
-const MOCK_STUDENTS: Student[] = [
-  { id: '1', full_name: 'Samuel Nderitu Muchugu', course: 'Math', university: 'Africa Nazarene University', is_top_student: true, is_premium: true, is_featured: true, year_of_study: 6 },
-]
-const MOCK_REQUESTS: Request[] = [
-  { id: '1', full_name: 'John Kamau', type: 'Premium', amount: 199, status: 'pending', user_id: '1' },
-  { id: '2', full_name: 'Faith Njeri', type: 'Featured', amount: 200, status: 'pending', user_id: '2' },
-  { id: '3', full_name: 'Mark Otieno', type: 'Top Student', amount: 100, status: 'pending', user_id: '3' },
-]
+export default function AdminPage(){
+  const router=useRouter()
+  const [tab,setTab]=useState<Tab>('students')
+  const [students,setStudents]=useState<any[]>([])
+  const [payments,setPayments]=useState<any[]>([])
+  const [groups,setGroups]=useState<any[]>([])
+  const [loading,setLoading]=useState(true)
+  const [ann,setAnn]=useState({title:'',content:''})
+  const [posting,setPosting]=useState(false)
 
-type Tab = 'students' | 'groups' | 'requests' | 'announce'
+  useEffect(()=>{loadAll()},[])
 
-export default function AdminPage() {
-  const [tab, setTab] = useState<Tab>('students')
-  const [students, setStudents] = useState<Student[]>([])
-  const [requests, setRequests] = useState<Request[]>([])
-  const [loading, setLoading] = useState(true)
-  const [announcement, setAnnouncement] = useState({ title: '', content: '' })
-  const [saving, setSaving] = useState(false)
-
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  async function loadData() {
+  async function loadAll(){
     setLoading(true)
-    try {
-      const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
-      const { data: payReqs } = await supabase.from('payment_requests').select('*, profiles(full_name)').eq('status', 'pending')
-      setStudents(profiles && profiles.length > 0 ? profiles : MOCK_STUDENTS)
-      setRequests(payReqs && payReqs.length > 0 ? payReqs.map((r: any) => ({ ...r, full_name: r.profiles?.full_name })) : MOCK_REQUESTS)
-    } catch {
-      setStudents(MOCK_STUDENTS)
-      setRequests(MOCK_REQUESTS)
-    }
+    const sb=createClient()
+    const [{data:s},{data:p},{data:g}]=await Promise.all([
+      sb.from('profiles').select('id,full_name,email,university,course,year_of_study,is_premium,is_featured,is_top_student').order('created_at',{ascending:false}),
+      sb.from('payment_requests').select('*').order('created_at',{ascending:false}).limit(50),
+      sb.from('whatsapp_groups').select('*').order('created_at',{ascending:false}),
+    ])
+    setStudents(s||[]);setPayments(p||[]);setGroups(g||[])
     setLoading(false)
   }
 
-  async function toggleBadge(id: string, field: string, current: boolean) {
-    await supabase.from('profiles').update({ [field]: !current }).eq('id', id)
-    setStudents(s => s.map(st => st.id === id ? { ...st, [field]: !current } : st))
+  async function toggleBadge(id:string,field:string,val:boolean){
+    await createClient().from('profiles').update({[field]:!val}).eq('id',id)
+    setStudents(ss=>ss.map(s=>s.id===id?{...s,[field]:!val}:s))
   }
 
-  async function approveRequest(id: string, userId: string, type: string) {
-    await supabase.from('payment_requests').update({ status: 'approved' }).eq('id', id)
-    const update: any = {}
-    if (type === 'Premium') update.is_premium = true
-    if (type === 'Featured') update.is_featured = true
-    if (type === 'Top Student') update.is_top_student = true
-    if (Object.keys(update).length > 0) await supabase.from('profiles').update(update).eq('id', userId)
-    setRequests(r => r.filter(req => req.id !== id))
+  async function approvePayment(id:string,userId:string,type:string){
+    const sb=createClient()
+    await sb.from('payment_requests').update({status:'approved'}).eq('id',id)
+    const upd:any={}
+    if(type==='premium') upd.is_premium=true
+    if(type==='featured') upd.is_featured=true
+    if(type==='top_student') upd.is_top_student=true
+    if(Object.keys(upd).length) await sb.from('profiles').update(upd).eq('id',userId)
+    setPayments(pp=>pp.map(p=>p.id===id?{...p,status:'approved'}:p))
   }
 
-  async function rejectRequest(id: string) {
-    await supabase.from('payment_requests').update({ status: 'rejected' }).eq('id', id)
-    setRequests(r => r.filter(req => req.id !== id))
+  async function rejectPayment(id:string){
+    await createClient().from('payment_requests').update({status:'rejected'}).eq('id',id)
+    setPayments(pp=>pp.map(p=>p.id===id?{...p,status:'rejected'}:p))
   }
 
-  async function deleteStudent(id: string) {
-    if (!confirm('Delete this student?')) return
-    await supabase.from('profiles').delete().eq('id', id)
-    setStudents(s => s.filter(st => st.id !== id))
+  async function deleteStudent(id:string){
+    if(!confirm('Delete this student?')) return
+    await createClient().from('profiles').delete().eq('id',id)
+    setStudents(ss=>ss.filter(s=>s.id!==id))
   }
 
-  async function postAnnouncement() {
-    if (!announcement.title || !announcement.content) return
-    setSaving(true)
-    await supabase.from('announcements').insert([announcement])
-    setAnnouncement({ title: '', content: '' })
-    setSaving(false)
-    alert('Announcement posted!')
+  async function approveGroup(id:string){
+    await createClient().from('whatsapp_groups').update({payment_status:'approved',is_verified:true}).eq('id',id)
+    setGroups(gg=>gg.map(g=>g.id===id?{...g,payment_status:'approved',is_verified:true}:g))
   }
 
-  const stats = [
-    { label: 'Total Students', value: students.length, icon: Users, color: 'text-orange-500', bg: 'bg-orange-100' },
-    { label: 'Premium', value: students.filter(s => s.is_premium).length, icon: Crown, color: 'text-purple-500', bg: 'bg-purple-100' },
-    { label: 'Featured', value: students.filter(s => s.is_featured).length, icon: Zap, color: 'text-yellow-500', bg: 'bg-yellow-100' },
-    { label: 'Pending', value: requests.length, icon: Clock, color: 'text-red-500', bg: 'bg-red-100' },
-  ]
+  async function deleteGroup(id:string){
+    await createClient().from('whatsapp_groups').delete().eq('id',id)
+    setGroups(gg=>gg.filter(g=>g.id!==id))
+  }
 
-  return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 gradient-orange rounded-xl flex items-center justify-center"><Star size={24} className="text-white" fill="white" /></div>
-          <div>
-            <h1 className="text-2xl font-extrabold text-gray-900">Admin Dashboard</h1>
-            <p className="text-gray-500 text-sm">CampusLink KE Management</p>
-          </div>
+  async function postAnnouncement(e:React.FormEvent){
+    e.preventDefault();setPosting(true)
+    await createClient().from('announcements').insert([ann])
+    setAnn({title:'',content:''});setPosting(false);alert('Posted!')
+  }
+
+  async function logout(){
+    await fetch('/api/admin-auth',{method:'DELETE'})
+    router.push('/admin/login')
+  }
+
+  const pendingPayments=payments.filter(p=>p.status==='pending').length
+  const stats=[{l:'Students',v:students.length},{l:'Premium',v:students.filter(s=>s.is_premium).length},{l:'Featured',v:students.filter(s=>s.is_featured).length},{l:'Pending',v:pendingPayments}]
+
+  const tabStyle=(t:Tab):React.CSSProperties=>({padding:'9px 18px',borderRadius:'8px',fontSize:'14px',fontWeight:'600',border:'none',cursor:'pointer',background:tab===t?'#fff':'transparent',color:tab===t?'#0f172a':'#64748b',boxShadow:tab===t?'0 1px 4px rgba(0,0,0,0.08)':'none',transition:'all 0.2s'})
+
+  return(
+    <div style={{maxWidth:'1100px',margin:'0 auto',padding:'32px 20px'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'28px',flexWrap:'wrap',gap:'12px'}}>
+        <div>
+          <h1 style={{fontSize:'24px',fontWeight:'800',color:'#0f172a',marginBottom:'2px'}}>Admin Dashboard</h1>
+          <p style={{color:'#64748b',fontSize:'13px'}}>CampusLink KE Management</p>
         </div>
-        <button onClick={async()=>{await fetch('/api/admin-auth',{method:'DELETE'});window.location.href='/admin/login'}} style={{background:'none',border:'1px solid #e5e7eb',borderRadius:'8px',padding:'8px 14px',fontSize:'13px',color:'#dc2626',cursor:'pointer',fontWeight:'600',marginRight:'8px'}}>🚪 Sign Out</button><button onClick={loadData} className="flex items-center gap-2 border border-gray-200 text-gray-600 px-4 py-2 rounded-xl text-sm hover:bg-gray-50 transition-all">
-          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
+        <div style={{display:'flex',gap:'8px'}}>
+          <button onClick={loadAll} style={{background:'#f8fafc',border:'1px solid #e2e8f0',borderRadius:'8px',padding:'9px 16px',fontSize:'13px',color:'#374151',cursor:'pointer',fontWeight:'600'}}>Refresh</button>
+          <button onClick={logout} style={{background:'#fef2f2',border:'1px solid #fecaca',borderRadius:'8px',padding:'9px 16px',fontSize:'13px',color:'#dc2626',cursor:'pointer',fontWeight:'600'}}>Sign Out</button>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginBottom:'24px'}}>
+        {stats.map(s=>(
+          <div key={s.l} style={{background:'#fff',borderRadius:'12px',border:'1px solid #e2e8f0',padding:'18px 16px'}}>
+            <div style={{fontSize:'24px',fontWeight:'900',color:'#0f172a',marginBottom:'2px'}}>{s.v}</div>
+            <div style={{fontSize:'12px',color:'#94a3b8'}}>{s.l}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tabs */}
+      <div style={{background:'#f8fafc',borderRadius:'10px',padding:'4px',display:'flex',gap:'2px',marginBottom:'20px',flexWrap:'wrap'}}>
+        <button onClick={()=>setTab('students')} style={tabStyle('students')}>Students</button>
+        <button onClick={()=>setTab('payments')} style={tabStyle('payments')}>
+          Payments {pendingPayments>0&&<span style={{background:'#dc2626',color:'#fff',fontSize:'10px',padding:'1px 5px',borderRadius:'50px',marginLeft:'4px'}}>{pendingPayments}</span>}
         </button>
+        <button onClick={()=>setTab('groups')} style={tabStyle('groups')}>Groups</button>
+        <button onClick={()=>setTab('announce')} style={tabStyle('announce')}>Announce</button>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {stats.map(s => (
-          <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 ${s.bg} rounded-xl flex items-center justify-center`}><s.icon size={18} className={s.color} /></div>
-              <div><div className="text-2xl font-extrabold text-gray-900">{s.value}</div><div className="text-xs text-gray-500">{s.label}</div></div>
+      {loading?<div style={{textAlign:'center',padding:'40px',color:'#94a3b8'}}>Loading...</div>:(<>
+
+      {tab==='students'&&(
+        <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+          {students.length===0?<p style={{textAlign:'center',padding:'40px',color:'#94a3b8'}}>No students yet</p>:
+          students.map(s=>(
+            <div key={s.id} style={{background:'#fff',borderRadius:'12px',border:'1px solid #e2e8f0',padding:'14px 16px',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'10px'}}>
+              <div>
+                <p style={{fontWeight:'600',color:'#0f172a',fontSize:'14px'}}>{s.full_name}</p>
+                <p style={{fontSize:'12px',color:'#94a3b8'}}>{s.course} · {s.university}</p>
+              </div>
+              <div style={{display:'flex',gap:'6px',flexWrap:'wrap',alignItems:'center'}}>
+                {s.is_top_student&&<span style={{background:'#fff7ed',color:'#ea580c',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',fontWeight:'700',border:'1px solid #fed7aa'}}>Top</span>}
+                {s.is_premium&&<span style={{background:'#f5f3ff',color:'#7c3aed',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',fontWeight:'700',border:'1px solid #ddd6fe'}}>Pro</span>}
+                {s.is_featured&&<span style={{background:'#eff6ff',color:'#2563eb',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',fontWeight:'700',border:'1px solid #bfdbfe'}}>Feat</span>}
+                <span style={{background:'#f1f5f9',color:'#64748b',fontSize:'11px',padding:'2px 7px',borderRadius:'50px'}}>Y{s.year_of_study}</span>
+                <div style={{display:'flex',gap:'4px'}}>
+                  <button onClick={()=>toggleBadge(s.id,'is_top_student',s.is_top_student)} title="Toggle Top" style={{background:'#fff7ed',border:'none',borderRadius:'6px',padding:'5px 8px',cursor:'pointer',fontSize:'12px'}}>⭐</button>
+                  <button onClick={()=>toggleBadge(s.id,'is_premium',s.is_premium)} title="Toggle Premium" style={{background:'#f5f3ff',border:'none',borderRadius:'6px',padding:'5px 8px',cursor:'pointer',fontSize:'12px'}}>👑</button>
+                  <button onClick={()=>toggleBadge(s.id,'is_featured',s.is_featured)} title="Toggle Featured" style={{background:'#eff6ff',border:'none',borderRadius:'6px',padding:'5px 8px',cursor:'pointer',fontSize:'12px'}}>✨</button>
+                  <button onClick={()=>deleteStudent(s.id)} title="Delete" style={{background:'#fef2f2',border:'none',borderRadius:'6px',padding:'5px 8px',cursor:'pointer',fontSize:'12px',color:'#dc2626'}}>✕</button>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      <div className="bg-gray-100 rounded-xl p-1 flex gap-1 mb-6">
-        {(['students', 'groups', 'requests', 'announce'] as Tab[]).map(t => (
-          <button key={t} onClick={() => setTab(t)} className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium capitalize transition-all ${tab === t ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-            {t === 'announce' ? 'Announce' : t.charAt(0).toUpperCase() + t.slice(1)}
-            {t === 'requests' && requests.length > 0 && <span className="ml-1.5 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">{requests.length}</span>}
+      {tab==='payments'&&(
+        <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+          {payments.length===0?<p style={{textAlign:'center',padding:'40px',color:'#94a3b8'}}>No payments yet</p>:
+          payments.map(p=>(
+            <div key={p.id} style={{background:'#fff',borderRadius:'12px',border:'1px solid #e2e8f0',padding:'14px 16px',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'10px'}}>
+              <div>
+                <p style={{fontWeight:'600',color:'#0f172a',fontSize:'14px'}}>{p.type} — KES {p.amount}</p>
+                <p style={{fontSize:'12px',color:'#94a3b8'}}>{p.reference} · {new Date(p.created_at).toLocaleDateString()}</p>
+              </div>
+              <div style={{display:'flex',gap:'6px',alignItems:'center'}}>
+                <span style={{fontSize:'12px',padding:'3px 9px',borderRadius:'50px',fontWeight:'600',background:p.status==='approved'?'#f0fdf4':p.status==='rejected'?'#fef2f2':'#fefce8',color:p.status==='approved'?'#16a34a':p.status==='rejected'?'#dc2626':'#ca8a04'}}>{p.status}</span>
+                {p.status==='pending'&&<>
+                  <button onClick={()=>approvePayment(p.id,p.user_id,p.type)} style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'8px',padding:'6px 12px',fontSize:'13px',fontWeight:'600',color:'#16a34a',cursor:'pointer'}}>Approve</button>
+                  <button onClick={()=>rejectPayment(p.id)} style={{background:'#fef2f2',border:'1px solid #fecaca',borderRadius:'8px',padding:'6px 12px',fontSize:'13px',fontWeight:'600',color:'#dc2626',cursor:'pointer'}}>Reject</button>
+                </>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab==='groups'&&(
+        <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+          {groups.length===0?<p style={{textAlign:'center',padding:'40px',color:'#94a3b8'}}>No groups yet</p>:
+          groups.map(g=>(
+            <div key={g.id} style={{background:'#fff',borderRadius:'12px',border:'1px solid #e2e8f0',padding:'14px 16px',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'10px'}}>
+              <div>
+                <p style={{fontWeight:'600',color:'#0f172a',fontSize:'14px'}}>{g.name}</p>
+                <p style={{fontSize:'12px',color:'#94a3b8'}}>{g.university} · {g.category}</p>
+              </div>
+              <div style={{display:'flex',gap:'6px',alignItems:'center'}}>
+                <span style={{fontSize:'12px',padding:'3px 9px',borderRadius:'50px',fontWeight:'600',background:g.payment_status==='approved'?'#f0fdf4':'#fefce8',color:g.payment_status==='approved'?'#16a34a':'#ca8a04'}}>{g.payment_status||'pending'}</span>
+                {g.payment_status!=='approved'&&<button onClick={()=>approveGroup(g.id)} style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'8px',padding:'6px 12px',fontSize:'13px',fontWeight:'600',color:'#16a34a',cursor:'pointer'}}>Approve</button>}
+                <button onClick={()=>deleteGroup(g.id)} style={{background:'#fef2f2',border:'none',borderRadius:'8px',padding:'6px 10px',fontSize:'13px',color:'#dc2626',cursor:'pointer',fontWeight:'600'}}>Delete</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab==='announce'&&(
+        <form onSubmit={postAnnouncement} style={{background:'#fff',borderRadius:'14px',border:'1px solid #e2e8f0',padding:'24px',display:'flex',flexDirection:'column',gap:'14px',maxWidth:'560px'}}>
+          <h2 style={{fontSize:'16px',fontWeight:'700',color:'#0f172a'}}>Post Announcement</h2>
+          <div>
+            <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Title</label>
+            <input value={ann.title} onChange={e=>setAnn(a=>({...a,title:e.target.value}))} required style={{width:'100%',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'11px 14px',fontSize:'14px',outline:'none',boxSizing:'border-box'}} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
+          </div>
+          <div>
+            <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Message</label>
+            <textarea value={ann.content} onChange={e=>setAnn(a=>({...a,content:e.target.value}))} required rows={4} style={{width:'100%',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'11px 14px',fontSize:'14px',outline:'none',resize:'none',boxSizing:'border-box'}} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
+          </div>
+          <button type="submit" disabled={posting} style={{background:posting?'#94a3b8':'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'12px',borderRadius:'10px',fontWeight:'700',fontSize:'14px',border:'none',cursor:posting?'not-allowed':'pointer'}}>
+            {posting?'Posting...':'Post Announcement'}
           </button>
-        ))}
-      </div>
-
-      {tab === 'students' && (
-        <div className="space-y-3">
-          <input placeholder="Search students..." className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 mb-2" />
-          {loading ? <div className="text-center py-8 text-gray-400">Loading students...</div> :
-            students.map(s => (
-              <div key={s.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-sm">
-                    {s.full_name.split(' ').map((n:string)=>n[0]).join('').toUpperCase().slice(0,2)}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-gray-900 text-sm">{s.full_name}</div>
-                    <div className="text-xs text-gray-500">{s.course} · {s.university}</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <div className="flex gap-1">
-                    {s.is_top_student && <span className="text-xs gradient-orange text-white px-2 py-0.5 rounded-full">TOP</span>}
-                    {s.is_premium && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">PRO</span>}
-                    {s.is_featured && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">FT</span>}
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Y{s.year_of_study}</span>
-                  </div>
-                  <div className="flex gap-1">
-                    <button onClick={() => toggleBadge(s.id, 'is_top_student', s.is_top_student)} title="Toggle Top" className="w-8 h-8 rounded-lg bg-yellow-100 hover:bg-yellow-200 flex items-center justify-center text-yellow-600 transition-all"><Star size={14} /></button>
-                    <button onClick={() => toggleBadge(s.id, 'is_premium', s.is_premium)} title="Toggle Premium" className="w-8 h-8 rounded-lg bg-purple-100 hover:bg-purple-200 flex items-center justify-center text-purple-600 transition-all"><Crown size={14} /></button>
-                    <button onClick={() => toggleBadge(s.id, 'is_featured', s.is_featured)} title="Toggle Featured" className="w-8 h-8 rounded-lg bg-blue-100 hover:bg-blue-200 flex items-center justify-center text-blue-600 transition-all"><Zap size={14} /></button>
-                    <a href={`/profile/${s.id}`} target="_blank" className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 transition-all"><ExternalLink size={14} /></a>
-                    <button onClick={() => deleteStudent(s.id)} className="w-8 h-8 rounded-lg bg-red-100 hover:bg-red-200 flex items-center justify-center text-red-600 transition-all"><Trash2 size={14} /></button>
-                  </div>
-                </div>
-              </div>
-            ))
-          }
-        </div>
+        </form>
       )}
-
-      {tab === 'requests' && (
-        <div className="space-y-3">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Pending Payment Requests</h2>
-          {requests.length === 0 ? <div className="text-center py-16 text-gray-400">No pending requests 🎉</div> :
-            requests.map(r => (
-              <div key={r.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center justify-between">
-                <div>
-                  <div className="font-semibold text-gray-900 text-sm">{r.full_name || 'Unknown'}</div>
-                  <div className="text-xs text-gray-500">{r.type} · KES {r.amount}</div>
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => approveRequest(r.id, r.user_id, r.type)} className="flex items-center gap-1 bg-green-100 text-green-700 hover:bg-green-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-all">
-                    <CheckCircle size={13} /> Approve
-                  </button>
-                  <button onClick={() => rejectRequest(r.id)} className="flex items-center gap-1 bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-all">
-                    <XCircle size={13} /> Reject
-                  </button>
-                </div>
-              </div>
-            ))
-          }
-        </div>
-      )}
-
-      {tab === 'groups' && (
-        <div className="text-center py-16 text-gray-400">
-          <div className="text-4xl mb-3">💬</div>
-          <p>No groups pending approval.</p>
-        </div>
-      )}
-
-      {tab === 'announce' && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Post Announcement</h2>
-          <div className="space-y-3">
-            <input value={announcement.title} onChange={e => setAnnouncement(a => ({...a, title: e.target.value}))} placeholder="Announcement title" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-400" />
-            <textarea value={announcement.content} onChange={e => setAnnouncement(a => ({...a, content: e.target.value}))} placeholder="Announcement content..." rows={4} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-400 resize-none" />
-            <button onClick={postAnnouncement} disabled={saving} className="gradient-orange text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50">
-              {saving ? 'Posting...' : 'Post Announcement'}
-            </button>
-          </div>
-        </div>
-      )}
+      </>)}
     </div>
   )
 }

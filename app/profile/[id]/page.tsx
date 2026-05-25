@@ -1,92 +1,103 @@
 'use client'
-import { useState } from 'react'
-import { MapPin, BookOpen, MessageCircle, Star, Crown, Zap, Eye, Phone } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase-browser'
 
-const MOCK_PROFILE = {
-  id: '1', full_name: 'Amina Wanjiku', university: 'University of Nairobi', course: 'Computer Science',
-  year_of_study: 2, bio: 'Passionate CS student at UoN. Interested in AI, web development and machine learning. Always happy to connect with fellow students!',
-  interests: ['coding', 'AI', 'football', 'music', 'reading'],
-  is_premium: true, is_featured: true, is_top_student: false,
-  profile_views: 142, whatsapp_number: '+254712345678',
-}
+function initials(n:string){return n?.split(' ').map((x:string)=>x[0]).join('').toUpperCase().slice(0,2)||'??'}
 
-function getInitials(name: string) { return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2) }
+export default function ProfilePage(){
+  const {id}=useParams()
+  const router=useRouter()
+  const [profile,setProfile]=useState<any>(null)
+  const [currentUser,setCurrentUser]=useState<any>(null)
+  const [loading,setLoading]=useState(true)
+  const [showUnlock,setShowUnlock]=useState(false)
+  const [unlocked,setUnlocked]=useState(false)
+  const [paying,setPaying]=useState(false)
 
-export default function ProfilePage() {
-  const [showUnlock, setShowUnlock] = useState(false)
-  const [unlocked, setUnlocked] = useState(false)
-  const p = MOCK_PROFILE
+  useEffect(()=>{
+    const sb=createClient()
+    sb.auth.getUser().then(({data:{user}})=>setCurrentUser(user))
+    sb.from('profiles').select('*').eq('id',id as string).maybeSingle().then(({data})=>{
+      setProfile(data)
+      setLoading(false)
+      // increment views
+      if(data) sb.from('profiles').update({profile_views:(data.profile_views||0)+1}).eq('id',id as string)
+    })
+  },[id])
 
-  return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      {/* Card */}
-      <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
-        {/* Header */}
-        <div className="h-28 gradient-orange relative">
-          {p.is_featured && <div className="absolute top-3 right-3 bg-purple-600 text-white text-xs px-3 py-1 rounded-full flex items-center gap-1"><Zap size={11} /> Featured</div>}
+  async function handleUnlock(){
+    if(!currentUser){router.push('/login');return}
+    setPaying(true)
+    try{
+      const sb=createClient()
+      const {data:curr}=await sb.from('profiles').select('full_name,whatsapp_number').eq('id',currentUser.id).maybeSingle()
+      const res=await fetch('/api/pesapal',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({userId:currentUser.id,userEmail:currentUser.email,userName:curr?.full_name||currentUser.email,phone:curr?.whatsapp_number||'',paymentType:'unlock',targetId:id})})
+      const data=await res.json()
+      if(data.redirectUrl) window.location.href=data.redirectUrl
+      else{alert('Payment failed: '+data.error);setPaying(false)}
+    }catch(e){alert('Something went wrong');setPaying(false)}
+  }
+
+  if(loading) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',color:'#94a3b8'}}>Loading...</div>
+  if(!profile) return <div style={{textAlign:'center',padding:'80px',color:'#94a3b8'}}><p style={{fontSize:'18px',fontWeight:'600',color:'#374151'}}>Profile not found</p><Link href="/discover" style={{color:'#f97316',marginTop:'12px',display:'block'}}>Browse students</Link></div>
+
+  return(
+    <div style={{maxWidth:'680px',margin:'0 auto',padding:'32px 20px'}}>
+      <Link href="/discover" style={{fontSize:'13px',color:'#64748b',marginBottom:'20px',display:'block'}}>← Back to students</Link>
+
+      <div style={{background:'#fff',borderRadius:'20px',border:'1px solid #e2e8f0',overflow:'hidden',boxShadow:'0 4px 20px rgba(0,0,0,0.06)'}}>
+        {/* Cover */}
+        <div style={{height:'100px',background:'linear-gradient(135deg,#f97316,#ea580c)',position:'relative'}}>
+          {profile.is_featured&&<span style={{position:'absolute',top:'12px',right:'12px',background:'rgba(255,255,255,0.2)',color:'#fff',fontSize:'11px',fontWeight:'700',padding:'4px 10px',borderRadius:'50px',backdropFilter:'blur(4px)'}}>FEATURED</span>}
         </div>
 
-        <div className="px-6 pb-6">
+        <div style={{padding:'0 24px 28px'}}>
           {/* Avatar */}
-          <div className="flex items-end justify-between -mt-10 mb-4">
-            <div className={`w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-bold border-4 border-white shadow-md ${p.is_premium ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-600'}`}>
-              {getInitials(p.full_name)}
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginTop:'-28px',marginBottom:'16px'}}>
+            {profile.avatar_url
+              ?<img src={profile.avatar_url} style={{width:'64px',height:'64px',borderRadius:'50%',objectFit:'cover',border:'3px solid #fff',boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}/>
+              :<div style={{width:'64px',height:'64px',borderRadius:'50%',background:profile.is_premium?'#f5f3ff':'#fff7ed',color:profile.is_premium?'#7c3aed':'#ea580c',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'800',fontSize:'20px',border:'3px solid #fff',boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>{initials(profile.full_name)}</div>
+            }
+            <div style={{display:'flex',gap:'6px',marginBottom:'4px'}}>
+              {profile.is_top_student&&<span style={{background:'#fff7ed',color:'#ea580c',fontSize:'11px',padding:'3px 8px',borderRadius:'50px',fontWeight:'700',border:'1px solid #fed7aa'}}>Top Student</span>}
+              {profile.is_premium&&<span style={{background:'#f5f3ff',color:'#7c3aed',fontSize:'11px',padding:'3px 8px',borderRadius:'50px',fontWeight:'700',border:'1px solid #ddd6fe'}}>Premium</span>}
             </div>
-            <div className="flex gap-1 mt-2">
-              {p.is_top_student && <span className="text-xs gradient-orange text-white px-2 py-1 rounded-full flex items-center gap-1"><Star size={10} fill="white" /> Top</span>}
-              {p.is_premium && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full flex items-center gap-1"><Crown size={10} /> Premium</span>}
-              {p.is_featured && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full flex items-center gap-1"><Zap size={10} /> Featured</span>}
+          </div>
+
+          <h1 style={{fontSize:'22px',fontWeight:'800',color:'#0f172a',marginBottom:'4px'}}>{profile.full_name}</h1>
+          <p style={{fontSize:'14px',color:'#64748b',marginBottom:'2px'}}>{profile.course} · Year {profile.year_of_study}</p>
+          <p style={{fontSize:'14px',color:'#94a3b8',marginBottom:'16px'}}>{profile.university}</p>
+
+          {profile.bio&&<p style={{fontSize:'14px',color:'#374151',lineHeight:'1.7',marginBottom:'16px',padding:'14px',background:'#f8fafc',borderRadius:'10px'}}>{profile.bio}</p>}
+
+          {profile.interests&&profile.interests.length>0&&(
+            <div style={{display:'flex',flexWrap:'wrap',gap:'6px',marginBottom:'20px'}}>
+              {profile.interests.map((i:string)=><span key={i} style={{background:'#f1f5f9',color:'#475569',fontSize:'12px',padding:'4px 10px',borderRadius:'50px'}}>{i}</span>)}
             </div>
-          </div>
+          )}
 
-          <h1 className="text-2xl font-extrabold text-gray-900">{p.full_name}</h1>
-          <div className="flex flex-wrap gap-3 mt-2 text-sm text-gray-500">
-            <span className="flex items-center gap-1"><BookOpen size={14} className="text-orange-400" /> {p.course}</span>
-            <span className="flex items-center gap-1"><MapPin size={14} className="text-orange-400" /> {p.university}</span>
-            <span className="flex items-center gap-1"><Eye size={14} className="text-orange-400" /> {p.profile_views} views</span>
-          </div>
+          <p style={{fontSize:'12px',color:'#94a3b8',marginBottom:'20px'}}>{profile.profile_views||0} profile views</p>
 
-          <p className="text-gray-600 text-sm mt-4 leading-relaxed">{p.bio}</p>
-
-          <div className="flex flex-wrap gap-2 mt-4">
-            {p.interests.map(i => (
-              <span key={i} className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">{i}</span>
-            ))}
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3 mt-6">
-            <button onClick={() => setShowUnlock(true)} className="flex-1 flex items-center justify-center gap-2 border-2 border-orange-300 text-orange-600 py-3 rounded-xl font-semibold hover:bg-orange-50 transition-all text-sm">
-              <Phone size={16} /> {unlocked ? p.whatsapp_number : 'Unlock WhatsApp'}
-            </button>
-            <a href={`https://wa.me/254790166252`} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold transition-all text-sm">
-              <MessageCircle size={16} /> Chat
-            </a>
+          {/* Unlock section */}
+          <div id="unlock" style={{background:'#f8fafc',borderRadius:'14px',border:'1px solid #e2e8f0',padding:'20px'}}>
+            <h3 style={{fontWeight:'700',color:'#0f172a',fontSize:'15px',marginBottom:'6px'}}>Connect on WhatsApp</h3>
+            <p style={{fontSize:'13px',color:'#64748b',marginBottom:'16px'}}>Pay KES 20 via M-Pesa to unlock this student's WhatsApp number and connect directly.</p>
+            {unlocked&&profile.whatsapp_number ? (
+              <a href={`https://wa.me/${profile.whatsapp_number.replace(/[^0-9]/g,'')}`} target="_blank" rel="noopener noreferrer"
+                style={{display:'block',background:'#16a34a',color:'#fff',padding:'13px',borderRadius:'10px',fontWeight:'700',fontSize:'15px',textAlign:'center'}}>
+                Open WhatsApp — {profile.whatsapp_number}
+              </a>
+            ):(
+              <button onClick={handleUnlock} disabled={paying} style={{width:'100%',background:paying?'#94a3b8':'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'13px',borderRadius:'10px',fontWeight:'700',fontSize:'15px',border:'none',cursor:paying?'not-allowed':'pointer',boxShadow:paying?'none':'0 4px 14px rgba(249,115,22,0.3)'}}>
+                {paying?'Redirecting to M-Pesa...':'Unlock for KES 20'}
+              </button>
+            )}
           </div>
         </div>
       </div>
-
-      {/* Unlock Modal */}
-      {showUnlock && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
-            <h2 className="text-xl font-bold text-gray-900 mb-3">Unlock WhatsApp Number</h2>
-            <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-4">
-              <p className="text-sm text-gray-700 font-medium mb-1">Send payment via M-Pesa:</p>
-              <p className="text-2xl font-extrabold text-orange-500">0790166252</p>
-              <p className="text-xs text-gray-500 mt-1">After payment, click the WhatsApp button below to confirm.</p>
-            </div>
-            <a
-              href="https://wa.me/254790166252?text=Hello%20CampusLink%20KE%2C%20I%20have%20completed%20payment."
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold mb-3 transition-all">
-              <MessageCircle size={16} /> Confirm on WhatsApp
-            </a>
-            <button onClick={() => setShowUnlock(false)} className="w-full text-sm text-gray-500 hover:text-gray-700 py-2">Close</button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

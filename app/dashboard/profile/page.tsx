@@ -1,124 +1,144 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 
-const UNIVERSITIES = ['Africa Nazarene University','Dedan Kimathi University','Egerton University','JKUAT','Kenyatta University','Maseno University','Moi University','Strathmore University','Technical University of Kenya','University of Nairobi','University of Eldoret','Multimedia University']
-const COURSES = ['Accounting','Architecture','Business Administration','Civil Engineering','Computer Science','Electrical Engineering','Education','Finance','Journalism','Law','Marketing','Mathematics','Medicine','Nursing','Pharmacy','Psychology','Software Engineering']
+const UNIS=['Africa Nazarene University','Dedan Kimathi University','Egerton University','JKUAT','Kenyatta University','Maseno University','Moi University','Strathmore University','Technical University of Kenya','University of Nairobi','University of Eldoret','Multimedia University']
+const COURSES=['Accounting','Architecture','Business Administration','Civil Engineering','Computer Science','Electrical Engineering','Education','Finance','Journalism','Law','Marketing','Mathematics','Medicine','Nursing','Pharmacy','Psychology','Software Engineering']
 
-export default function EditProfilePage() {
-  const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [error, setError] = useState('')
-  const [userId, setUserId] = useState('')
-  const [form, setForm] = useState({full_name:'',university:'',course:'',year_of_study:'1',whatsapp_number:'',bio:'',interests:''})
-  const set = (k:string)=>(e:any)=>setForm(f=>({...f,[k]:e.target.value}))
-  const inp = {width:'100%',border:'1.5px solid #e5e7eb',borderRadius:'12px',padding:'12px 16px',fontSize:'14px',outline:'none',boxSizing:'border-box' as const}
+export default function EditProfile(){
+  const router=useRouter()
+  const fileRef=useRef<HTMLInputElement>(null)
+  const [loading,setLoading]=useState(true)
+  const [saving,setSaving]=useState(false)
+  const [uploading,setUploading]=useState(false)
+  const [success,setSuccess]=useState(false)
+  const [error,setError]=useState('')
+  const [userId,setUserId]=useState('')
+  const [avatarUrl,setAvatarUrl]=useState('')
+  const [form,setForm]=useState({full_name:'',university:'',course:'',year_of_study:'1',whatsapp_number:'',bio:'',interests:''})
+  const set=(k:string)=>(e:any)=>setForm(f=>({...f,[k]:e.target.value}))
+  const inp:React.CSSProperties={width:'100%',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'11px 14px',fontSize:'14px',outline:'none',background:'#fff',boxSizing:'border-box',color:'#0f172a'}
 
   useEffect(()=>{
-    async function load(){
-      const supabase = createClient()
-      const { data:{user}, error:authErr } = await supabase.auth.getUser()
-      if (authErr || !user){ router.push('/login'); return }
+    const sb=createClient()
+    sb.auth.getUser().then(({data:{user}})=>{
+      if(!user){router.push('/login');return}
       setUserId(user.id)
-      const { data:profile, error:profileErr } = await supabase
-        .from('profiles').select('*').eq('id', user.id).maybeSingle()
-      if (profileErr) { setError('Could not load profile: ' + profileErr.message) }
-      if (profile) {
-        setForm({
-          full_name: profile.full_name||'',
-          university: profile.university||'',
-          course: profile.course||'',
-          year_of_study: String(profile.year_of_study||'1'),
-          whatsapp_number: profile.whatsapp_number||'',
-          bio: profile.bio||'',
-          interests: Array.isArray(profile.interests) ? profile.interests.join(', ') : (profile.interests||''),
-        })
-      }
-      setLoading(false)
-    }
-    load()
+      sb.from('profiles').select('*').eq('id',user.id).maybeSingle().then(({data})=>{
+        if(data){
+          setAvatarUrl(data.avatar_url||'')
+          setForm({full_name:data.full_name||'',university:data.university||'',course:data.course||'',year_of_study:String(data.year_of_study||'1'),whatsapp_number:data.whatsapp_number||'',bio:data.bio||'',
+            interests:Array.isArray(data.interests)?data.interests.join(', '):(data.interests||'')})
+        }
+        setLoading(false)
+      })
+    })
   },[])
 
+  async function uploadPhoto(e:React.ChangeEvent<HTMLInputElement>){
+    const file=e.target.files?.[0]; if(!file) return
+    if(file.size>5*1024*1024){setError('Image must be under 5MB');return}
+    setUploading(true);setError('')
+    const sb=createClient()
+    const ext=file.name.split('.').pop()
+    const path=`${userId}/avatar.${ext}`
+    const {error:upErr}=await sb.storage.from('avatars').upload(path,file,{upsert:true})
+    if(upErr){setError('Upload failed: '+upErr.message);setUploading(false);return}
+    const {data:{publicUrl}}=sb.storage.from('avatars').getPublicUrl(path)
+    await sb.from('profiles').update({avatar_url:publicUrl}).eq('id',userId)
+    setAvatarUrl(publicUrl)
+    setUploading(false)
+  }
+
   async function handleSave(e:React.FormEvent){
-    e.preventDefault()
-    setSaving(true); setError(''); setSuccess(false)
-    const supabase = createClient()
-    const interests = form.interests.split(',').map(i=>i.trim()).filter(Boolean)
-    const { error:saveErr } = await supabase.from('profiles').upsert({
-      id: userId,
-      full_name: form.full_name,
-      university: form.university,
-      course: form.course,
-      year_of_study: form.year_of_study,
-      whatsapp_number: form.whatsapp_number,
-      bio: form.bio,
-      interests,
-    }, { onConflict:'id' })
-    if (saveErr) { setError(saveErr.message) }
-    else { setSuccess(true); setTimeout(()=>setSuccess(false),3000) }
+    e.preventDefault();setSaving(true);setError('');setSuccess(false)
+    const interests=form.interests.split(',').map(i=>i.trim()).filter(Boolean)
+    const {error:err}=await createClient().from('profiles').upsert({
+      id:userId,full_name:form.full_name,university:form.university,course:form.course,
+      year_of_study:form.year_of_study,whatsapp_number:form.whatsapp_number,bio:form.bio,interests
+    },{onConflict:'id'})
+    if(err) setError(err.message)
+    else{setSuccess(true);setTimeout(()=>setSuccess(false),3000)}
     setSaving(false)
   }
 
-  if(loading) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',color:'#9ca3af'}}>Loading profile...</div>
+  function initials(n:string){return(n||'?').split(' ').map((x:string)=>x[0]).join('').toUpperCase().slice(0,2)}
+
+  if(loading) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',color:'#94a3b8'}}>Loading...</div>
 
   return(
-    <div style={{maxWidth:'640px',margin:'0 auto',padding:'32px 16px'}}>
+    <div style={{maxWidth:'600px',margin:'0 auto',padding:'32px 20px'}}>
       <div style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'28px'}}>
-        <Link href="/dashboard" style={{background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:'10px',padding:'8px 14px',fontSize:'13px',color:'#6b7280',cursor:'pointer',fontWeight:'600',textDecoration:'none'}}>← Back</Link>
+        <Link href="/dashboard" style={{background:'#f8fafc',border:'1px solid #e2e8f0',borderRadius:'8px',padding:'8px 14px',fontSize:'13px',color:'#64748b',fontWeight:'600'}}>← Back</Link>
         <div>
-          <h1 style={{fontSize:'22px',fontWeight:'900',color:'#111827',marginBottom:'2px'}}>Edit Profile</h1>
-          <p style={{color:'#9ca3af',fontSize:'13px'}}>Changes save directly to your live profile</p>
+          <h1 style={{fontSize:'22px',fontWeight:'800',color:'#0f172a',marginBottom:'2px'}}>Edit Profile</h1>
+          <p style={{color:'#94a3b8',fontSize:'13px'}}>Changes are saved to your live profile</p>
         </div>
       </div>
 
-      {success&&<div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'12px',padding:'12px 16px',marginBottom:'20px',color:'#16a34a',fontSize:'14px',fontWeight:'600'}}>✅ Profile saved successfully!</div>}
-      {error&&<div style={{background:'#fef2f2',border:'1px solid #fecaca',borderRadius:'12px',padding:'12px 16px',marginBottom:'20px',color:'#dc2626',fontSize:'13px'}}>⚠️ {error}</div>}
+      {success&&<div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'10px',padding:'11px 14px',marginBottom:'18px',color:'#16a34a',fontSize:'14px',fontWeight:'600'}}>Profile saved successfully.</div>}
+      {error&&<div style={{background:'#fef2f2',border:'1px solid #fecaca',borderRadius:'10px',padding:'11px 14px',marginBottom:'18px',color:'#dc2626',fontSize:'13px'}}>{error}</div>}
 
-      <form onSubmit={handleSave} style={{background:'white',borderRadius:'20px',border:'1px solid #f3f4f6',padding:'28px',boxShadow:'0 4px 20px rgba(0,0,0,0.06)',display:'flex',flexDirection:'column',gap:'16px'}}>
+      {/* Photo upload */}
+      <div style={{background:'#fff',borderRadius:'14px',border:'1px solid #e2e8f0',padding:'20px',marginBottom:'16px',display:'flex',alignItems:'center',gap:'16px'}}>
+        {avatarUrl
+          ?<img src={avatarUrl} style={{width:'64px',height:'64px',borderRadius:'50%',objectFit:'cover',border:'2px solid #e2e8f0'}}/>
+          :<div style={{width:'64px',height:'64px',borderRadius:'50%',background:'#fff7ed',color:'#ea580c',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'20px',border:'2px solid #fed7aa',flexShrink:0}}>{initials(form.full_name)}</div>
+        }
         <div>
-          <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'6px'}}>Full Name *</label>
-          <input value={form.full_name} onChange={set('full_name')} placeholder="Your full name" required style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e5e7eb'}/>
+          <p style={{fontWeight:'600',color:'#0f172a',fontSize:'14px',marginBottom:'4px'}}>Profile Photo</p>
+          <p style={{fontSize:'12px',color:'#94a3b8',marginBottom:'8px'}}>JPG, PNG or WebP · Max 5MB</p>
+          <button type="button" onClick={()=>fileRef.current?.click()} disabled={uploading}
+            style={{background:uploading?'#94a3b8':'#0f172a',color:'#fff',padding:'7px 16px',borderRadius:'8px',fontSize:'13px',fontWeight:'600',border:'none',cursor:uploading?'not-allowed':'pointer'}}>
+            {uploading?'Uploading...':'Upload Photo'}
+          </button>
+          <input ref={fileRef} type="file" accept="image/*" onChange={uploadPhoto} style={{display:'none'}}/>
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px'}}>
+      </div>
+
+      <form onSubmit={handleSave} style={{background:'#fff',borderRadius:'14px',border:'1px solid #e2e8f0',padding:'24px',display:'flex',flexDirection:'column',gap:'16px'}}>
+        <div>
+          <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Full Name *</label>
+          <input value={form.full_name} onChange={set('full_name')} required style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
           <div>
-            <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'6px'}}>University</label>
-            <select value={form.university} onChange={set('university')} style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e5e7eb'}>
+            <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>University</label>
+            <select value={form.university} onChange={set('university')} style={inp}>
               <option value="">Select...</option>
-              {UNIVERSITIES.map(u=><option key={u}>{u}</option>)}
+              {UNIS.map(u=><option key={u}>{u}</option>)}
             </select>
           </div>
           <div>
-            <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'6px'}}>Course</label>
+            <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Course</label>
             <select value={form.course} onChange={set('course')} style={inp}>
               <option value="">Select...</option>
               {COURSES.map(c=><option key={c}>{c}</option>)}
             </select>
           </div>
           <div>
-            <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'6px'}}>Year of Study</label>
+            <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Year</label>
             <select value={form.year_of_study} onChange={set('year_of_study')} style={inp}>
               {['1','2','3','4','5','6'].map(y=><option key={y} value={y}>Year {y}</option>)}
             </select>
           </div>
           <div>
-            <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'6px'}}>WhatsApp</label>
-            <input value={form.whatsapp_number} onChange={set('whatsapp_number')} placeholder="+254712345678" style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e5e7eb'}/>
+            <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>WhatsApp</label>
+            <input value={form.whatsapp_number} onChange={set('whatsapp_number')} placeholder="+254..." style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
           </div>
         </div>
         <div>
-          <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'6px'}}>Bio</label>
-          <textarea value={form.bio} onChange={set('bio')} placeholder="Tell other students about yourself..." rows={3} style={{...inp,resize:'none' as const}} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e5e7eb'}/>
+          <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Bio</label>
+          <textarea value={form.bio} onChange={set('bio')} rows={3} placeholder="Tell other students about yourself..." style={{...inp,resize:'none'}} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
         </div>
         <div>
-          <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'6px'}}>Interests <span style={{fontWeight:'400',color:'#9ca3af'}}>(comma separated)</span></label>
-          <input value={form.interests} onChange={set('interests')} placeholder="football, coding, music, reading" style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e5e7eb'}/>
+          <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Interests <span style={{fontWeight:'400',color:'#94a3b8'}}>(comma separated)</span></label>
+          <input value={form.interests} onChange={set('interests')} placeholder="football, coding, music" style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
         </div>
-        <button type="submit" disabled={saving} style={{background:saving?'#fdba74':'linear-gradient(135deg,#f97316,#ea580c)',color:'white',padding:'14px',borderRadius:'12px',fontWeight:'700',fontSize:'15px',border:'none',cursor:saving?'not-allowed':'pointer',boxShadow:'0 6px 16px rgba(249,115,22,0.3)',marginTop:'4px'}}>
-          {saving?'⏳ Saving...':'💾 Save Profile'}
+        <button type="submit" disabled={saving} style={{background:saving?'#94a3b8':'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'13px',borderRadius:'10px',fontWeight:'700',fontSize:'15px',border:'none',cursor:saving?'not-allowed':'pointer',marginTop:'4px'}}>
+          {saving?'Saving...':'Save Profile'}
         </button>
       </form>
     </div>

@@ -1,70 +1,47 @@
-// POST /api/pesapal/ipn — Pesapal webhook (called automatically after payment)
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getPesapalToken, getTransactionStatus } from '@/lib/pesapal'
+import { getToken, getStatus } from '@/lib/pesapal'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const body = await request.json()
-    const { orderTrackingId, orderMerchantReference, orderNotificationType } = body
+    const body = await req.json()
+    const { orderTrackingId } = body
+    if (!orderTrackingId) return NextResponse.json({status:200})
 
-    if (orderNotificationType !== 'IPNCHANGE') {
-      return NextResponse.json({ status: 200 })
+    const token = await getToken()
+    const status = await getStatus(token, orderTrackingId)
+    if (status.payment_status_description !== 'Completed') return NextResponse.json({status:200})
+
+    const { data: payment } = await sb.from('payment_requests').select('*').eq('order_tracking_id', orderTrackingId).maybeSingle()
+    if (!payment || payment.status === 'approved') return NextResponse.json({status:200})
+
+    await sb.from('payment_requests').update({status:'approved'}).eq('order_tracking_id', orderTrackingId)
+
+    // Apply upgrade based on type
+    const type = payment.type
+    if (type === 'premium') {
+      const exp = new Date(); exp.setMonth(exp.getMonth()+1)
+      await sb.from('profiles').update({is_premium:true, premium_expires_at:exp.toISOString()}).eq('id', payment.user_id)
+    } else if (type === 'featured') {
+      await sb.from('profiles').update({is_featured:true}).eq('id', payment.user_id)
+    } else if (type === 'top_student') {
+      await sb.from('profiles').update({is_top_student:true}).eq('id', payment.user_id)
+    } else if (type === 'unlock') {
+      // Mark the contact as unlocked for this user
+      await sb.from('unlock_requests').upsert({requester_id:payment.user_id, target_id:payment.target_id, status:'approved'})
+    } else if (type === 'add_group') {
+      // Approve the group listing
+      if (payment.group_id) {
+        await sb.from('whatsapp_groups').update({payment_status:'approved', is_verified:true}).eq('id', payment.group_id)
+      }
     }
 
-    // Get transaction status from Pesapal
-    const token = await getPesapalToken()
-    const status = await getTransactionStatus(token, orderTrackingId)
-
-    if (status.payment_status_description !== 'Completed') {
-      return NextResponse.json({ status: 200 })
-    }
-
-    // Find payment request
-    const { data: payment } = await supabase
-      .from('payment_requests')
-      .select('*')
-      .eq('order_tracking_id', orderTrackingId)
-      .single()
-
-    if (!payment || payment.status === 'approved') {
-      return NextResponse.json({ status: 200 })
-    }
-
-    // Mark payment as approved
-    await supabase.from('payment_requests')
-      .update({ status: 'approved' })
-      .eq('order_tracking_id', orderTrackingId)
-
-    // Upgrade the user profile based on payment type
-    const update: Record<string, any> = {}
-    if (payment.type === 'premium') {
-      const expiresAt = new Date()
-      expiresAt.setMonth(expiresAt.getMonth() + 1)
-      update.is_premium = true
-      update.premium_expires_at = expiresAt.toISOString()
-    }
-    if (payment.type === 'featured') update.is_featured = true
-    if (payment.type === 'top_student') update.is_top_student = true
-
-    if (Object.keys(update).length > 0) {
-      await supabase.from('profiles').update(update).eq('id', payment.user_id)
-    }
-
-    console.log(`✅ Payment approved for user ${payment.user_id} - ${payment.type}`)
-    return NextResponse.json({ orderNotificationType, orderTrackingId, status: 200 })
-  } catch (error) {
-    console.error('IPN error:', error)
-    return NextResponse.json({ status: 500 })
+    return NextResponse.json({orderNotificationType:'IPNCHANGE', orderTrackingId, status:200})
+  } catch (e) {
+    return NextResponse.json({status:500})
   }
 }
 
-export async function GET(request: NextRequest) {
-  // Pesapal sometimes sends GET for IPN verification
-  return NextResponse.json({ status: 200 })
-}
+export async function GET() { return NextResponse.json({status:200}) }
