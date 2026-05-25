@@ -95,7 +95,7 @@ export default function AdminPage() {
             <p className="text-gray-500 text-sm">CampusLink KE Management</p>
           </div>
         </div>
-        <button onClick={loadData} className="flex items-center gap-2 border border-gray-200 text-gray-600 px-4 py-2 rounded-xl text-sm hover:bg-gray-50 transition-all">
+        <button onClick={async()=>{await fetch('/api/admin-auth',{method:'DELETE'});window.location.href='/admin/login'}} style={{background:'none',border:'1px solid #e5e7eb',borderRadius:'8px',padding:'8px 14px',fontSize:'13px',color:'#dc2626',cursor:'pointer',fontWeight:'600',marginRight:'8px'}}>🚪 Sign Out</button><button onClick={loadData} className="flex items-center gap-2 border border-gray-200 text-gray-600 px-4 py-2 rounded-xl text-sm hover:bg-gray-50 transition-all">
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
         </button>
       </div>
