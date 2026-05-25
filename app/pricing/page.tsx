@@ -58,9 +58,9 @@ export default function PricingPage(){
         </div>}
 
         {/* Plans grid */}
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:'16px',alignItems:'start'}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:'16px',alignItems:'stretch'}}>
           {PLANS.map(p=>(
-            <div key={p.type} style={{background:'#fff',borderRadius:'20px',border:p.featured?'2px solid #7c3aed':'1px solid #e2e8f0',padding:'28px 22px',boxShadow:p.featured?'0 8px 40px rgba(124,58,237,0.15)':'0 1px 4px rgba(0,0,0,0.04)',position:'relative',transition:'box-shadow 0.2s'}}
+            <div key={p.type} style={{background:'#fff',borderRadius:'20px',display:'flex',flexDirection:'column',border:p.featured?'2px solid #7c3aed':'1px solid #e2e8f0',padding:'28px 22px',boxShadow:p.featured?'0 8px 40px rgba(124,58,237,0.15)':'0 1px 4px rgba(0,0,0,0.04)',position:'relative',transition:'box-shadow 0.2s'}}
               onMouseEnter={e=>(e.currentTarget as HTMLElement).style.boxShadow=p.featured?'0 12px 50px rgba(124,58,237,0.2)':'0 6px 24px rgba(0,0,0,0.08)'}
               onMouseLeave={e=>(e.currentTarget as HTMLElement).style.boxShadow=p.featured?'0 8px 40px rgba(124,58,237,0.15)':'0 1px 4px rgba(0,0,0,0.04)'}>
               {p.tag&&<div style={{position:'absolute',top:'-11px',left:'50%',transform:'translateX(-50%)',background:p.tagColor,color:'#fff',fontSize:'11px',fontWeight:'700',padding:'3px 12px',borderRadius:'50px',whiteSpace:'nowrap',letterSpacing:'0.3px'}}>{p.tag}</div>}
@@ -72,7 +72,7 @@ export default function PricingPage(){
               <p style={{fontSize:'12px',color:'#94a3b8',marginBottom:'14px',textTransform:'uppercase',letterSpacing:'0.3px',fontWeight:'600'}}>{p.period}</p>
               <p style={{fontSize:'13px',color:'#64748b',lineHeight:'1.6',marginBottom:'20px',minHeight:'40px'}}>{p.desc}</p>
 
-              <ul style={{listStyle:'none',display:'flex',flexDirection:'column',gap:'9px',marginBottom:'24px'}}>
+              <ul style={{listStyle:'none',display:'flex',flexDirection:'column',gap:'9px',marginBottom:'24px',flex:1}}>
                 {p.features.map(f=>(
                   <li key={f} style={{display:'flex',gap:'8px',alignItems:'flex-start',fontSize:'13px',color:'#374151'}}>
                     <span style={{color:'#16a34a',fontWeight:'700',flexShrink:0,marginTop:'1px'}}>✓</span>{f}
