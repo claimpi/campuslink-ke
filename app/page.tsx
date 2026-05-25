@@ -1,85 +1,125 @@
+'use client'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase-browser'
 
-export default function Home() {
-  const stats = [['500+','Students'],['40+','Universities'],['200+','Groups'],['1,000+','Connections']]
-  const features = [
-    {title:'Student Profiles',desc:'Create your profile with photo, bio, university and interests. Get discovered by peers across Kenya.'},
-    {title:'WhatsApp Groups',desc:'Browse and join verified WhatsApp groups for your university, course or interest area.'},
-    {title:'Connect Directly',desc:'Unlock a student\'s WhatsApp number for just KES 20 and connect directly on WhatsApp.'},
-    {title:'Get Featured',desc:'Stand out with Top Student badge, Premium membership, or Homepage featured placement.'},
-  ]
-  return (
-    <div>
-      {/* Hero */}
-      <section style={{background:'linear-gradient(160deg,#fff7ed 0%,#fff 60%,#f5f3ff 100%)',padding:'80px 20px 90px'}}>
-        <div style={{maxWidth:'760px',margin:'0 auto',textAlign:'center'}}>
-          <div style={{display:'inline-block',background:'#fff7ed',border:'1px solid #fed7aa',color:'#ea580c',padding:'5px 16px',borderRadius:'50px',fontSize:'13px',fontWeight:'600',marginBottom:'24px'}}>Kenya's Student Network</div>
-          <h1 style={{fontSize:'clamp(32px,6vw,58px)',fontWeight:'900',color:'#0f172a',lineHeight:'1.1',marginBottom:'20px',letterSpacing:'-0.5px'}}>
-            Connect with Students<br/><span style={{color:'#f97316'}}>Across Kenya</span>
-          </h1>
-          <p style={{fontSize:'18px',color:'#64748b',marginBottom:'36px',maxWidth:'520px',margin:'0 auto 36px'}}>
-            Find study partners, join WhatsApp groups, unlock contacts and build your university network.
-          </p>
-          <div style={{display:'flex',gap:'12px',justifyContent:'center',flexWrap:'wrap'}}>
-            <Link href="/register" style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'14px 32px',borderRadius:'10px',fontWeight:'700',fontSize:'16px',boxShadow:'0 6px 20px rgba(249,115,22,0.35)'}}>Get Started Free</Link>
-            <Link href="/discover" style={{background:'#fff',color:'#0f172a',padding:'14px 32px',borderRadius:'10px',fontWeight:'600',fontSize:'16px',border:'1.5px solid #e2e8f0'}}>Browse Students</Link>
-          </div>
-          <div style={{display:'flex',justifyContent:'center',gap:'40px',flexWrap:'wrap',marginTop:'56px'}}>
-            {stats.map(([n,l])=>(
-              <div key={l} style={{textAlign:'center'}}>
-                <div style={{fontSize:'26px',fontWeight:'900',color:'#f97316'}}>{n}</div>
-                <div style={{fontSize:'13px',color:'#94a3b8',marginTop:'2px'}}>{l}</div>
-              </div>
-            ))}
-          </div>
+const MOCK = [
+  {id:'1',full_name:'Amina Wanjiku',university:'University of Nairobi',course:'Computer Science',year_of_study:'2',is_premium:true,is_featured:true,avatar_url:null,interests:['coding','AI']},
+  {id:'2',full_name:'Brian Ochieng',university:'Kenyatta University',course:'Business Administration',year_of_study:'3',is_top_student:true,avatar_url:null,interests:['football','chess']},
+  {id:'3',full_name:'Catherine Muthoni',university:'Strathmore University',course:'Law',year_of_study:'1',avatar_url:null,interests:['debate','reading']},
+  {id:'4',full_name:'Dennis Kipchoge',university:'JKUAT',course:'Engineering',year_of_study:'4',is_premium:true,avatar_url:null,interests:['robotics']},
+  {id:'5',full_name:'Esther Akinyi',university:'Moi University',course:'Medicine',year_of_study:'5',avatar_url:null,interests:['research']},
+  {id:'6',full_name:'Felix Njoroge',university:'Africa Nazarene University',course:'Mathematics',year_of_study:'2',avatar_url:null,interests:['music']},
+  {id:'7',full_name:'Grace Wambui',university:'Technical University of Kenya',course:'Software Engineering',year_of_study:'3',avatar_url:null,interests:['coding','design']},
+  {id:'8',full_name:'Henry Mutua',university:'Maseno University',course:'Economics',year_of_study:'2',avatar_url:null,interests:['business']},
+]
+
+const UNIS=['All','University of Nairobi','Kenyatta University','Strathmore University','JKUAT','Moi University','Africa Nazarene University','Technical University of Kenya','Maseno University','Dedan Kimathi University']
+const YEARS=['All Years','1','2','3','4','5','6']
+
+function initials(n:string){return(n||'?').split(' ').map((x:string)=>x[0]).join('').toUpperCase().slice(0,2)}
+
+export default function HomePage(){
+  const [students,setStudents]=useState<any[]>([])
+  const [loading,setLoading]=useState(true)
+  const [search,setSearch]=useState('')
+  const [uni,setUni]=useState('All')
+  const [year,setYear]=useState('All Years')
+
+  useEffect(()=>{
+    createClient().from('profiles')
+      .select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_top_student,interests')
+      .order('is_featured',{ascending:false})
+      .order('is_premium',{ascending:false})
+      .then(({data,error})=>{
+        setStudents(!error&&data&&data.length>0?data:MOCK)
+        setLoading(false)
+      })
+  },[])
+
+  const filtered=students.filter(s=>{
+    const q=search.toLowerCase()
+    return(!q||s.full_name?.toLowerCase().includes(q)||s.course?.toLowerCase().includes(q)||s.university?.toLowerCase().includes(q))
+      &&(uni==='All'||s.university===uni)
+      &&(year==='All Years'||String(s.year_of_study)===year)
+  })
+
+  return(
+    <div style={{maxWidth:'1200px',margin:'0 auto',padding:'28px 20px'}}>
+
+      {/* Top bar */}
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'20px',flexWrap:'wrap',gap:'12px'}}>
+        <div>
+          <h1 style={{fontSize:'22px',fontWeight:'800',color:'#0f172a',marginBottom:'2px'}}>Students</h1>
+          <p style={{fontSize:'13px',color:'#94a3b8'}}>{filtered.length} students across Kenyan universities</p>
         </div>
-      </section>
+        <Link href="/register" style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'9px 20px',borderRadius:'8px',fontWeight:'600',fontSize:'13px',boxShadow:'0 2px 8px rgba(249,115,22,0.3)'}}>Join Free</Link>
+      </div>
 
-      {/* Features */}
-      <section style={{maxWidth:'1100px',margin:'0 auto',padding:'80px 20px'}}>
-        <h2 style={{fontSize:'30px',fontWeight:'800',color:'#0f172a',textAlign:'center',marginBottom:'48px'}}>Everything you need to connect</h2>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))',gap:'20px'}}>
-          {features.map(f=>(
-            <div key={f.title} style={{background:'#fff',borderRadius:'16px',border:'1px solid #e2e8f0',padding:'28px',boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
-              <h3 style={{fontWeight:'700',color:'#0f172a',fontSize:'16px',marginBottom:'10px'}}>{f.title}</h3>
-              <p style={{fontSize:'14px',color:'#64748b',lineHeight:'1.7'}}>{f.desc}</p>
+      {/* Search + filters */}
+      <div style={{display:'flex',gap:'10px',flexWrap:'wrap',marginBottom:'24px'}}>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by name, course or university..."
+          style={{flex:1,minWidth:'220px',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'10px 14px',fontSize:'14px',outline:'none',background:'#fff',color:'#0f172a'}}
+          onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
+        <select value={uni} onChange={e=>setUni(e.target.value)}
+          style={{border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'10px 14px',fontSize:'14px',outline:'none',background:'#fff',color:'#374151',cursor:'pointer'}}>
+          {UNIS.map(u=><option key={u}>{u}</option>)}
+        </select>
+        <select value={year} onChange={e=>setYear(e.target.value)}
+          style={{border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'10px 14px',fontSize:'14px',outline:'none',background:'#fff',color:'#374151',cursor:'pointer'}}>
+          {YEARS.map(y=><option key={y}>{y}</option>)}
+        </select>
+      </div>
+
+      {/* Student grid */}
+      {loading ? (
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:'14px'}}>
+          {[...Array(8)].map((_,i)=>(
+            <div key={i} style={{background:'#fff',borderRadius:'14px',border:'1px solid #e2e8f0',height:'240px',animation:'pulse 1.5s ease infinite'}}/>
+          ))}
+          <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}`}</style>
+        </div>
+      ) : filtered.length===0 ? (
+        <div style={{textAlign:'center',padding:'80px 20px',background:'#fff',borderRadius:'16px',border:'1px solid #e2e8f0'}}>
+          <p style={{fontSize:'16px',fontWeight:'600',color:'#374151',marginBottom:'6px'}}>No students found</p>
+          <p style={{fontSize:'14px',color:'#94a3b8'}}>Try a different search or filter</p>
+        </div>
+      ) : (
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:'14px'}}>
+          {filtered.map(s=>(
+            <div key={s.id} style={{background:'#fff',borderRadius:'14px',border:`1px solid ${s.is_featured?'#ddd6fe':s.is_top_student?'#fed7aa':'#e2e8f0'}`,overflow:'hidden',transition:'transform 0.15s,box-shadow 0.15s'}}
+              onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.transform='translateY(-2px)';(e.currentTarget as HTMLElement).style.boxShadow='0 8px 24px rgba(0,0,0,0.09)'}}
+              onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.transform='none';(e.currentTarget as HTMLElement).style.boxShadow='none'}}>
+              {s.is_featured&&<div style={{background:'linear-gradient(135deg,#7c3aed,#6d28d9)',color:'#fff',fontSize:'10px',fontWeight:'700',textAlign:'center',padding:'4px',letterSpacing:'0.5px'}}>FEATURED</div>}
+              {s.is_top_student&&!s.is_featured&&<div style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',fontSize:'10px',fontWeight:'700',textAlign:'center',padding:'4px',letterSpacing:'0.5px'}}>TOP STUDENT</div>}
+
+              <div style={{padding:'16px'}}>
+                {/* Avatar */}
+                <div style={{marginBottom:'12px'}}>
+                  {s.avatar_url
+                    ?<img src={s.avatar_url} style={{width:'52px',height:'52px',borderRadius:'50%',objectFit:'cover',border:'2px solid #f1f5f9'}}/>
+                    :<div style={{width:'52px',height:'52px',borderRadius:'50%',background:s.is_premium?'#f5f3ff':s.is_top_student?'#fff7ed':'#f1f5f9',color:s.is_premium?'#7c3aed':s.is_top_student?'#ea580c':'#64748b',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'16px'}}>{initials(s.full_name)}</div>
+                  }
+                </div>
+
+                <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px',marginBottom:'2px',lineHeight:'1.3'}}>{s.full_name}</p>
+                <p style={{fontSize:'12px',color:'#64748b',marginBottom:'2px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.course}</p>
+                <p style={{fontSize:'12px',color:'#94a3b8',marginBottom:'10px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.university}</p>
+
+                <div style={{display:'flex',gap:'4px',flexWrap:'wrap',marginBottom:'12px'}}>
+                  <span style={{background:'#f8fafc',color:'#64748b',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',border:'1px solid #e2e8f0'}}>Year {s.year_of_study}</span>
+                  {s.is_premium&&<span style={{background:'#f5f3ff',color:'#7c3aed',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',border:'1px solid #ddd6fe',fontWeight:'600'}}>Pro</span>}
+                </div>
+
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'6px'}}>
+                  <Link href={`/profile/${s.id}`} style={{textAlign:'center',border:'1px solid #e2e8f0',color:'#374151',padding:'7px',borderRadius:'8px',fontSize:'12px',fontWeight:'600',background:'#f8fafc'}}>View</Link>
+                  <Link href={`/profile/${s.id}#unlock`} style={{textAlign:'center',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'7px',borderRadius:'8px',fontSize:'12px',fontWeight:'600'}}>Connect</Link>
+                </div>
+              </div>
             </div>
           ))}
         </div>
-      </section>
-
-      {/* Pricing preview */}
-      <section style={{background:'#0f172a',padding:'80px 20px'}}>
-        <div style={{maxWidth:'900px',margin:'0 auto',textAlign:'center'}}>
-          <h2 style={{fontSize:'30px',fontWeight:'800',color:'#fff',marginBottom:'12px'}}>Simple pricing</h2>
-          <p style={{color:'#94a3b8',marginBottom:'48px',fontSize:'15px'}}>All payments via M-Pesa. Upgrades applied automatically.</p>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:'16px'}}>
-            {[
-              {name:'Unlock Contact',price:'KES 20',desc:'View a student\'s WhatsApp number'},
-              {name:'Add Group',price:'KES 100',desc:'List your WhatsApp group'},
-              {name:'Top Student',price:'KES 100',desc:'Badge + priority listing'},
-              {name:'Premium',price:'KES 199/mo',desc:'All features unlocked',highlight:true},
-              {name:'Featured',price:'KES 200',desc:'Homepage placement'},
-            ].map(p=>(
-              <div key={p.name} style={{background:p.highlight?'linear-gradient(135deg,#f97316,#ea580c)':'rgba(255,255,255,0.05)',border:p.highlight?'none':'1px solid rgba(255,255,255,0.1)',borderRadius:'14px',padding:'24px 20px',textAlign:'left'}}>
-                <div style={{fontSize:'15px',fontWeight:'700',color:'#fff',marginBottom:'6px'}}>{p.name}</div>
-                <div style={{fontSize:'22px',fontWeight:'900',color:'#fff',marginBottom:'6px'}}>{p.price}</div>
-                <div style={{fontSize:'13px',color:p.highlight?'rgba(255,255,255,0.85)':'#94a3b8'}}>{p.desc}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{marginTop:'32px'}}>
-            <Link href="/pricing" style={{background:'#fff',color:'#0f172a',padding:'13px 32px',borderRadius:'10px',fontWeight:'700',fontSize:'15px',display:'inline-block'}}>View Pricing</Link>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section style={{padding:'80px 20px',textAlign:'center',background:'#fff'}}>
-        <h2 style={{fontSize:'32px',fontWeight:'900',color:'#0f172a',marginBottom:'12px'}}>Ready to join?</h2>
-        <p style={{color:'#64748b',marginBottom:'28px',fontSize:'16px'}}>Join hundreds of Kenyan students already on CampusLink KE.</p>
-        <Link href="/register" style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'14px 36px',borderRadius:'10px',fontWeight:'700',fontSize:'16px',boxShadow:'0 6px 20px rgba(249,115,22,0.35)',display:'inline-block'}}>Create Free Account</Link>
-      </section>
+      )}
     </div>
   )
 }
