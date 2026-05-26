@@ -96,7 +96,7 @@ export default function Navbar() {
         </div>
       )}
     </nav>
-    <style>{`@media(min-width:768px){.mob-btn{display:none!important}}@media(max-width:767px){.nav-links{display:none!important}}`}</style>
+    <style>{`@media(min-width:768px){.mob-btn{display:none!important}}@media(max-width:767px){.nav-links{display:none!important}.mob-btn{display:none!important}.mob-auth{display:none!important}}`}</style>
     </>
   )
 }
