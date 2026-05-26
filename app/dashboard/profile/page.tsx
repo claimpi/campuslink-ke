@@ -227,7 +227,6 @@ export default function EditProfile(){
             <input value={form.instagram} onChange={set('instagram')} placeholder="yourusername" style={{...inp,border:'none',borderRadius:0,flex:1}}/>
           </div>
         </div>
-        </div>
         <div>
           <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Bio</label>
           <textarea value={form.bio} onChange={set('bio')} rows={3} placeholder="Tell other students about yourself..." style={{...inp,resize:'none'}} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
