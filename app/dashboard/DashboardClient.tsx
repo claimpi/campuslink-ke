@@ -115,9 +115,15 @@ export default function DashboardClient(){
               <p style={{fontWeight:'700',color:'#0f172a',fontSize:'15px',marginBottom:'2px'}}>Your Referral Link</p>
               <p style={{fontSize:'12px',color:'#94a3b8'}}>Earn KES 10 for every student who joins using your link</p>
             </div>
-            <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'10px',padding:'8px 16px',textAlign:'center'}}>
-              <p style={{fontSize:'20px',fontWeight:'900',color:'#16a34a',lineHeight:'1'}}>KES {profile.referral_earnings||0}</p>
-              <p style={{fontSize:'11px',color:'#16a34a',fontWeight:'600'}}>Earnings</p>
+            <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+              <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'10px',padding:'8px 16px',textAlign:'center'}}>
+                <p style={{fontSize:'20px',fontWeight:'900',color:'#16a34a',lineHeight:'1'}}>KES {profile?.referral_earnings||0}</p>
+                <p style={{fontSize:'11px',color:'#16a34a',fontWeight:'600'}}>Earnings</p>
+              </div>
+              <button onClick={()=>{
+                createClient().from('profiles').select('referral_earnings').eq('id',userId).maybeSingle()
+                  .then(({data})=>{ if(data) setProfile((p:any)=>({...p,referral_earnings:data.referral_earnings})) })
+              }} style={{background:'#f8fafc',border:'1px solid #e2e8f0',borderRadius:'8px',padding:'6px 10px',fontSize:'12px',cursor:'pointer',color:'#64748b',fontWeight:'600'}}>Refresh</button>
             </div>
           </div>
           <div style={{display:'flex',gap:'8px'}}>
