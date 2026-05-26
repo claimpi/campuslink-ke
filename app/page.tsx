@@ -152,4 +152,27 @@ export default function HomePage(){
                     </div>
                   </div>
                 </div>
-                
+                <div style={{display:'flex',gap:'8px'}}>
+                  <button onClick={(e)=>{e.stopPropagation();router.push(`/profile/${s.id}`)}}
+                    style={{flex:1,padding:'8px',border:'1px solid #e2e8f0',borderRadius:'8px',background:'#fff',color:'#374151',fontSize:'13px',fontWeight:'600',cursor:'pointer'}}>
+                    View
+                  </button>
+                  <button onClick={(e)=>{e.stopPropagation();router.push(`/profile/${s.id}`)}}
+                    style={{flex:1,padding:'8px',borderRadius:'8px',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',fontSize:'13px',fontWeight:'700',border:'none',cursor:'pointer',boxShadow:'0 2px 8px rgba(249,115,22,0.3)'}}>
+                    Connect
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {filtered.length===0&&(
+          <div style={{textAlign:'center',padding:'60px 20px',color:'#94a3b8'}}>
+            <p style={{fontSize:'18px',marginBottom:'8px'}}>No students found</p>
+            <p style={{fontSize:'14px'}}>Try adjusting your search or filters</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
