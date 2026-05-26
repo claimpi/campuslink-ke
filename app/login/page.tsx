@@ -14,7 +14,7 @@ export default function LoginPage() {
   // If already logged in, redirect to dashboard
   useEffect(()=>{
     createClient().auth.getSession().then(({data:{session}})=>{
-      if(session) router.replace('/dashboard')
+      if(session) window.location.href='/dashboard'
     })
   },[])
 
@@ -28,8 +28,7 @@ export default function LoginPage() {
       const supabase = createClient()
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) { setError(error.message); setLoading(false); return }
-      router.push('/dashboard')
-      router.refresh()
+      window.location.href='/dashboard'
     } catch {
       setError('Something went wrong. Please try again.')
       setLoading(false)
