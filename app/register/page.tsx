@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 
-const UNIS=['Africa Nazarene University','Dedan Kimathi University','Egerton University','JKUAT','Kenyatta University','Maseno University','Moi University','Strathmore University','Technical University of Kenya','University of Nairobi','University of Eldoret','Multimedia University']
+const UNIS=['Africa Nazarene University','Dedan Kimathi University','Egerton University','JKUAT','Kenyatta University','Kisii University','Laikipia University','Maseno University','Meru University','Moi University','Mount Kenya University','Multimedia University','Pwani University','Rongo University','Strathmore University','Technical University of Kenya','University of Nairobi','University of Eldoret','University of Embu','Zetech University','Other']
 const COURSES=['Accounting','Architecture','Business Administration','Civil Engineering','Computer Science','Electrical Engineering','Education','Finance','Journalism','Law','Marketing','Mathematics','Medicine','Nursing','Pharmacy','Psychology','Software Engineering']
 
 export default function RegisterPage() {
