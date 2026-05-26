@@ -121,7 +121,7 @@ export default function DashboardClient(){
                 <p style={{fontSize:'11px',color:'#16a34a',fontWeight:'600'}}>Earnings</p>
               </div>
               <button onClick={()=>{
-                createClient().from('profiles').select('referral_earnings').eq('id',userId).maybeSingle()
+                createClient().from('profiles').select('referral_earnings').eq('id',user?.id).maybeSingle()
                   .then(({data})=>{ if(data) setProfile((p:any)=>({...p,referral_earnings:data.referral_earnings})) })
               }} style={{background:'#f8fafc',border:'1px solid #e2e8f0',borderRadius:'8px',padding:'6px 10px',fontSize:'12px',cursor:'pointer',color:'#64748b',fontWeight:'600'}}>Refresh</button>
             </div>
