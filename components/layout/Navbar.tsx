@@ -2,14 +2,12 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase-browser'
-import { useTheme } from '@/components/ThemeProvider'
 import { useRouter } from 'next/navigation'
 
 function initials(n:string){return n.split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2)}
 
 export default function Navbar() {
   const router = useRouter()
-  const { dark, toggle } = useTheme()
   const [open, setOpen] = useState(false)
   const [drop, setDrop] = useState(false)
   const [user, setUser] = useState<any>(null)
@@ -46,31 +44,25 @@ export default function Navbar() {
 
   return(
     <>
-    <nav style={{position:'sticky',top:0,zIndex:100,background:'var(--nav-bg)',backdropFilter:'blur(8px)',borderBottom:'1px solid var(--border)'}}>
+    <nav style={{position:'sticky',top:0,zIndex:100,background:'rgba(255,255,255,0.97)',backdropFilter:'blur(8px)',borderBottom:'1px solid #e2e8f0'}}>
       <div style={{maxWidth:'1200px',margin:'0 auto',padding:'0 20px',display:'flex',alignItems:'center',justifyContent:'space-between',height:'60px'}}>
         <Link href="/" style={{display:'flex',alignItems:'center',gap:'8px'}}>
           <div style={{width:'32px',height:'32px',background:'linear-gradient(135deg,#f97316,#ea580c)',borderRadius:'8px',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:'800',fontSize:'12px'}}>CL</div>
-          <span style={{fontWeight:'700',fontSize:'16px',color:'var(--text)'}}>CampusLink <span style={{color:'#f97316'}}>KE</span></span>
+          <span style={{fontWeight:'700',fontSize:'16px',color:'#0f172a'}}>CampusLink <span style={{color:'#f97316'}}>KE</span></span>
         </Link>
 
         <div style={{display:'flex',alignItems:'center',gap:'4px'}} className="nav-links">
           {links.map(l=>(
-            <Link key={l.href} href={l.href} style={{padding:'7px 14px',borderRadius:'8px',fontSize:'14px',color:'var(--text2)',fontWeight:'500',transition:'color 0.2s'}}>
+            <Link key={l.href} href={l.href} style={{padding:'7px 14px',borderRadius:'8px',fontSize:'14px',color:'#64748b',fontWeight:'500',transition:'color 0.2s'}}>
               {l.label}
             </Link>
           ))}
         </div>
 
         <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
-          {/* Dark mode toggle */}
-          <button onClick={toggle} title={dark?'Light mode':'Dark mode'}
-            style={{background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:'8px',padding:'6px 10px',cursor:'pointer',fontSize:'16px',color:'var(--text2)',transition:'all 0.2s'}}>
-            {dark?'☀️':'🌙'}
-          </button>
-
           {user ? (
             <div style={{position:'relative'}}>
-              <button onClick={()=>setDrop(d=>!d)} style={{display:'flex',alignItems:'center',gap:'8px',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:'50px',padding:'5px 12px 5px 5px',cursor:'pointer',fontSize:'13px',fontWeight:'600',color:'var(--text)'}}>
+              <button onClick={()=>setDrop(d=>!d)} style={{display:'flex',alignItems:'center',gap:'8px',background:'#f8fafc',border:'1px solid #e2e8f0',borderRadius:'50px',padding:'5px 12px 5px 5px',cursor:'pointer',fontSize:'13px',fontWeight:'600',color:'#0f172a'}}>
                 {profile?.avatar_url
                   ? <img src={profile.avatar_url} style={{width:'28px',height:'28px',borderRadius:'50%',objectFit:'cover'}}/>
                   : <div style={{width:'28px',height:'28px',borderRadius:'50%',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'11px',fontWeight:'700'}}>{initials(profile?.full_name||user.email||'U')}</div>
@@ -79,9 +71,9 @@ export default function Navbar() {
                 {profile?.is_premium && <span style={{background:'#7c3aed',color:'#fff',fontSize:'10px',padding:'1px 6px',borderRadius:'50px',fontWeight:'700'}}>PRO</span>}
               </button>
               {drop && (
-                <div style={{position:'absolute',right:0,top:'calc(100% + 6px)',background:'var(--bg2)',borderRadius:'12px',boxShadow:'0 8px 30px rgba(0,0,0,0.2)',border:'1px solid var(--border)',minWidth:'180px',zIndex:200}}>
+                <div style={{position:'absolute',right:0,top:'calc(100% + 6px)',background:'#fff',borderRadius:'12px',boxShadow:'0 8px 30px rgba(0,0,0,0.12)',border:'1px solid #e2e8f0',minWidth:'180px',zIndex:200}}>
                   {[{href:'/dashboard',label:'Dashboard'},{href:'/dashboard/profile',label:'Edit Profile'},{href:'/pricing',label:'Upgrade'}].map(item=>(
-                    <Link key={item.href} href={item.href} onClick={()=>setDrop(false)} style={{display:'block',padding:'11px 16px',fontSize:'14px',color:'var(--text)',fontWeight:'500',borderBottom:'1px solid var(--border)'}}>{item.label}</Link>
+                    <Link key={item.href} href={item.href} onClick={()=>setDrop(false)} style={{display:'block',padding:'11px 16px',fontSize:'14px',color:'var(--text)',fontWeight:'500',borderBottom:'1px solid #e2e8f0'}}>{item.label}</Link>
                   ))}
                   <button onClick={logout} style={{width:'100%',textAlign:'left',padding:'11px 16px',fontSize:'14px',color:'#dc2626',background:'none',border:'none',cursor:'pointer',fontWeight:'500'}}>Sign Out</button>
                 </div>
@@ -98,9 +90,9 @@ export default function Navbar() {
       </div>
 
       {open && (
-        <div style={{background:'var(--bg2)',borderTop:'1px solid var(--border)',padding:'12px 20px'}}>
+        <div style={{background:'#fff',borderTop:'1px solid #e2e8f0',padding:'12px 20px'}}>
           {links.map(l=>(
-            <Link key={l.href} href={l.href} onClick={()=>setOpen(false)} style={{display:'block',padding:'10px 0',fontSize:'15px',color:'var(--text)',fontWeight:'500',borderBottom:'1px solid var(--border)'}}>{l.label}</Link>
+            <Link key={l.href} href={l.href} onClick={()=>setOpen(false)} style={{display:'block',padding:'10px 0',fontSize:'15px',color:'var(--text)',fontWeight:'500',borderBottom:'1px solid #e2e8f0'}}>{l.label}</Link>
           ))}
           {user
             ? <button onClick={logout} style={{width:'100%',textAlign:'left',padding:'10px 0',fontSize:'15px',color:'#dc2626',background:'none',border:'none',cursor:'pointer',fontWeight:'500',marginTop:'4px'}}>Sign Out</button>
