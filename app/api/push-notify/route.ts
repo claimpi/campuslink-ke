@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+export const runtime = 'nodejs'
+
 const sb = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -17,8 +19,7 @@ export async function POST(req: NextRequest) {
 
     if (!subs || subs.length === 0) return NextResponse.json({ sent: 0 })
 
-    // Dynamic import to avoid SSR issues
-    const webpush = (await import('web-push')).default
+    const webpush = require('web-push')
     webpush.setVapidDetails(
       'mailto:admin@campuslink.co.ke',
       process.env.VAPID_PUBLIC_KEY!,
