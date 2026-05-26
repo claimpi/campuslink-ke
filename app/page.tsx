@@ -53,12 +53,13 @@ export default function HomePage(){
 
       {/* Announcements */}
       {announcements.map(a=>(
-        <div key={a.id} style={{background:'linear-gradient(135deg,#f97316,#ea580c)',borderRadius:'10px',padding:'12px 16px',marginBottom:'16px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px'}}>
-          <div>
-            <span style={{background:'rgba(255,255,255,0.25)',color:'#fff',fontSize:'10px',fontWeight:'700',padding:'2px 7px',borderRadius:'4px',marginRight:'8px',letterSpacing:'0.5px'}}>ANNOUNCEMENT</span>
-            <span style={{fontWeight:'700',color:'#fff',fontSize:'14px'}}>{a.title}</span>
-            {a.content&&<p style={{fontSize:'13px',color:'rgba(255,255,255,0.85)',marginTop:'2px'}}>{a.content}</p>}
+        <div key={a.id} style={{background:'#fff',border:'1px solid #fed7aa',borderRadius:'10px',padding:'10px 14px',marginBottom:'10px',display:'flex',alignItems:'flex-start',gap:'10px'}}>
+          <span style={{fontSize:'16px',flexShrink:0}}>🔔</span>
+          <div style={{flex:1,minWidth:0}}>
+            <span style={{fontWeight:'700',color:'#0f172a',fontSize:'14px'}}>{a.title}</span>
+            {a.content&&<p style={{fontSize:'13px',color:'#64748b',marginTop:'2px',lineHeight:'1.5'}}>{a.content}</p>}
           </div>
+          <button onClick={()=>setAnnouncements(aa=>aa.filter(x=>x.id!==a.id))} style={{background:'none',border:'none',color:'#94a3b8',cursor:'pointer',fontSize:'16px',flexShrink:0,padding:'0 2px',lineHeight:'1'}}>✕</button>
         </div>
       ))}
 

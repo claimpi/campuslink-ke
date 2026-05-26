@@ -3,6 +3,33 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
 
+function AnnouncementsList(){
+  const [anns,setAnns]=useState<any[]>([])
+  useEffect(()=>{
+    createClient().from('announcements').select('*').order('created_at',{ascending:false}).then(({data})=>setAnns(data||[]))
+  },[])
+  async function del(id:string){
+    await createClient().from('announcements').delete().eq('id',id)
+    setAnns(a=>a.filter(x=>x.id!==id))
+  }
+  if(anns.length===0) return <p style={{fontSize:'13px',color:'#94a3b8',marginBottom:'8px'}}>No announcements yet.</p>
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'4px'}}>
+      <p style={{fontSize:'13px',fontWeight:'700',color:'#0f172a',marginBottom:'4px'}}>Posted Announcements</p>
+      {anns.map(a=>(
+        <div key={a.id} style={{background:'#fff',border:'1px solid #e2e8f0',borderRadius:'10px',padding:'12px 14px',display:'flex',alignItems:'flex-start',gap:'10px'}}>
+          <span style={{fontSize:'15px'}}>🔔</span>
+          <div style={{flex:1}}>
+            <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px'}}>{a.title}</p>
+            <p style={{fontSize:'12px',color:'#64748b',marginTop:'2px'}}>{a.content}</p>
+          </div>
+          <button onClick={()=>del(a.id)} style={{background:'#fef2f2',border:'none',borderRadius:'6px',padding:'5px 8px',cursor:'pointer',fontSize:'12px',color:'#dc2626',fontWeight:'600',flexShrink:0}}>Delete</button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 type Tab = 'students'|'payments'|'groups'|'announce'
 
 export default function AdminPage(){
@@ -184,8 +211,11 @@ export default function AdminPage(){
       )}
 
       {tab==='announce'&&(
-        <form onSubmit={postAnnouncement} style={{background:'#fff',borderRadius:'14px',border:'1px solid #e2e8f0',padding:'24px',display:'flex',flexDirection:'column',gap:'14px',maxWidth:'560px'}}>
-          <h2 style={{fontSize:'16px',fontWeight:'700',color:'#0f172a'}}>Post Announcement</h2>
+        <div>
+        {/* Existing announcements */}
+        <AnnouncementsList/>
+        <form onSubmit={postAnnouncement} style={{background:'#fff',borderRadius:'14px',border:'1px solid #e2e8f0',padding:'24px',display:'flex',flexDirection:'column',gap:'14px',maxWidth:'560px',marginTop:'16px'}}>
+          <h2 style={{fontSize:'16px',fontWeight:'700',color:'#0f172a'}}>Post New Announcement</h2>
           <div>
             <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Title</label>
             <input value={ann.title} onChange={e=>setAnn(a=>({...a,title:e.target.value}))} required style={{width:'100%',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'11px 14px',fontSize:'14px',outline:'none',boxSizing:'border-box'}} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
@@ -198,6 +228,7 @@ export default function AdminPage(){
             {posting?'Posting...':'Post Announcement'}
           </button>
         </form>
+        </div>
       )}
       </>)}
     </div>
