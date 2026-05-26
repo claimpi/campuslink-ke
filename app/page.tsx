@@ -23,6 +23,22 @@ export default function HomePage(){
   const [friendStatuses,setFriendStatuses]=useState<Record<string,string>>({})
   const [sendingTo,setSendingTo]=useState<string|null>(null)
 
+  const loadFriendStatuses=(userId:string)=>{
+    createClient().from('friend_requests').select('receiver_id,sender_id,status')
+      .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+      .not('status','eq','declined')
+      .then(({data})=>{
+        const statuses:Record<string,string>={}
+        data?.forEach((r:any)=>{
+          const otherId = r.sender_id===userId ? r.receiver_id : r.sender_id
+          if(r.status==='accepted') statuses[otherId]='friends'
+          else if(r.sender_id===userId) statuses[otherId]='pending_sent'
+          else statuses[otherId]='pending_received'
+        })
+        setFriendStatuses(statuses)
+      })
+  }
+
   const loadStudents=()=>{
     createClient().from('profiles')
       .select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_top_student,interests,status,last_seen')
@@ -31,25 +47,17 @@ export default function HomePage(){
   }
 
   useEffect(()=>{
+    createClient().from('announcements').select('*').order('created_at',{ascending:false}).limit(3)
+      .then(({data})=>{ if(data&&data.length>0) setAnnouncements(data) })
+
+    // Load user + friend statuses
     createClient().auth.getUser().then(({data:{user}})=>{
       if(user){
         setCurrentUserId(user.id)
-        createClient().from('friend_requests').select('receiver_id,sender_id,status')
-          .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-          .then(({data})=>{
-            const statuses:Record<string,string>={}
-            data?.forEach((r:any)=>{
-              const otherId = r.sender_id===user.id ? r.receiver_id : r.sender_id
-              if(r.status==='accepted') statuses[otherId]='friends'
-              else if(r.sender_id===user.id) statuses[otherId]='pending_sent'
-              else statuses[otherId]='pending_received'
-            })
-            setFriendStatuses(statuses)
-          })
+        loadFriendStatuses(user.id)
       }
     })
-    createClient().from('announcements').select('*').order('created_at',{ascending:false}).limit(3)
-      .then(({data})=>{ if(data&&data.length>0) setAnnouncements(data) })
+
     loadStudents()
     const interval=setInterval(loadStudents,30000)
     return ()=>clearInterval(interval)
@@ -71,6 +79,8 @@ export default function HomePage(){
     await sb.from('friend_requests').insert([{sender_id:currentUserId,receiver_id:receiverId,status:'pending'}])
     setFriendStatuses(prev=>({...prev,[receiverId]:'pending_sent'}))
     setSendingTo(null)
+    // Re-fetch to confirm from server
+    loadFriendStatuses(currentUserId)
   }
 
   return(
