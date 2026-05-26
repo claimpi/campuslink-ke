@@ -128,9 +128,9 @@ export default function DashboardClient(){
           </div>
           <div style={{display:'flex',gap:'8px'}}>
             <div style={{flex:1,background:'#f8fafc',border:'1px solid #e2e8f0',borderRadius:'8px',padding:'10px 14px',fontSize:'13px',color:'#374151',fontFamily:'monospace',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-              campuslink-ke.vercel.app/ref/{profile.referral_code}
+              campuslink.co.ke/ref/{profile.referral_code}
             </div>
-            <button onClick={()=>{navigator.clipboard.writeText(`https://campuslink-ke.vercel.app/ref/${profile.referral_code}`);alert('Link copied!')}}
+            <button onClick={()=>{navigator.clipboard.writeText(`https://campuslink.co.ke/ref/${profile.referral_code}`);alert('Link copied!')}}
               style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'10px 18px',borderRadius:'8px',fontWeight:'600',fontSize:'13px',border:'none',cursor:'pointer',flexShrink:0}}>
               Copy
             </button>
