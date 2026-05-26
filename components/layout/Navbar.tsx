@@ -9,6 +9,7 @@ function initials(n:string){return n.split(' ').map(x=>x[0]).join('').toUpperCas
 export default function Navbar() {
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [pendingCount, setPendingCount] = useState(0)
   const [drop, setDrop] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
@@ -60,6 +61,15 @@ export default function Navbar() {
         </div>
 
         <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+          {user && pendingCount > 0 && (
+            <a href="/dashboard" style={{position:'relative',display:'flex',alignItems:'center',textDecoration:'none'}}>
+              <span style={{fontSize:'20px'}}>🔔</span>
+              <span style={{position:'absolute',top:'-4px',right:'-4px',background:'#ef4444',color:'#fff',fontSize:'10px',fontWeight:'800',borderRadius:'50%',width:'16px',height:'16px',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:'1'}}>
+                {pendingCount > 9 ? '9+' : pendingCount}
+              </span>
+            </a>
+          )}
+
           {user ? (
             <div style={{position:'relative'}}>
               <button onClick={()=>setDrop(d=>!d)} style={{display:'flex',alignItems:'center',gap:'8px',background:'#f8fafc',border:'1px solid #e2e8f0',borderRadius:'50px',padding:'5px 12px 5px 5px',cursor:'pointer',fontSize:'13px',fontWeight:'600',color:'#0f172a'}}>
