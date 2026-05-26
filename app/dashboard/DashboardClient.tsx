@@ -143,6 +143,10 @@ export default function DashboardClient(){
                   <div>
                     <p style={{fontWeight:'600',color:'#0f172a',fontSize:'14px'}}>{req.sender?.full_name}</p>
                     <p style={{fontSize:'12px',color:'#94a3b8'}}>{req.sender?.university}</p>
+                    <a href={`/profile/${req.sender_id}`} target="_blank" rel="noopener noreferrer"
+                      style={{fontSize:'12px',color:'#f97316',fontWeight:'600',textDecoration:'none'}}>
+                      View Profile →
+                    </a>
                   </div>
                 </div>
                 <div style={{display:'flex',gap:'6px'}}>
