@@ -131,36 +131,25 @@ export default function HomePage(){
               {s.is_top_student&&!s.is_featured&&<div style={{background:'#fff7ed',color:'#ea580c',fontSize:'10px',fontWeight:'700',textAlign:'center',padding:'4px',letterSpacing:'0.5px',borderBottom:'1px solid #fed7aa'}}>TOP STUDENT</div>}
 
               <div style={{padding:'14px'}}>
-                {/* Avatar */}
-                <div style={{marginBottom:'12px',position:'relative',display:'inline-block'}}>
-                  {s.avatar_url
-                    ?<img src={s.avatar_url} style={{width:'52px',height:'52px',borderRadius:'50%',objectFit:'cover',border:'2px solid #f1f5f9'}}/>
-                    :<div style={{width:'52px',height:'52px',borderRadius:'50%',background:s.is_top_student?'#fff7ed':'#f1f5f9',color:s.is_top_student?'#ea580c':'#64748b',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'16px'}}>{initials(s.full_name)}</div>
-                  }
-                  {isOnline(s.last_seen)&&<div style={{position:'absolute',bottom:'1px',right:'1px',width:'13px',height:'13px',background:'#22c55e',borderRadius:'50%',border:'2px solid #fff'}}/>}
+                <div style={{display:'flex',gap:'12px',alignItems:'flex-start',marginBottom:'12px'}}>
+                  <div style={{position:'relative',flexShrink:0}}>
+                    {s.avatar_url
+                      ?<img src={s.avatar_url} style={{width:'50px',height:'50px',borderRadius:'12px',objectFit:'cover',border:'1px solid #f1f5f9'}}/>
+                      :<div style={{width:'50px',height:'50px',borderRadius:'12px',background:s.is_top_student?'#fff7ed':'#f1f5f9',color:s.is_top_student?'#ea580c':'#64748b',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'16px'}}>{initials(s.full_name)}</div>
+                    }
+                    {isOnline(s.last_seen)&&<div style={{position:'absolute',bottom:'2px',right:'2px',width:'11px',height:'11px',background:'#22c55e',borderRadius:'50%',border:'2px solid #fff'}}/>}
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px',marginBottom:'2px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.full_name}</p>
+                    <p style={{fontSize:'12px',color:'#64748b',marginBottom:'1px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.course}</p>
+                    <p style={{fontSize:'11px',color:'#94a3b8',marginBottom:'6px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.university}</p>
+                    <div style={{display:'flex',flexWrap:'wrap',gap:'4px'}}>
+                      <span style={{background:'#f8fafc',color:'#64748b',fontSize:'10px',padding:'2px 6px',borderRadius:'50px',border:'1px solid #e2e8f0'}}>Y{s.year_of_study}</span>
+                      {s.is_premium&&<span style={{background:'#f5f3ff',color:'#7c3aed',fontSize:'10px',padding:'2px 6px',borderRadius:'50px',border:'1px solid #ddd6fe',fontWeight:'600'}}>Pro</span>}
+                      {s.status==='single'&&<span style={{background:'#f0fdf4',color:'#16a34a',fontSize:'10px',padding:'2px 6px',borderRadius:'50px',border:'1px solid #bbf7d0',fontWeight:'600'}}>💚 Single</span>}
+                      {s.status==='taken'&&<span style={{background:'#fef2f2',color:'#dc2626',fontSize:'10px',padding:'2px 6px',borderRadius:'50px',border:'1px solid #fecaca',fontWeight:'600'}}>❤️ Taken</span>}
+                      {s.status==='complicated'&&<span style={{background:'#fff7ed',color:'#ea580c',fontSize:'10px',padding:'2px 6px',borderRadius:'50px',border:'1px solid #fed7aa',fontWeight:'600'}}>🤔</span>}
+                    </div>
+                  </div>
                 </div>
-
-                <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px',marginBottom:'2px',lineHeight:'1.3'}}>{s.full_name}</p>
-                <p style={{fontSize:'12px',color:'#64748b',marginBottom:'2px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.course}</p>
-                <p style={{fontSize:'12px',color:'#94a3b8',marginBottom:'10px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.university}</p>
-
-                <div style={{display:'flex',gap:'4px',flexWrap:'wrap',marginBottom:'12px'}}>
-                  <span style={{background:'#f8fafc',color:'#64748b',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',border:'1px solid #e2e8f0'}}>Year {s.year_of_study}</span>
-                  {s.is_premium&&<span style={{background:'#f5f3ff',color:'#7c3aed',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',border:'1px solid #ddd6fe',fontWeight:'600'}}>Pro</span>}
-                  {s.status==='single'&&<span style={{background:'#f0fdf4',color:'#16a34a',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',border:'1px solid #bbf7d0',fontWeight:'600'}}>💚 Single</span>}
-                  {s.status==='taken'&&<span style={{background:'#fef2f2',color:'#dc2626',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',border:'1px solid #fecaca',fontWeight:'600'}}>❤️ Taken</span>}
-                  {s.status==='complicated'&&<span style={{background:'#fff7ed',color:'#ea580c',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',border:'1px solid #fed7aa',fontWeight:'600'}}>🤔 Complicated</span>}
-                </div>
-
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'6px'}}>
-                  <Link href={`/profile/${s.id}`} style={{textAlign:'center',border:'1px solid #e2e8f0',color:'#374151',padding:'7px',borderRadius:'8px',fontSize:'12px',fontWeight:'600',background:'#f8fafc'}}>View</Link>
-                  <Link href={`/profile/${s.id}#unlock`} style={{textAlign:'center',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'7px',borderRadius:'8px',fontSize:'12px',fontWeight:'600'}}>Connect</Link>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
+                
