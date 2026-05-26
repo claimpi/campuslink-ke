@@ -44,9 +44,11 @@ export default function HomePage(){
 
   const filtered=students.filter(s=>{
     const q=search.toLowerCase()
-    return(!q||s.full_name?.toLowerCase().includes(q)||s.course?.toLowerCase().includes(q)||s.university?.toLowerCase().includes(q))
-      &&(uni==='All'||s.university===uni)
-      &&(year==='All Years'||String(s.year_of_study)===year)
+    const matchSearch=!q||s.full_name?.toLowerCase().includes(q)||s.course?.toLowerCase().includes(q)||s.university?.toLowerCase().includes(q)
+    const matchUni=uni==='All'||s.university===uni
+    const matchYear=year==='All Years'||String(s.year_of_study)===year
+    const matchStatus=status==='All'||s.status===status
+    return matchSearch&&matchUni&&matchYear&&matchStatus
   })
 
   return(

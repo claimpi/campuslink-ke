@@ -34,10 +34,11 @@ export default function DiscoverPage(){
 
   const filtered = students.filter(s=>{
     const q=search.toLowerCase()
-    return (!q||s.full_name?.toLowerCase().includes(q)||s.course?.toLowerCase().includes(q))
-      &&(uni==='All Universities'||s.university===uni)
-      &&(year==='All Years'||String(s.year_of_study)===year)
-      &&(status==='All'||s.status===status)
+    const matchSearch=!q||s.full_name?.toLowerCase().includes(q)||s.course?.toLowerCase().includes(q)
+    const matchUni=uni==='All Universities'||s.university===uni
+    const matchYear=year==='All Years'||String(s.year_of_study)===year
+    const matchStatus=status==='All'||s.status===status
+    return matchSearch&&matchUni&&matchYear&&matchStatus
   })
 
   const sel:React.CSSProperties={width:'100%',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'10px 14px',fontSize:'14px',outline:'none',background:'#fff',color:'#0f172a'}
