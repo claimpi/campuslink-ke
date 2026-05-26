@@ -120,8 +120,8 @@ export default function HomePage(){
             <div key={s.id} style={{background:'#fff',borderRadius:'14px',border:`1px solid ${s.is_featured?'#ddd6fe':s.is_top_student?'#fed7aa':'#e2e8f0'}`,overflow:'hidden',transition:'transform 0.15s,box-shadow 0.15s'}}
               onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.transform='translateY(-2px)';(e.currentTarget as HTMLElement).style.boxShadow='0 8px 24px rgba(0,0,0,0.09)'}}
               onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.transform='none';(e.currentTarget as HTMLElement).style.boxShadow='none'}}>
-              {s.is_featured&&<div style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',fontSize:'10px',fontWeight:'700',textAlign:'center',padding:'4px',letterSpacing:'0.5px'}}>FEATURED</div>}
-              {s.is_top_student&&!s.is_featured&&<div style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',fontSize:'10px',fontWeight:'700',textAlign:'center',padding:'4px',letterSpacing:'0.5px'}}>TOP STUDENT</div>}
+              {s.is_featured&&<div style={{background:'#fff7ed',color:'#ea580c',fontSize:'10px',fontWeight:'700',textAlign:'center',padding:'4px',letterSpacing:'0.5px',borderBottom:'1px solid #fed7aa'}}>FEATURED</div>}
+              {s.is_top_student&&!s.is_featured&&<div style={{background:'#fff7ed',color:'#ea580c',fontSize:'10px',fontWeight:'700',textAlign:'center',padding:'4px',letterSpacing:'0.5px',borderBottom:'1px solid #fed7aa'}}>TOP STUDENT</div>}
 
               <div style={{padding:'16px'}}>
                 {/* Avatar */}
