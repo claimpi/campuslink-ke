@@ -13,6 +13,7 @@ export default function ProfilePage(){
   const [currentUser,setCurrentUser]=useState<any>(null)
   const [loading,setLoading]=useState(true)
   const [paying,setPaying]=useState(false)
+  const [isUnlocked,setIsUnlocked]=useState(false)
   const [activePhoto,setActivePhoto]=useState<string|null>(null)
   const [copied,setCopied]=useState(false)
 
@@ -30,6 +31,16 @@ export default function ProfilePage(){
   useEffect(()=>{
     const sb=createClient()
     sb.auth.getUser().then(({data:{user}})=>setCurrentUser(user))
+    // Check if already unlocked
+    sb.auth.getUser().then(({data:{user}})=>{
+      if(user){
+        sb.from('unlock_requests').select('id').eq('requester_id',user.id).eq('target_id',id as string).eq('status','approved').maybeSingle()
+          .then(({data})=>{ if(data) setIsUnlocked(true) })
+        // Also check payment_requests
+        sb.from('payment_requests').select('id').eq('user_id',user.id).eq('type','unlock').eq('status','approved').ilike('reference',`%${(id as string).slice(0,6)}%`)
+          .then(({data})=>{ if(data&&data.length>0) setIsUnlocked(true) })
+      }
+    })
     sb.from('profiles').select('*').eq('id',id as string).maybeSingle().then(({data})=>{
       setProfile(data)
       setLoading(false)
@@ -169,10 +180,17 @@ export default function ProfilePage(){
             <div style={{background:'#fff',border:'1px solid #e2e8f0',borderRadius:'14px',padding:'18px'}}>
               <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px',marginBottom:'4px'}}>Connect on WhatsApp</p>
               <p style={{fontSize:'12px',color:'#64748b',marginBottom:'14px',lineHeight:'1.5'}}>Pay KES 20 via M-Pesa to unlock this student's WhatsApp number.</p>
-              <button onClick={handleUnlock} disabled={paying}
-                style={{width:'100%',background:paying?'#94a3b8':'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'12px',borderRadius:'10px',fontWeight:'700',fontSize:'14px',border:'none',cursor:paying?'not-allowed':'pointer',boxShadow:paying?'none':'0 4px 12px rgba(249,115,22,0.3)'}}>
-                {paying?'Redirecting to M-Pesa...':'Unlock for KES 20'}
-              </button>
+              {isUnlocked && profile.whatsapp_number ? (
+                <a href={`https://wa.me/${profile.whatsapp_number.replace(/[^0-9]/g,'')}`} target="_blank" rel="noopener noreferrer"
+                  style={{display:'block',background:'#16a34a',color:'#fff',padding:'13px',borderRadius:'10px',fontWeight:'700',fontSize:'15px',textAlign:'center'}}>
+                  💬 Open WhatsApp — {profile.whatsapp_number}
+                </a>
+              ) : (
+                <button onClick={handleUnlock} disabled={paying}
+                  style={{width:'100%',background:paying?'#94a3b8':'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'12px',borderRadius:'10px',fontWeight:'700',fontSize:'14px',border:'none',cursor:paying?'not-allowed':'pointer',boxShadow:paying?'none':'0 4px 12px rgba(249,115,22,0.3)'}}>
+                  {paying?'Redirecting to M-Pesa...':'Unlock for KES 20'}
+                </button>
+              )}
               {!currentUser&&<p style={{fontSize:'11px',color:'#94a3b8',textAlign:'center',marginTop:'8px'}}>
                 <Link href="/login" style={{color:'#f97316',fontWeight:'600'}}>Sign in</Link> to connect
               </p>}

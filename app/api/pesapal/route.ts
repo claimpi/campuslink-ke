@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     const amount = AMOUNTS[paymentType]
     if (!amount) return NextResponse.json({error:'Invalid payment type'},{status:400})
 
-    const ref = `CL-${paymentType}-${userId.slice(0,6)}-${Date.now()}`
+    const ref = `CL-${paymentType}-${userId.slice(0,6)}-${Date.now()}${targetId ? '-t'+targetId.slice(0,6) : ''}`
 
     // Save payment record
     await sb.from('payment_requests').insert([{
