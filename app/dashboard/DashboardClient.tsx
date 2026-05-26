@@ -13,6 +13,7 @@ export default function DashboardClient(){
   const [user,setUser]=useState<any>(null)
   const [profile,setProfile]=useState<any>(null)
   const [loading,setLoading]=useState(true)
+  const [friendRequests,setFriendRequests]=useState<any[]>([])
 
   useEffect(()=>{
     async function load(){
@@ -106,6 +107,40 @@ export default function DashboardClient(){
           </Link>
         ))}
       </div>
+
+      {/* Friend Requests */}
+      {friendRequests.length>0&&(
+        <div style={{background:'#fff',borderRadius:'14px',border:'1px solid #e2e8f0',padding:'20px',marginBottom:'16px'}}>
+          <p style={{fontWeight:'700',color:'#0f172a',fontSize:'15px',marginBottom:'14px'}}>
+            Friend Requests <span style={{background:'#f97316',color:'#fff',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',marginLeft:'6px'}}>{friendRequests.length}</span>
+          </p>
+          <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+            {friendRequests.map((req:any)=>(
+              <div key={req.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px',flexWrap:'wrap'}}>
+                <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
+                  <div style={{width:'38px',height:'38px',borderRadius:'50%',background:'#fff7ed',color:'#ea580c',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'14px',flexShrink:0}}>
+                    {(req.sender?.full_name||'?').split(' ').map((x:string)=>x[0]).join('').toUpperCase().slice(0,2)}
+                  </div>
+                  <div>
+                    <p style={{fontWeight:'600',color:'#0f172a',fontSize:'14px'}}>{req.sender?.full_name}</p>
+                    <p style={{fontSize:'12px',color:'#94a3b8'}}>{req.sender?.university}</p>
+                  </div>
+                </div>
+                <div style={{display:'flex',gap:'6px'}}>
+                  <button onClick={async()=>{
+                    await createClient().from('friend_requests').update({status:'accepted'}).eq('id',req.id)
+                    setFriendRequests(fr=>fr.filter(r=>r.id!==req.id))
+                  }} style={{background:'#16a34a',color:'#fff',border:'none',borderRadius:'8px',padding:'7px 14px',fontSize:'13px',fontWeight:'700',cursor:'pointer'}}>Accept</button>
+                  <button onClick={async()=>{
+                    await createClient().from('friend_requests').update({status:'declined'}).eq('id',req.id)
+                    setFriendRequests(fr=>fr.filter(r=>r.id!==req.id))
+                  }} style={{background:'#fef2f2',border:'1px solid #fecaca',color:'#dc2626',borderRadius:'8px',padding:'7px 14px',fontSize:'13px',fontWeight:'700',cursor:'pointer'}}>Decline</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Referral Section */}
       {profile?.referral_code&&(
