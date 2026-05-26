@@ -205,6 +205,15 @@ export default function EditProfile(){
           </div>
         </div>
         <div>
+          <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Relationship Status</label>
+          <select value={form.status} onChange={set('status')} style={inp}>
+            <option value="">Prefer not to say</option>
+            <option value="single">💚 Single</option>
+            <option value="taken">❤️ Taken</option>
+            <option value="complicated">🤔 It's complicated</option>
+          </select>
+        </div>
+        <div>
           <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Bio</label>
           <textarea value={form.bio} onChange={set('bio')} rows={3} placeholder="Tell other students about yourself..." style={{...inp,resize:'none'}} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
         </div>
