@@ -64,7 +64,7 @@ export default function Navbar() {
         <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
           {/* Dark mode toggle */}
           <button onClick={toggle} title={dark?'Light mode':'Dark mode'}
-            style={{background:'none',border:'1px solid var(--border)',borderRadius:'8px',padding:'6px 10px',cursor:'pointer',fontSize:'16px',color:'var(--text2)',background:'var(--bg2)',transition:'all 0.2s'}}>
+            style={{background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:'8px',padding:'6px 10px',cursor:'pointer',fontSize:'16px',color:'var(--text2)',transition:'all 0.2s'}}>
             {dark?'☀️':'🌙'}
           </button>
 
