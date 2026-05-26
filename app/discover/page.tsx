@@ -94,10 +94,13 @@ export default function DiscoverPage(){
                   {s.is_top_student&&!s.is_featured&&<div style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',fontSize:'11px',fontWeight:'700',textAlign:'center',padding:'5px',letterSpacing:'0.5px'}}>TOP STUDENT</div>}
                   <div style={{padding:'18px'}}>
                     <div style={{display:'flex',gap:'12px',alignItems:'flex-start',marginBottom:'12px'}}>
-                      {s.avatar_url
-                        ?<img src={s.avatar_url} style={{width:'44px',height:'44px',borderRadius:'50%',objectFit:'cover',flexShrink:0}}/>
-                        :<div style={{width:'44px',height:'44px',borderRadius:'50%',background:s.is_premium?'#f5f3ff':'#fff7ed',color:s.is_premium?'#7c3aed':'#ea580c',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'14px',flexShrink:0}}>{initials(s.full_name||'?')}</div>
-                      }
+                      <div style={{position:'relative',flexShrink:0}}>
+                        {s.avatar_url
+                          ?<img src={s.avatar_url} style={{width:'44px',height:'44px',borderRadius:'50%',objectFit:'cover'}}/>
+                          :<div style={{width:'44px',height:'44px',borderRadius:'50%',background:s.is_premium?'#f5f3ff':'#fff7ed',color:s.is_premium?'#7c3aed':'#ea580c',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'14px'}}>{initials(s.full_name||'?')}</div>
+                        }
+                        {isOnline(s.last_seen)&&<div style={{position:'absolute',bottom:'1px',right:'1px',width:'12px',height:'12px',background:'#22c55e',borderRadius:'50%',border:'2px solid #fff',zIndex:1}}/>}
+                      </div>
                       <div>
                         <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px',lineHeight:'1.3'}}>{s.full_name}</p>
                         <div style={{display:'flex',gap:'4px',flexWrap:'wrap',marginTop:'5px'}}>
