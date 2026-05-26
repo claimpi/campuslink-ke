@@ -94,7 +94,7 @@ export default function HomePage(){
         </div>
       ):(
         <>
-          <style>{`@media(max-width:640px){.sgrid{grid-template-columns:1fr 1fr!important;gap:8px!important}.scard-inner{padding:10px!important}.sname{font-size:12px!important}.sbtn{padding:6px!important;font-size:11px!important}.shide{display:none!important}}`}</style>
+          <style>{`@media(max-width:640px){.sgrid{grid-template-columns:1fr 1fr!important;gap:8px!important}.scard-inner{padding:8px!important}.sname{font-size:11px!important}.sbtn{padding:5px!important;font-size:11px!important}.shide{display:none!important}.savatar{width:38px!important;height:38px!important;font-size:13px!important}}`}</style>
           {filtered.length===0?(
             <div style={{textAlign:'center',padding:'60px 20px',background:'#fff',borderRadius:'16px',border:'1px solid #e2e8f0'}}>
               <p style={{fontSize:'16px',fontWeight:'600',color:'#374151',marginBottom:'6px'}}>No students found</p>
@@ -115,8 +115,8 @@ export default function HomePage(){
                     <div style={{display:'flex',gap:'10px',alignItems:'flex-start',marginBottom:'10px'}}>
                       <div style={{position:'relative',flexShrink:0}}>
                         {s.avatar_url
-                          ?<img src={s.avatar_url} style={{width:'48px',height:'48px',borderRadius:'10px',objectFit:'cover'}}/>
-                          :<div style={{width:'48px',height:'48px',borderRadius:'10px',background:s.is_top_student?'#fff7ed':'#f1f5f9',color:s.is_top_student?'#ea580c':'#64748b',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'15px'}}>{initials(s.full_name)}</div>
+                          ?<img src={s.avatar_url} className="savatar" style={{width:'48px',height:'48px',borderRadius:'10px',objectFit:'cover'}}/>
+                          :<div className="savatar" style={{width:'48px',height:'48px',borderRadius:'10px',background:s.is_top_student?'#fff7ed':'#f1f5f9',color:s.is_top_student?'#ea580c':'#64748b',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'15px'}}>{initials(s.full_name)}</div>
                         }
                         {isOnline(s.last_seen)&&<div style={{position:'absolute',bottom:'1px',right:'1px',width:'10px',height:'10px',background:'#22c55e',borderRadius:'50%',border:'2px solid #fff'}}/>}
                       </div>
