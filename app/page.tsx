@@ -94,13 +94,13 @@ export default function HomePage(){
         </div>
       ):(
         <>
+          <style>{`@media(max-width:640px){.sgrid{grid-template-columns:1fr 1fr!important;gap:8px!important}.scard-inner{padding:10px!important}.sname{font-size:12px!important}.sbtn{padding:6px!important;font-size:11px!important}.shide{display:none!important}}`}</style>
           {filtered.length===0?(
             <div style={{textAlign:'center',padding:'60px 20px',background:'#fff',borderRadius:'16px',border:'1px solid #e2e8f0'}}>
               <p style={{fontSize:'16px',fontWeight:'600',color:'#374151',marginBottom:'6px'}}>No students found</p>
               <p style={{fontSize:'14px',color:'#94a3b8'}}>Try a different search or filter</p>
             </div>
           ):(
-            <style>{`@media(max-width:640px){.sgrid{grid-template-columns:1fr 1fr!important;gap:8px!important}.scard-inner{padding:10px!important}.sname{font-size:12px!important}.sbtn{padding:6px!important;font-size:11px!important}.shide{display:none!important}}`}</style>
             <div className="sgrid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:'12px'}}>
               {filtered.map(s=>(
                 <div key={s.id} style={{background:'#fff',borderRadius:'14px',border:`1px solid ${s.is_featured?'#fed7aa':s.is_top_student?'#fed7aa':'#e2e8f0'}`,overflow:'hidden',transition:'transform 0.15s,box-shadow 0.15s'}}
