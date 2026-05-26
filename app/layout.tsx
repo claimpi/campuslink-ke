@@ -3,6 +3,7 @@ import Navbar from '@/components/layout/Navbar'
 import BottomNav from '@/components/layout/BottomNav'
 import ToastContainer from '@/components/Toast'
 import InstallBanner from '@/components/InstallBanner'
+import PushNotifications from '@/components/PushNotifications'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <BottomNav />
         <ToastContainer />
         <InstallBanner />
+        <PushNotifications />
         <style>{`@media(max-width:767px){.desktop-footer{display:none}}`}</style>
       </body>
     </html>
