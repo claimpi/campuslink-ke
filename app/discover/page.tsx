@@ -26,11 +26,15 @@ export default function DiscoverPage(){
   const [status,setStatus]=useState('All')
 
   useEffect(()=>{
-    createClient().from('profiles').select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_top_student,interests,status,last_seen')
+    const load = () => createClient().from('profiles')
+      .select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_top_student,interests,status,last_seen')
       .order('is_featured',{ascending:false}).then(({data,error})=>{
-        setStudents(!error&&data&&data.length>0?data:MOCK)
+        if(!error&&data&&data.length>0) setStudents(data)
         setLoading(false)
       })
+    load()
+    const interval = setInterval(load, 30000)
+    return () => clearInterval(interval)
   },[])
 
   const filtered = students.filter(s=>{

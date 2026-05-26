@@ -33,17 +33,24 @@ export default function HomePage(){
 
   const [announcements,setAnnouncements]=useState<any[]>([])
 
-  useEffect(()=>{
-    createClient().from('announcements').select('*').order('created_at',{ascending:false}).limit(3)
-      .then(({data})=>{ if(data&&data.length>0) setAnnouncements(data) })
+  const loadStudents = () => {
     createClient().from('profiles')
       .select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_top_student,interests,status,last_seen')
       .order('is_featured',{ascending:false})
       .order('is_premium',{ascending:false})
       .then(({data,error})=>{
-        setStudents(!error&&data&&data.length>0?data:MOCK)
+        if(!error&&data&&data.length>0) setStudents(data)
         setLoading(false)
       })
+  }
+
+  useEffect(()=>{
+    createClient().from('announcements').select('*').order('created_at',{ascending:false}).limit(3)
+      .then(({data})=>{ if(data&&data.length>0) setAnnouncements(data) })
+    loadStudents()
+    // Refresh every 30 seconds to update online dots
+    const interval = setInterval(loadStudents, 30000)
+    return () => clearInterval(interval)
   },[])
 
   const filtered=students.filter(s=>{
