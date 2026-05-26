@@ -5,7 +5,18 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'CampusLink KE — Kenyan Student Network',
-  description: 'Connect with students across Kenyan universities.',
+  description: 'Connect with students across Kenyan universities. Find study partners, join WhatsApp groups and build your campus network.',
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/icon-16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/icon-32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/icon-192.png' },
+    ],
+    shortcut: '/favicon.ico',
+  },
   manifest: '/manifest.json',
   themeColor: '#f97316',
   viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
