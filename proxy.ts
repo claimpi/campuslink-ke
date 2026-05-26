@@ -12,10 +12,14 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  // Protect dashboard - check for supabase auth cookie
+  // Protect dashboard - check for any auth-related cookie
   if (pathname.startsWith('/dashboard')) {
-    const hasSession = request.cookies.getAll().some(c =>
-      c.name.includes('supabase') || c.name.includes('sb-')
+    const cookies = request.cookies.getAll()
+    const hasSession = cookies.some(c =>
+      c.name.includes('supabase') ||
+      c.name.includes('sb-') ||
+      c.name.includes('campuslink-auth') ||
+      c.name.startsWith('sb.')
     )
     if (!hasSession) {
       return NextResponse.redirect(new URL('/login', request.url))

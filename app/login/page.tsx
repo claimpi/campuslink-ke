@@ -14,7 +14,7 @@ export default function LoginPage() {
   // If already logged in, redirect to dashboard
   useEffect(()=>{
     createClient().auth.getSession().then(({data:{session}})=>{
-      if(session) window.location.href='/dashboard'
+      if(session) window.location.href='/'
     })
   },[])
 
