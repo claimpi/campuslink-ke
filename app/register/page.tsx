@@ -1,23 +1,26 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 
-const UNIVERSITIES = ['Africa Nazarene University','Dedan Kimathi University','Egerton University','JKUAT','Kenyatta University','Maseno University','Moi University','Strathmore University','Technical University of Kenya','University of Nairobi','University of Eldoret','Multimedia University']
-const COURSES = ['Accounting','Architecture','Business Administration','Civil Engineering','Computer Science','Electrical Engineering','Education','Finance','Journalism','Law','Marketing','Mathematics','Medicine','Nursing','Pharmacy','Psychology','Software Engineering']
+const UNIS=['Africa Nazarene University','Dedan Kimathi University','Egerton University','JKUAT','Kenyatta University','Maseno University','Moi University','Strathmore University','Technical University of Kenya','University of Nairobi','University of Eldoret','Multimedia University']
+const COURSES=['Accounting','Architecture','Business Administration','Civil Engineering','Computer Science','Electrical Engineering','Education','Finance','Journalism','Law','Marketing','Mathematics','Medicine','Nursing','Pharmacy','Psychology','Software Engineering']
 
 export default function RegisterPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [form, setForm] = useState({
-    name:'', email:'', password:'', confirmPassword:'',
-    university:'', course:'', year:'1', whatsapp:'', interests:'', bio:''
-  })
+  const [refCode, setRefCode] = useState('')
+  const [form, setForm] = useState({name:'',email:'',password:'',confirmPassword:'',university:'',course:'',year:'1',whatsapp:'',interests:'',bio:''})
   const set = (k:string) => (e:any) => setForm(f=>({...f,[k]:e.target.value}))
-  const inp = {width:'100%',border:'1.5px solid #e5e7eb',borderRadius:'12px',padding:'12px 16px',fontSize:'14px',outline:'none',boxSizing:'border-box' as const}
+  const inp:React.CSSProperties = {width:'100%',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'11px 14px',fontSize:'14px',outline:'none',background:'#fff',boxSizing:'border-box',color:'#0f172a'}
+
+  useEffect(() => {
+    const stored = localStorage.getItem('ref_code')
+    if (stored) setRefCode(stored)
+  }, [])
 
   function nextStep(e: React.FormEvent) {
     e.preventDefault()
@@ -30,23 +33,30 @@ export default function RegisterPage() {
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true); setError('')
-    const supabase = createClient()
+    const sb = createClient()
     try {
-      // Step 1: Sign up auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const { data: authData, error: authError } = await sb.auth.signUp({
         email: form.email.trim(),
         password: form.password,
-        options: {
-          data: { full_name: form.name },
-          emailRedirectTo: 'https://campuslink-ke.vercel.app/auth/callback'
-        }
+        options: { data: { full_name: form.name }, emailRedirectTo: 'https://campuslink-ke.vercel.app/auth/callback' }
       })
       if (authError) { setError(authError.message); setLoading(false); return }
-      if (!authData.user) { setError('Registration failed. Try again.'); setLoading(false); return }
+      if (!authData.user) { setError('Registration failed.'); setLoading(false); return }
 
-      // Step 2: Create profile using upsert (handles both insert and update)
       const interests = form.interests.split(',').map(i=>i.trim()).filter(Boolean)
-      const { error: profileError } = await supabase.from('profiles').upsert({
+      const refCode_upper = refCode?.toUpperCase()
+
+      // Find referrer
+      let referrerId = null
+      if (refCode_upper) {
+        const { data: referrer } = await sb.from('profiles').select('id').eq('referral_code', refCode_upper).maybeSingle()
+        if (referrer) referrerId = referrer.id
+      }
+
+      // Generate unique referral code for new user
+      const newRefCode = authData.user.id.replace(/-/g,'').substring(0,8).toUpperCase()
+
+      await sb.from('profiles').upsert({
         id: authData.user.id,
         email: form.email.trim(),
         full_name: form.name,
@@ -56,16 +66,23 @@ export default function RegisterPage() {
         whatsapp_number: form.whatsapp,
         bio: form.bio,
         interests,
-        is_premium: false,
-        is_featured: false,
-        is_top_student: false,
+        referral_code: newRefCode,
+        referred_by: referrerId,
+        referral_earnings: 0,
       }, { onConflict: 'id' })
 
-      if (profileError) {
-        console.error('Profile error:', profileError.message)
-        // Don't block - user is created, profile can be filled later
+      // Credit referrer KES 10
+      if (referrerId) {
+        await sb.from('referrals').insert([{ referrer_id: referrerId, referred_id: authData.user.id, amount: 10, status: 'credited' }])
+        await sb.rpc('increment_referral_earnings', { user_id: referrerId, amount: 10 }).catch(()=>{
+          // Fallback if RPC not set up
+          sb.from('profiles').select('referral_earnings').eq('id', referrerId).single().then(({data}) => {
+            sb.from('profiles').update({ referral_earnings: (data?.referral_earnings||0) + 10 }).eq('id', referrerId)
+          })
+        })
       }
 
+      localStorage.removeItem('ref_code')
       router.push('/dashboard?welcome=true')
     } catch (err: any) {
       setError(err.message || 'Something went wrong.')
@@ -74,52 +91,51 @@ export default function RegisterPage() {
   }
 
   return (
-    <div style={{minHeight:'85vh',display:'flex',alignItems:'center',justifyContent:'center',padding:'24px',background:'linear-gradient(135deg,#fff7ed,#faf5ff)'}}>
-      <div style={{width:'100%',maxWidth:'500px',background:'white',borderRadius:'24px',boxShadow:'0 20px 60px rgba(0,0,0,0.1)',padding:'40px',border:'1px solid #f3f4f6'}}>
+    <div style={{minHeight:'85vh',display:'flex',alignItems:'center',justifyContent:'center',padding:'24px',background:'#f8fafc'}}>
+      <div style={{width:'100%',maxWidth:'500px',background:'#fff',borderRadius:'20px',boxShadow:'0 4px 24px rgba(0,0,0,0.08)',padding:'36px',border:'1px solid #e2e8f0'}}>
         <div style={{textAlign:'center',marginBottom:'24px'}}>
-          <div style={{width:'52px',height:'52px',background:'linear-gradient(135deg,#f97316,#ea580c)',borderRadius:'14px',display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontWeight:'900',fontSize:'18px',margin:'0 auto 12px',boxShadow:'0 8px 20px rgba(249,115,22,0.35)'}}>CL</div>
-          <h1 style={{fontSize:'24px',fontWeight:'900',color:'#111827',marginBottom:'4px'}}>Join CampusLink KE</h1>
-          <p style={{color:'#9ca3af',fontSize:'13px'}}>Free forever · Connect with students across Kenya</p>
+          <div style={{width:'44px',height:'44px',background:'linear-gradient(135deg,#f97316,#ea580c)',borderRadius:'12px',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:'900',fontSize:'16px',margin:'0 auto 12px'}}>CL</div>
+          <h1 style={{fontSize:'22px',fontWeight:'800',color:'#0f172a',marginBottom:'4px'}}>Create Account</h1>
+          <p style={{color:'#94a3b8',fontSize:'13px'}}>Join CampusLink KE — free forever</p>
+          {refCode&&<div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'8px',padding:'7px 12px',marginTop:'10px',fontSize:'12px',color:'#16a34a',fontWeight:'600'}}>Referral code applied: {refCode}</div>}
         </div>
 
-        {/* Progress */}
-        <div style={{display:'flex',gap:'6px',marginBottom:'8px'}}>
-          {[1,2].map(n=><div key={n} style={{flex:1,height:'4px',borderRadius:'2px',background:step>=n?'linear-gradient(135deg,#f97316,#ea580c)':'#f3f4f6',transition:'all 0.3s'}}/>)}
+        <div style={{display:'flex',gap:'6px',marginBottom:'20px'}}>
+          {[1,2].map(n=><div key={n} style={{flex:1,height:'3px',borderRadius:'2px',background:step>=n?'linear-gradient(135deg,#f97316,#ea580c)':'#f1f5f9',transition:'all 0.3s'}}/>)}
         </div>
-        <p style={{fontSize:'12px',color:'#9ca3af',textAlign:'center',marginBottom:'20px'}}>Step {step} of 2 — {step===1?'Account Details':'Your Profile'}</p>
 
-        {error && <div style={{background:'#fef2f2',border:'1px solid #fecaca',borderRadius:'10px',padding:'11px 14px',marginBottom:'14px',color:'#dc2626',fontSize:'13px'}}>⚠️ {error}</div>}
+        {error&&<div style={{background:'#fef2f2',border:'1px solid #fecaca',borderRadius:'10px',padding:'10px 14px',marginBottom:'14px',color:'#dc2626',fontSize:'13px'}}>{error}</div>}
 
-        {step === 1 && (
+        {step===1&&(
           <form onSubmit={nextStep} style={{display:'flex',flexDirection:'column',gap:'14px'}}>
             <div>
               <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Full Name *</label>
-              <input value={form.name} onChange={set('name')} placeholder="John Kamau" required style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e5e7eb'}/>
+              <input value={form.name} onChange={set('name')} placeholder="John Kamau" required style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
             </div>
             <div>
               <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Email *</label>
-              <input type="email" value={form.email} onChange={set('email')} placeholder="john@email.com" required style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e5e7eb'}/>
+              <input type="email" value={form.email} onChange={set('email')} placeholder="john@email.com" required style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
             </div>
             <div>
               <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Password *</label>
-              <input type="password" value={form.password} onChange={set('password')} placeholder="Min 6 characters" required style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e5e7eb'}/>
+              <input type="password" value={form.password} onChange={set('password')} placeholder="Min 6 characters" required style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
             </div>
             <div>
               <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Confirm Password *</label>
-              <input type="password" value={form.confirmPassword} onChange={set('confirmPassword')} placeholder="Repeat password" required style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e5e7eb'}/>
+              <input type="password" value={form.confirmPassword} onChange={set('confirmPassword')} placeholder="Repeat password" required style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
             </div>
-            <button type="submit" style={{width:'100%',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'white',padding:'13px',borderRadius:'12px',fontWeight:'700',fontSize:'15px',border:'none',cursor:'pointer',boxShadow:'0 6px 16px rgba(249,115,22,0.3)',marginTop:'4px'}}>Continue →</button>
+            <button type="submit" style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'13px',borderRadius:'10px',fontWeight:'700',fontSize:'15px',border:'none',cursor:'pointer',marginTop:'4px'}}>Continue →</button>
           </form>
         )}
 
-        {step === 2 && (
+        {step===2&&(
           <form onSubmit={handleRegister} style={{display:'flex',flexDirection:'column',gap:'13px'}}>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
               <div style={{gridColumn:'1/-1'}}>
                 <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>University *</label>
-                <select value={form.university} onChange={set('university')} required style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e5e7eb'}>
+                <select value={form.university} onChange={set('university')} required style={inp}>
                   <option value="">Select your university...</option>
-                  {UNIVERSITIES.map(u=><option key={u}>{u}</option>)}
+                  {UNIS.map(u=><option key={u}>{u}</option>)}
                 </select>
               </div>
               <div>
@@ -136,29 +152,29 @@ export default function RegisterPage() {
                 </select>
               </div>
               <div style={{gridColumn:'1/-1'}}>
-                <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>WhatsApp Number</label>
-                <input value={form.whatsapp} onChange={set('whatsapp')} placeholder="+254712345678" style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e5e7eb'}/>
+                <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>WhatsApp</label>
+                <input value={form.whatsapp} onChange={set('whatsapp')} placeholder="+254712345678" style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
               </div>
               <div style={{gridColumn:'1/-1'}}>
-                <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Interests <span style={{fontWeight:'400',color:'#9ca3af'}}>(comma separated)</span></label>
-                <input value={form.interests} onChange={set('interests')} placeholder="football, coding, music" style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e5e7eb'}/>
+                <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Interests <span style={{fontWeight:'400',color:'#94a3b8'}}>(comma separated)</span></label>
+                <input value={form.interests} onChange={set('interests')} placeholder="football, coding, music" style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
               </div>
               <div style={{gridColumn:'1/-1'}}>
-                <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Bio <span style={{fontWeight:'400',color:'#9ca3af'}}>(optional)</span></label>
-                <textarea value={form.bio} onChange={set('bio')} placeholder="Tell others about yourself..." rows={2} style={{...inp,resize:'none' as const}}/>
+                <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Bio <span style={{fontWeight:'400',color:'#94a3b8'}}>(optional)</span></label>
+                <textarea value={form.bio} onChange={set('bio')} rows={2} placeholder="Tell others about yourself..." style={{...inp,resize:'none'}}/>
               </div>
             </div>
-            <div style={{display:'flex',gap:'10px',marginTop:'4px'}}>
-              <button type="button" onClick={()=>{setStep(1);setError('')}} style={{flex:1,border:'1.5px solid #e5e7eb',background:'white',color:'#6b7280',padding:'12px',borderRadius:'12px',fontWeight:'600',fontSize:'14px',cursor:'pointer'}}>← Back</button>
-              <button type="submit" disabled={loading} style={{flex:2,background:loading?'#fdba74':'linear-gradient(135deg,#f97316,#ea580c)',color:'white',padding:'12px',borderRadius:'12px',fontWeight:'700',fontSize:'14px',border:'none',cursor:loading?'not-allowed':'pointer',boxShadow:'0 6px 16px rgba(249,115,22,0.3)'}}>
-                {loading?'⏳ Creating account...':'🚀 Create Account'}
+            <div style={{display:'flex',gap:'8px',marginTop:'4px'}}>
+              <button type="button" onClick={()=>{setStep(1);setError('')}} style={{flex:1,border:'1.5px solid #e2e8f0',background:'#fff',color:'#64748b',padding:'12px',borderRadius:'10px',fontWeight:'600',fontSize:'14px',cursor:'pointer'}}>← Back</button>
+              <button type="submit" disabled={loading} style={{flex:2,background:loading?'#94a3b8':'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'12px',borderRadius:'10px',fontWeight:'700',fontSize:'14px',border:'none',cursor:loading?'not-allowed':'pointer'}}>
+                {loading?'Creating account...':'Create Account'}
               </button>
             </div>
           </form>
         )}
 
-        <p style={{textAlign:'center',fontSize:'14px',color:'#9ca3af',marginTop:'18px'}}>
-          Already have an account? <Link href="/login" style={{color:'#f97316',fontWeight:'700',textDecoration:'none'}}>Sign In</Link>
+        <p style={{textAlign:'center',fontSize:'13px',color:'#94a3b8',marginTop:'18px'}}>
+          Already have an account? <Link href="/login" style={{color:'#f97316',fontWeight:'700'}}>Sign In</Link>
         </p>
       </div>
     </div>

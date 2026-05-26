@@ -107,6 +107,41 @@ export default function DashboardClient(){
         ))}
       </div>
 
+      {/* Referral Section */}
+      {profile?.referral_code&&(
+        <div style={{background:'#fff',borderRadius:'14px',border:'1px solid #e2e8f0',padding:'20px',marginBottom:'16px'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'12px',marginBottom:'14px'}}>
+            <div>
+              <p style={{fontWeight:'700',color:'#0f172a',fontSize:'15px',marginBottom:'2px'}}>Your Referral Link</p>
+              <p style={{fontSize:'12px',color:'#94a3b8'}}>Earn KES 10 for every student who joins using your link</p>
+            </div>
+            <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'10px',padding:'8px 16px',textAlign:'center'}}>
+              <p style={{fontSize:'20px',fontWeight:'900',color:'#16a34a',lineHeight:'1'}}>KES {profile.referral_earnings||0}</p>
+              <p style={{fontSize:'11px',color:'#16a34a',fontWeight:'600'}}>Earnings</p>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:'8px'}}>
+            <div style={{flex:1,background:'#f8fafc',border:'1px solid #e2e8f0',borderRadius:'8px',padding:'10px 14px',fontSize:'13px',color:'#374151',fontFamily:'monospace',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+              campuslink-ke.vercel.app/ref/{profile.referral_code}
+            </div>
+            <button onClick={()=>{navigator.clipboard.writeText(`https://campuslink-ke.vercel.app/ref/${profile.referral_code}`);alert('Link copied!')}}
+              style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'10px 18px',borderRadius:'8px',fontWeight:'600',fontSize:'13px',border:'none',cursor:'pointer',flexShrink:0}}>
+              Copy
+            </button>
+          </div>
+          {(profile.referral_earnings||0) > 0 && (
+            <div style={{marginTop:'12px',background:'#f0fdf4',borderRadius:'8px',padding:'10px 14px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+              <p style={{fontSize:'13px',color:'#16a34a',fontWeight:'600'}}>You have KES {profile.referral_earnings} in earnings</p>
+              <a href={`https://wa.me/254790166252?text=Hello%20CampusLink%20KE%2C%20I%20want%20to%20withdraw%20my%20referral%20earnings%20of%20KES%20${profile.referral_earnings}.%20My%20referral%20code%20is%20${profile.referral_code}`}
+                target="_blank" rel="noopener noreferrer"
+                style={{background:'#16a34a',color:'#fff',padding:'7px 14px',borderRadius:'7px',fontSize:'12px',fontWeight:'700'}}>
+                Withdraw via WhatsApp
+              </a>
+            </div>
+          )}
+        </div>
+      )}
+
       {!profile?.is_premium&&(
         <div style={{background:'#0f172a',borderRadius:'14px',padding:'20px 24px',color:'#fff',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'12px'}}>
           <div>
