@@ -90,7 +90,7 @@ export default function DiscoverPage(){
                 <div key={s.id} style={{background:'#fff',borderRadius:'14px',border:`1px solid ${s.is_featured?'#c4b5fd':s.is_top_student?'#fed7aa':'#e2e8f0'}`,overflow:'hidden',transition:'box-shadow 0.2s,transform 0.2s'}}
                   onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.boxShadow='0 8px 24px rgba(0,0,0,0.1)';(e.currentTarget as HTMLElement).style.transform='translateY(-2px)'}}
                   onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.boxShadow='none';(e.currentTarget as HTMLElement).style.transform='none'}}>
-                  {s.is_featured&&<div style={{background:'linear-gradient(135deg,#7c3aed,#6d28d9)',color:'#fff',fontSize:'11px',fontWeight:'700',textAlign:'center',padding:'5px',letterSpacing:'0.5px'}}>FEATURED</div>}
+                  {s.is_featured&&<div style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',fontSize:'11px',fontWeight:'700',textAlign:'center',padding:'5px',letterSpacing:'0.5px'}}>FEATURED</div>}
                   {s.is_top_student&&!s.is_featured&&<div style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',fontSize:'11px',fontWeight:'700',textAlign:'center',padding:'5px',letterSpacing:'0.5px'}}>TOP STUDENT</div>}
                   <div style={{padding:'18px'}}>
                     <div style={{display:'flex',gap:'12px',alignItems:'flex-start',marginBottom:'12px'}}>
