@@ -68,7 +68,7 @@ export default function DashboardClient(){
             <p style={{fontWeight:'800',fontSize:'18px',marginBottom:'3px'}}>Welcome, {name.split(' ')[0]}!</p>
             <p style={{fontSize:'13px',opacity:0.9}}>Complete your profile to appear in search results.</p>
           </div>
-          <Link href="/dashboard/profile" style={{background:'#fff',color:'#f97316',padding:'9px 20px',borderRadius:'8px',fontWeight:'700',fontSize:'13px'}}>Complete Profile</Link>
+          <Link href="/dashboard/profile" style={{background:'var(--card-bg)',color:'#f97316',padding:'9px 20px',borderRadius:'8px',fontWeight:'700',fontSize:'13px'}}>Complete Profile</Link>
         </div>
       )}
 
@@ -79,8 +79,8 @@ export default function DashboardClient(){
             :<div style={{width:'52px',height:'52px',borderRadius:'50%',background:'linear-gradient(135deg,#fff7ed,#fed7aa)',color:'#ea580c',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'18px',border:'2px solid #fed7aa'}}>{initials(name)}</div>
           }
           <div>
-            <h1 style={{fontSize:'20px',fontWeight:'800',color:'#0f172a',marginBottom:'2px'}}>Hi, {name.split(' ')[0]}</h1>
-            <p style={{color:'#94a3b8',fontSize:'13px'}}>{profile?.university||'Add your university'}</p>
+            <h1 style={{fontSize:'20px',fontWeight:'800',color:'var(--text)',marginBottom:'2px'}}>Hi, {name.split(' ')[0]}</h1>
+            <p style={{color:'var(--text3)',fontSize:'13px'}}>{profile?.university||'Add your university'}</p>
           </div>
         </div>
         <Link href="/dashboard/profile" style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'10px 20px',borderRadius:'8px',fontWeight:'600',fontSize:'13px',boxShadow:'0 4px 12px rgba(249,115,22,0.3)'}}>Edit Profile</Link>
@@ -94,20 +94,20 @@ export default function DashboardClient(){
           {label:'Featured',value:profile?.is_featured?'Yes':'No',bg:'#fefce8',color:'#ca8a04'},
           {label:'Top Student',value:profile?.is_top_student?'Yes':'No',bg:'#f0fdf4',color:'#16a34a'},
         ].map(s=>(
-          <div key={s.label} style={{background:'#fff',borderRadius:'12px',border:'1px solid #e2e8f0',padding:'16px'}}>
-            <div style={{fontSize:'20px',fontWeight:'900',color:'#0f172a',marginBottom:'2px'}}>{String(s.value)}</div>
-            <div style={{fontSize:'12px',color:'#94a3b8'}}>{s.label}</div>
+          <div key={s.label} style={{background:'var(--card-bg)',borderRadius:'12px',border:'1px solid var(--border)',padding:'16px'}}>
+            <div style={{fontSize:'20px',fontWeight:'900',color:'var(--text)',marginBottom:'2px'}}>{String(s.value)}</div>
+            <div style={{fontSize:'12px',color:'var(--text3)'}}>{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* Completeness */}
-      <div style={{background:'#fff',borderRadius:'14px',border:'1px solid #e2e8f0',padding:'20px',marginBottom:'20px'}}>
+      <div style={{background:'var(--card-bg)',borderRadius:'14px',border:'1px solid var(--border)',padding:'20px',marginBottom:'20px'}}>
         <div style={{display:'flex',justifyContent:'space-between',marginBottom:'8px'}}>
-          <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px'}}>Profile Completeness</p>
+          <p style={{fontWeight:'700',color:'var(--text)',fontSize:'14px'}}>Profile Completeness</p>
           <p style={{fontWeight:'700',color:'#f97316',fontSize:'14px'}}>{pct}%</p>
         </div>
-        <div style={{background:'#f1f5f9',borderRadius:'50px',height:'6px',overflow:'hidden',marginBottom:'12px'}}>
+        <div style={{background:'var(--bg3)',borderRadius:'50px',height:'6px',overflow:'hidden',marginBottom:'12px'}}>
           <div style={{height:'100%',background:'linear-gradient(135deg,#f97316,#ea580c)',borderRadius:'50px',width:`${pct}%`,transition:'width 0.5s'}}/>
         </div>
         <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
@@ -120,17 +120,17 @@ export default function DashboardClient(){
       {/* Actions */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:'12px',marginBottom:'20px'}}>
         {[{href:'/dashboard/profile',t:'Edit Profile',d:'Update info & photo'},{href:'/discover',t:'Browse Students',d:'Find connections'},{href:'/groups',t:'WhatsApp Groups',d:'Join group chats'},{href:'/pricing',t:'Upgrade',d:'Premium & badges'}].map(a=>(
-          <Link key={a.href} href={a.href} style={{background:'#fff',borderRadius:'12px',border:'1px solid #e2e8f0',padding:'18px',display:'block'}}>
-            <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px',marginBottom:'3px'}}>{a.t}</p>
-            <p style={{fontSize:'12px',color:'#94a3b8'}}>{a.d}</p>
+          <Link key={a.href} href={a.href} style={{background:'var(--card-bg)',borderRadius:'12px',border:'1px solid var(--border)',padding:'18px',display:'block'}}>
+            <p style={{fontWeight:'700',color:'var(--text)',fontSize:'14px',marginBottom:'3px'}}>{a.t}</p>
+            <p style={{fontSize:'12px',color:'var(--text3)'}}>{a.d}</p>
           </Link>
         ))}
       </div>
 
       {/* Friend Requests */}
       {friendRequests.length>0&&(
-        <div style={{background:'#fff',borderRadius:'14px',border:'1px solid #e2e8f0',padding:'20px',marginBottom:'16px'}}>
-          <p style={{fontWeight:'700',color:'#0f172a',fontSize:'15px',marginBottom:'14px'}}>
+        <div style={{background:'var(--card-bg)',borderRadius:'14px',border:'1px solid var(--border)',padding:'20px',marginBottom:'16px'}}>
+          <p style={{fontWeight:'700',color:'var(--text)',fontSize:'15px',marginBottom:'14px'}}>
             Friend Requests <span style={{background:'#f97316',color:'#fff',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',marginLeft:'6px'}}>{friendRequests.length}</span>
           </p>
           <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
@@ -141,8 +141,8 @@ export default function DashboardClient(){
                     {(req.sender?.full_name||'?').split(' ').map((x:string)=>x[0]).join('').toUpperCase().slice(0,2)}
                   </div>
                   <div>
-                    <p style={{fontWeight:'600',color:'#0f172a',fontSize:'14px'}}>{req.sender?.full_name}</p>
-                    <p style={{fontSize:'12px',color:'#94a3b8'}}>{req.sender?.university}</p>
+                    <p style={{fontWeight:'600',color:'var(--text)',fontSize:'14px'}}>{req.sender?.full_name}</p>
+                    <p style={{fontSize:'12px',color:'var(--text3)'}}>{req.sender?.university}</p>
                     <a href={`/profile/${req.sender_id}`} target="_blank" rel="noopener noreferrer"
                       style={{fontSize:'12px',color:'#f97316',fontWeight:'600',textDecoration:'none'}}>
                       View Profile →
@@ -167,11 +167,11 @@ export default function DashboardClient(){
 
       {/* Referral Section */}
       {profile?.referral_code&&(
-        <div style={{background:'#fff',borderRadius:'14px',border:'1px solid #e2e8f0',padding:'20px',marginBottom:'16px'}}>
+        <div style={{background:'var(--card-bg)',borderRadius:'14px',border:'1px solid var(--border)',padding:'20px',marginBottom:'16px'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'12px',marginBottom:'14px'}}>
             <div>
-              <p style={{fontWeight:'700',color:'#0f172a',fontSize:'15px',marginBottom:'2px'}}>Your Referral Link</p>
-              <p style={{fontSize:'12px',color:'#94a3b8'}}>Earn KES 10 for every student who joins using your link</p>
+              <p style={{fontWeight:'700',color:'var(--text)',fontSize:'15px',marginBottom:'2px'}}>Your Referral Link</p>
+              <p style={{fontSize:'12px',color:'var(--text3)'}}>Earn KES 10 for every student who joins using your link</p>
             </div>
             <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
               <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'10px',padding:'8px 16px',textAlign:'center'}}>
@@ -181,11 +181,11 @@ export default function DashboardClient(){
               <button onClick={()=>{
                 createClient().from('profiles').select('referral_earnings').eq('id',user?.id).maybeSingle()
                   .then(({data})=>{ if(data) setProfile((p:any)=>({...p,referral_earnings:data.referral_earnings})) })
-              }} style={{background:'#f8fafc',border:'1px solid #e2e8f0',borderRadius:'8px',padding:'6px 10px',fontSize:'12px',cursor:'pointer',color:'#64748b',fontWeight:'600'}}>Refresh</button>
+              }} style={{background:'var(--bg)',border:'1px solid var(--border)',borderRadius:'8px',padding:'6px 10px',fontSize:'12px',cursor:'pointer',color:'var(--text2)',fontWeight:'600'}}>Refresh</button>
             </div>
           </div>
           <div style={{display:'flex',gap:'8px'}}>
-            <div style={{flex:1,background:'#f8fafc',border:'1px solid #e2e8f0',borderRadius:'8px',padding:'10px 14px',fontSize:'13px',color:'#374151',fontFamily:'monospace',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+            <div style={{flex:1,background:'var(--bg)',border:'1px solid var(--border)',borderRadius:'8px',padding:'10px 14px',fontSize:'13px',color:'var(--text)',fontFamily:'monospace',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
               campuslink.co.ke/ref/{profile.referral_code}
             </div>
             <button onClick={()=>{navigator.clipboard.writeText(`https://campuslink.co.ke/ref/${profile.referral_code}`);alert('Link copied!')}}
@@ -210,7 +210,7 @@ export default function DashboardClient(){
         <div style={{background:'#0f172a',borderRadius:'14px',padding:'20px 24px',color:'#fff',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'12px'}}>
           <div>
             <p style={{fontWeight:'700',fontSize:'16px',marginBottom:'3px'}}>Upgrade to Premium — KES 199/month</p>
-            <p style={{fontSize:'13px',color:'#94a3b8'}}>Unlimited unlocks, premium badge, analytics</p>
+            <p style={{fontSize:'13px',color:'var(--text3)'}}>Unlimited unlocks, premium badge, analytics</p>
           </div>
           <Link href="/pricing" style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'10px 20px',borderRadius:'8px',fontWeight:'600',fontSize:'13px',flexShrink:0}}>Upgrade</Link>
         </div>

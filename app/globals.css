@@ -2,52 +2,57 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html { scroll-behavior: smooth; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-body { background: #f8fafc; color: #0f172a; line-height: 1.6; overscroll-behavior: none; }
-a { text-decoration: none; color: inherit; }
-button { font-family: inherit; cursor: pointer; }
-input, select, textarea { font-family: inherit; font-size: 16px; } /* 16px prevents iOS zoom */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-thumb { background: #f97316; border-radius: 3px; }
 
-/* Smooth tap feedback */
-a:active, button:active { opacity: 0.75; transform: scale(0.97); }
-
-/* Animations */
-@keyframes spin { to { transform: rotate(360deg); } }
-@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-.fade-up { animation: fadeUp 0.3s ease forwards; }
-
-/* Mobile card feel */
-@media(max-width:767px) {
-  input, select, textarea { font-size: 16px !important; } /* Prevent iOS zoom on focus */
+/* Light mode defaults */
+:root {
+  --bg: #f8fafc;
+  --bg2: #ffffff;
+  --bg3: #f1f5f9;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --text2: #64748b;
+  --text3: #94a3b8;
+  --nav-bg: rgba(255,255,255,0.97);
+  --card-bg: #ffffff;
+  --input-bg: #ffffff;
 }
 
 /* Dark mode */
-[data-theme="dark"] body {
-  background: #0f172a !important;
-  color: #e2e8f0 !important;
+[data-theme="dark"] {
+  --bg: #0f172a;
+  --bg2: #1e293b;
+  --bg3: #334155;
+  --border: #334155;
+  --text: #f1f5f9;
+  --text2: #94a3b8;
+  --text3: #64748b;
+  --nav-bg: rgba(15,23,42,0.97);
+  --card-bg: #1e293b;
+  --input-bg: #1e293b;
 }
-[data-theme="dark"] nav {
-  background: rgba(15,23,42,0.97) !important;
-  border-bottom-color: #1e293b !important;
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  overscroll-behavior: none;
+  transition: background 0.2s, color 0.2s;
 }
-[data-theme="dark"] .dark-card,
-[data-theme="dark"] [style*="background:#fff"],
-[data-theme="dark"] [style*="background: #fff"],
-[data-theme="dark"] [style*="background:'#fff'"] {
-  background: #1e293b !important;
-  border-color: #334155 !important;
-  color: #e2e8f0 !important;
+
+a { text-decoration: none; color: inherit; }
+button { font-family: inherit; cursor: pointer; }
+input, select, textarea {
+  font-family: inherit;
+  font-size: 16px;
+  background: var(--input-bg);
+  color: var(--text);
+  border-color: var(--border);
 }
-[data-theme="dark"] input,
-[data-theme="dark"] select,
-[data-theme="dark"] textarea {
-  background: #1e293b !important;
-  border-color: #334155 !important;
-  color: #e2e8f0 !important;
-}
-[data-theme="dark"] p, [data-theme="dark"] span, [data-theme="dark"] h1,
-[data-theme="dark"] h2, [data-theme="dark"] h3 {
-  color: inherit;
-}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: #f97316; border-radius: 3px; }
+a:active, button:active { opacity: 0.75; transform: scale(0.97); }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
