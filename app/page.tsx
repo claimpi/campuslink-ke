@@ -130,12 +130,12 @@ export default function HomePage(){
               {s.is_featured&&<div style={{background:'#fff7ed',color:'#ea580c',fontSize:'10px',fontWeight:'700',textAlign:'center',padding:'4px',letterSpacing:'0.5px',borderBottom:'1px solid #fed7aa'}}>FEATURED</div>}
               {s.is_top_student&&!s.is_featured&&<div style={{background:'#fff7ed',color:'#ea580c',fontSize:'10px',fontWeight:'700',textAlign:'center',padding:'4px',letterSpacing:'0.5px',borderBottom:'1px solid #fed7aa'}}>TOP STUDENT</div>}
 
-              <div style={{padding:'16px'}}>
+              <div style={{padding:'14px'}}>
                 {/* Avatar */}
                 <div style={{marginBottom:'12px',position:'relative',display:'inline-block'}}>
                   {s.avatar_url
                     ?<img src={s.avatar_url} style={{width:'52px',height:'52px',borderRadius:'50%',objectFit:'cover',border:'2px solid #f1f5f9'}}/>
-                    :<div style={{width:'52px',height:'52px',borderRadius:'50%',background:s.is_premium?'#f5f3ff':s.is_top_student?'#fff7ed':'#f1f5f9',color:s.is_premium?'#7c3aed':s.is_top_student?'#ea580c':'#64748b',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'16px'}}>{initials(s.full_name)}</div>
+                    :<div style={{width:'52px',height:'52px',borderRadius:'50%',background:s.is_top_student?'#fff7ed':'#f1f5f9',color:s.is_top_student?'#ea580c':'#64748b',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'16px'}}>{initials(s.full_name)}</div>
                   }
                   {isOnline(s.last_seen)&&<div style={{position:'absolute',bottom:'1px',right:'1px',width:'13px',height:'13px',background:'#22c55e',borderRadius:'50%',border:'2px solid #fff'}}/>}
                 </div>
