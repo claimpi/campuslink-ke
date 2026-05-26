@@ -2,12 +2,14 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase-browser'
+import { useTheme } from '@/components/ThemeProvider'
 import { useRouter } from 'next/navigation'
 
 function initials(n:string){return n.split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2)}
 
 export default function Navbar() {
   const router = useRouter()
+  const { dark, toggle } = useTheme()
   const [open, setOpen] = useState(false)
   const [drop, setDrop] = useState(false)
   const [user, setUser] = useState<any>(null)
@@ -60,6 +62,12 @@ export default function Navbar() {
         </div>
 
         <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+          {/* Dark mode toggle */}
+          <button onClick={toggle} title={dark?'Light mode':'Dark mode'}
+            style={{background:'none',border:'1px solid #e2e8f0',borderRadius:'8px',padding:'6px 10px',cursor:'pointer',fontSize:'16px',color:'#64748b',transition:'all 0.2s'}}>
+            {dark?'☀️':'🌙'}
+          </button>
+
           {user ? (
             <div style={{position:'relative'}}>
               <button onClick={()=>setDrop(d=>!d)} style={{display:'flex',alignItems:'center',gap:'8px',background:'#f8fafc',border:'1px solid #e2e8f0',borderRadius:'50px',padding:'5px 12px 5px 5px',cursor:'pointer',fontSize:'13px',fontWeight:'600',color:'#0f172a'}}>

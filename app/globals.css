@@ -22,3 +22,32 @@ a:active, button:active { opacity: 0.75; transform: scale(0.97); }
 @media(max-width:767px) {
   input, select, textarea { font-size: 16px !important; } /* Prevent iOS zoom on focus */
 }
+
+/* Dark mode */
+[data-theme="dark"] body {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] nav {
+  background: rgba(15,23,42,0.97) !important;
+  border-bottom-color: #1e293b !important;
+}
+[data-theme="dark"] .dark-card,
+[data-theme="dark"] [style*="background:#fff"],
+[data-theme="dark"] [style*="background: #fff"],
+[data-theme="dark"] [style*="background:'#fff'"] {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] p, [data-theme="dark"] span, [data-theme="dark"] h1,
+[data-theme="dark"] h2, [data-theme="dark"] h3 {
+  color: inherit;
+}

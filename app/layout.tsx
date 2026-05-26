@@ -1,6 +1,7 @@
 import './globals.css'
 import Navbar from '@/components/layout/Navbar'
 import BottomNav from '@/components/layout/BottomNav'
+import ThemeProvider from '@/components/ThemeProvider'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="mobile-web-app-capable" content="yes"/>
       </head>
       <body style={{margin:0,padding:0,overscrollBehavior:'none'}}>
+        <ThemeProvider>
         <Navbar />
         <main style={{minHeight:'80vh'}}>{children}</main>
         <footer style={{background:'#0f172a',color:'#64748b',padding:'32px 20px',textAlign:'center',fontSize:'13px'}} className="desktop-footer">
@@ -40,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <p style={{marginTop:'8px'}}>© 2026 CampusLink KE</p>
         </footer>
         <BottomNav />
+        </ThemeProvider>
         <style>{`@media(max-width:767px){.desktop-footer{display:none}}`}</style>
       </body>
     </html>
