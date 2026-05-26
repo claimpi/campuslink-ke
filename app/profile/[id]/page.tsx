@@ -14,6 +14,18 @@ export default function ProfilePage(){
   const [loading,setLoading]=useState(true)
   const [paying,setPaying]=useState(false)
   const [activePhoto,setActivePhoto]=useState<string|null>(null)
+  const [copied,setCopied]=useState(false)
+
+  function shareProfile(){
+    const url = `https://campuslink-ke.vercel.app/profile/${id}`
+    if(navigator.share){
+      navigator.share({title:`${profile?.full_name} — CampusLink KE`,text:`Connect with ${profile?.full_name} on CampusLink KE`,url})
+    } else {
+      navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(()=>setCopied(false),2000)
+    }
+  }
 
   useEffect(()=>{
     const sb=createClient()
@@ -126,7 +138,22 @@ export default function ProfilePage(){
               </div>
             )}
 
-            <p style={{fontSize:'12px',color:'#cbd5e1'}}>{profile.profile_views||0} profile views</p>
+            <p style={{fontSize:'12px',color:'#cbd5e1',marginBottom:'12px'}}>{profile.profile_views||0} profile views</p>
+          <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+            <button onClick={shareProfile} style={{display:'flex',alignItems:'center',gap:'6px',background:'#f8fafc',border:'1px solid #e2e8f0',borderRadius:'8px',padding:'8px 14px',fontSize:'13px',fontWeight:'600',color:'#374151',cursor:'pointer'}}>
+              {copied ? '✅ Link copied!' : '🔗 Share Profile'}
+            </button>
+            <a href={`https://wa.me/?text=Connect%20with%20${encodeURIComponent(profile.full_name)}%20on%20CampusLink%20KE%20https://campuslink-ke.vercel.app/profile/${id}`}
+              target="_blank" rel="noopener noreferrer"
+              style={{display:'flex',alignItems:'center',gap:'6px',background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'8px',padding:'8px 14px',fontSize:'13px',fontWeight:'600',color:'#16a34a'}}>
+              💬 Share on WhatsApp
+            </a>
+            <a href={`https://twitter.com/intent/tweet?text=Connect%20with%20${encodeURIComponent(profile.full_name)}%20on%20CampusLink%20KE&url=https://campuslink-ke.vercel.app/profile/${id}`}
+              target="_blank" rel="noopener noreferrer"
+              style={{display:'flex',alignItems:'center',gap:'6px',background:'#eff6ff',border:'1px solid #bfdbfe',borderRadius:'8px',padding:'8px 14px',fontSize:'13px',fontWeight:'600',color:'#2563eb'}}>
+              𝕏 Share
+            </a>
+          </div>
           </div>
 
           {/* Right: Bio + Connect */}
