@@ -100,7 +100,8 @@ export default function HomePage(){
               <p style={{fontSize:'14px',color:'#94a3b8'}}>Try a different search or filter</p>
             </div>
           ):(
-            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:'12px'}}>
+            <style>{`@media(max-width:640px){.sgrid{grid-template-columns:1fr 1fr!important;gap:8px!important}.scard-inner{padding:10px!important}.sname{font-size:12px!important}.sbtn{padding:6px!important;font-size:11px!important}.shide{display:none!important}}`}</style>
+            <div className="sgrid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:'12px'}}>
               {filtered.map(s=>(
                 <div key={s.id} style={{background:'#fff',borderRadius:'14px',border:`1px solid ${s.is_featured?'#fed7aa':s.is_top_student?'#fed7aa':'#e2e8f0'}`,overflow:'hidden',transition:'transform 0.15s,box-shadow 0.15s'}}
                   onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.transform='translateY(-2px)';(e.currentTarget as HTMLElement).style.boxShadow='0 8px 24px rgba(0,0,0,0.09)'}}
@@ -109,7 +110,7 @@ export default function HomePage(){
                   {s.is_featured&&<div style={{background:'#fff7ed',color:'#ea580c',fontSize:'10px',fontWeight:'700',textAlign:'center',padding:'4px',letterSpacing:'0.5px',borderBottom:'1px solid #fed7aa'}}>FEATURED</div>}
                   {s.is_top_student&&!s.is_featured&&<div style={{background:'#fff7ed',color:'#ea580c',fontSize:'10px',fontWeight:'700',textAlign:'center',padding:'4px',letterSpacing:'0.5px',borderBottom:'1px solid #fed7aa'}}>TOP STUDENT</div>}
 
-                  <div style={{padding:'12px'}}>
+                  <div className="scard-inner" style={{padding:'12px'}}>
                     {/* Card row: avatar + info */}
                     <div style={{display:'flex',gap:'10px',alignItems:'flex-start',marginBottom:'10px'}}>
                       <div style={{position:'relative',flexShrink:0}}>
@@ -120,9 +121,9 @@ export default function HomePage(){
                         {isOnline(s.last_seen)&&<div style={{position:'absolute',bottom:'1px',right:'1px',width:'10px',height:'10px',background:'#22c55e',borderRadius:'50%',border:'2px solid #fff'}}/>}
                       </div>
                       <div style={{flex:1,minWidth:0}}>
-                        <p style={{fontWeight:'700',color:'#0f172a',fontSize:'13px',marginBottom:'1px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.full_name}</p>
-                        <p style={{fontSize:'11px',color:'#64748b',marginBottom:'1px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.course}</p>
-                        <p style={{fontSize:'10px',color:'#94a3b8',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.university}</p>
+                        <p className="sname" style={{fontWeight:'700',color:'#0f172a',fontSize:'13px',marginBottom:'1px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.full_name}</p>
+                        <p className="shide" style={{fontSize:'11px',color:'#64748b',marginBottom:'1px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.course}</p>
+                        <p className="shide" style={{fontSize:'10px',color:'#94a3b8',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.university}</p>
                       </div>
                     </div>
 
@@ -138,11 +139,11 @@ export default function HomePage(){
                     {/* Buttons */}
                     <div style={{display:'flex',gap:'6px'}}>
                       <button onClick={()=>router.push(`/profile/${s.id}`)}
-                        style={{flex:1,padding:'7px',border:'1px solid #e2e8f0',borderRadius:'8px',background:'#fff',color:'#374151',fontSize:'12px',fontWeight:'600',cursor:'pointer'}}>
+                        className="sbtn" style={{flex:1,padding:'7px',border:'1px solid #e2e8f0',borderRadius:'8px',background:'#fff',color:'#374151',fontSize:'12px',fontWeight:'600',cursor:'pointer'}}>
                         View
                       </button>
                       <button onClick={()=>router.push(`/profile/${s.id}`)}
-                        style={{flex:1,padding:'7px',borderRadius:'8px',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',fontSize:'12px',fontWeight:'700',border:'none',cursor:'pointer'}}>
+                        className="sbtn" style={{flex:1,padding:'7px',borderRadius:'8px',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',fontSize:'12px',fontWeight:'700',border:'none',cursor:'pointer'}}>
                         Connect
                       </button>
                     </div>
