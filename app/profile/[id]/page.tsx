@@ -102,6 +102,17 @@ export default function ProfilePage(){
                   <span style={{fontSize:'13px',color:'#374151',fontWeight:'500'}}>Year {profile.year_of_study}</span>
                 </div>
               )}
+              {profile.status&&(
+                <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
+                  <span style={{fontSize:'12px',color:'#94a3b8',width:'60px',flexShrink:0}}>Status</span>
+                  <span style={{fontSize:'13px',fontWeight:'600',padding:'2px 10px',borderRadius:'50px',
+                    background:profile.status==='single'?'#f0fdf4':profile.status==='taken'?'#fef2f2':'#fff7ed',
+                    color:profile.status==='single'?'#16a34a':profile.status==='taken'?'#dc2626':'#ea580c',
+                    border:`1px solid ${profile.status==='single'?'#bbf7d0':profile.status==='taken'?'#fecaca':'#fed7aa'}`}}>
+                    {profile.status==='single'?'Single 💚':profile.status==='taken'?'Taken ❤️':"It's complicated 🤔"}
+                  </span>
+                </div>
+              )}
             </div>
 
             {interests.length>0&&(

@@ -21,7 +21,7 @@ export default function EditProfile(){
   const [userEmail,setUserEmail]=useState('')
   const [avatarUrl,setAvatarUrl]=useState('')
   const [photos,setPhotos]=useState<string[]>([])
-  const [form,setForm]=useState({full_name:'',university:'',course:'',year_of_study:'1',whatsapp_number:'',bio:'',interests:''})
+  const [form,setForm]=useState({full_name:'',university:'',course:'',year_of_study:'1',whatsapp_number:'',bio:'',interests:'',status:''})
   const set=(k:string)=>(e:any)=>setForm(f=>({...f,[k]:e.target.value}))
   const inp:React.CSSProperties={width:'100%',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'11px 14px',fontSize:'14px',outline:'none',background:'#fff',boxSizing:'border-box',color:'#0f172a'}
 
@@ -37,7 +37,7 @@ export default function EditProfile(){
           setPhotos(Array.isArray(data.photos)?data.photos:[])
           setForm({full_name:data.full_name||'',university:data.university||'',course:data.course||'',
             year_of_study:String(data.year_of_study||'1'),whatsapp_number:data.whatsapp_number||'',
-            bio:data.bio||'',interests:Array.isArray(data.interests)?data.interests.join(', '):(data.interests||'')})
+            bio:data.bio||'',interests:Array.isArray(data.interests)?data.interests.join(', '):(data.interests||''),status:data.status||''})
         }
         setLoading(false)
       })
@@ -94,7 +94,7 @@ export default function EditProfile(){
       id:userId,
       email:userEmail, // include email to satisfy NOT NULL constraint
       full_name:form.full_name,university:form.university,course:form.course,
-      year_of_study:form.year_of_study,whatsapp_number:form.whatsapp_number,bio:form.bio,interests
+      year_of_study:form.year_of_study,whatsapp_number:form.whatsapp_number,bio:form.bio,status:form.status,interests
     },{onConflict:'id'})
     if(err) setError(err.message)
     else{setSuccess(true);setTimeout(()=>setSuccess(false),3000)}
