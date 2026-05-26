@@ -227,21 +227,6 @@ export default function EditProfile(){
             <input value={form.instagram} onChange={set('instagram')} placeholder="yourusername" style={{...inp,border:'none',borderRadius:0,flex:1}}/>
           </div>
         </div>
-        <div>
-          <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>TikTok Username</label>
-          <div style={{position:'relative'}}>
-            <span style={{position:'absolute',left:'12px',top:'50%',transform:'translateY(-50%)',fontSize:'13px',color:'#94a3b8'}}>@</span>
-            <input value={form.tiktok} onChange={set('tiktok')} placeholder="yourusername" style={{...inp,paddingLeft:'28px'}}
-              onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
-          </div>
-        </div>
-        <div>
-          <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Instagram Username</label>
-          <div style={{position:'relative'}}>
-            <span style={{position:'absolute',left:'12px',top:'50%',transform:'translateY(-50%)',fontSize:'13px',color:'#94a3b8'}}>@</span>
-            <input value={form.instagram} onChange={set('instagram')} placeholder="yourusername" style={{...inp,paddingLeft:'28px'}}
-              onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
-          </div>
         </div>
         <div>
           <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Bio</label>
