@@ -22,9 +22,10 @@ export default function DiscoverPage(){
   const [search,setSearch]=useState('')
   const [uni,setUni]=useState('All Universities')
   const [year,setYear]=useState('All Years')
+  const [status,setStatus]=useState('All')
 
   useEffect(()=>{
-    createClient().from('profiles').select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_top_student,interests')
+    createClient().from('profiles').select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_top_student,interests,status')
       .order('is_featured',{ascending:false}).then(({data,error})=>{
         setStudents(!error&&data&&data.length>0?data:MOCK)
         setLoading(false)
@@ -36,6 +37,7 @@ export default function DiscoverPage(){
     return (!q||s.full_name?.toLowerCase().includes(q)||s.course?.toLowerCase().includes(q))
       &&(uni==='All Universities'||s.university===uni)
       &&(year==='All Years'||String(s.year_of_study)===year)
+      &&(status==='All'||s.status===status)
   })
 
   const sel:React.CSSProperties={width:'100%',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'10px 14px',fontSize:'14px',outline:'none',background:'#fff',color:'#0f172a'}

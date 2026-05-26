@@ -25,6 +25,7 @@ export default function HomePage(){
   const [search,setSearch]=useState('')
   const [uni,setUni]=useState('All')
   const [year,setYear]=useState('All Years')
+  const [status,setStatus]=useState('All')
 
   const [announcements,setAnnouncements]=useState<any[]>([])
 
@@ -32,7 +33,7 @@ export default function HomePage(){
     createClient().from('announcements').select('*').order('created_at',{ascending:false}).limit(3)
       .then(({data})=>{ if(data&&data.length>0) setAnnouncements(data) })
     createClient().from('profiles')
-      .select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_top_student,interests')
+      .select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_top_student,interests,status')
       .order('is_featured',{ascending:false})
       .order('is_premium',{ascending:false})
       .then(({data,error})=>{
@@ -85,6 +86,13 @@ export default function HomePage(){
           style={{border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'10px 14px',fontSize:'14px',outline:'none',background:'#fff',color:'#374151',cursor:'pointer'}}>
           {YEARS.map(y=><option key={y}>{y}</option>)}
         </select>
+        <select value={status} onChange={e=>setStatus(e.target.value)}
+          style={{border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'10px 14px',fontSize:'14px',outline:'none',background:'#fff',color:'#374151',cursor:'pointer'}}>
+          <option value="All">All Status</option>
+          <option value="single">💚 Single</option>
+          <option value="taken">❤️ Taken</option>
+          <option value="complicated">🤔 Complicated</option>
+        </select>
       </div>
 
       {/* Student grid */}
@@ -125,6 +133,9 @@ export default function HomePage(){
                 <div style={{display:'flex',gap:'4px',flexWrap:'wrap',marginBottom:'12px'}}>
                   <span style={{background:'#f8fafc',color:'#64748b',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',border:'1px solid #e2e8f0'}}>Year {s.year_of_study}</span>
                   {s.is_premium&&<span style={{background:'#f5f3ff',color:'#7c3aed',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',border:'1px solid #ddd6fe',fontWeight:'600'}}>Pro</span>}
+                  {s.status==='single'&&<span style={{background:'#f0fdf4',color:'#16a34a',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',border:'1px solid #bbf7d0',fontWeight:'600'}}>💚 Single</span>}
+                  {s.status==='taken'&&<span style={{background:'#fef2f2',color:'#dc2626',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',border:'1px solid #fecaca',fontWeight:'600'}}>❤️ Taken</span>}
+                  {s.status==='complicated'&&<span style={{background:'#fff7ed',color:'#ea580c',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',border:'1px solid #fed7aa',fontWeight:'600'}}>🤔 Complicated</span>}
                 </div>
 
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'6px'}}>
