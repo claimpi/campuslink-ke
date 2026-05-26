@@ -62,13 +62,14 @@ export default function AdminPage(){
   }
 
   async function approvePayment(id:string,userId:string,type:string){
-    const sb=createClient()
-    await sb.from('payment_requests').update({status:'approved'}).eq('id',id)
-    const upd:any={}
-    if(type==='premium') upd.is_premium=true
-    if(type==='featured') upd.is_featured=true
-    if(type==='top_student') upd.is_top_student=true
-    if(Object.keys(upd).length) await sb.from('profiles').update(upd).eq('id',userId)
+    // Update payment status
+    await createClient().from('payment_requests').update({status:'approved'}).eq('id',id)
+    // Update profile badge via server API
+    const field = type==='premium'?'is_premium':type==='featured'?'is_featured':type==='top_student'?'is_top_student':null
+    if(field){
+      await fetch('/api/admin/update-user',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({userId,field,value:true})})
+    }
     setPayments(pp=>pp.map(p=>p.id===id?{...p,status:'approved'}:p))
   }
 
