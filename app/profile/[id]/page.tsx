@@ -149,7 +149,16 @@ export default function ProfilePage(){
               </div>
             )}
 
-            <p style={{fontSize:'12px',color:'#cbd5e1',marginBottom:'12px'}}>{profile.profile_views||0} profile views</p>
+            <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'12px'}}>
+            <p style={{fontSize:'12px',color:'#cbd5e1'}}>{profile.profile_views||0} profile views</p>
+            {profile.last_seen&&(Date.now()-new Date(profile.last_seen).getTime())<5*60*1000&&(
+              <span style={{display:'flex',alignItems:'center',gap:'4px',background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'50px',padding:'2px 8px'}}>
+                <div style={{width:'7px',height:'7px',background:'#22c55e',borderRadius:'50%',animation:'pulse 2s infinite'}}/>
+                <span style={{fontSize:'11px',color:'#16a34a',fontWeight:'600'}}>Online</span>
+              </span>
+            )}
+          </div>
+          <style>{`@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.7;transform:scale(1.2)}}`}</style>
           <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
             <button onClick={shareProfile} style={{display:'flex',alignItems:'center',gap:'6px',background:'#f8fafc',border:'1px solid #e2e8f0',borderRadius:'8px',padding:'8px 14px',fontSize:'13px',fontWeight:'600',color:'#374151',cursor:'pointer'}}>
               {copied ? '✅ Link copied!' : '🔗 Share Profile'}

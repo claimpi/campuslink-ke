@@ -14,6 +14,7 @@ const MOCK = [
 const UNIS = ['All Universities','University of Nairobi','Kenyatta University','Strathmore University','JKUAT','Moi University','Africa Nazarene University','Technical University of Kenya','Maseno University','Dedan Kimathi University']
 const YEARS = ['All Years','1','2','3','4','5','6']
 
+function isOnline(t:string|null){return t?(Date.now()-new Date(t).getTime())<5*60*1000:false}
 function initials(n:string){return n.split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2)}
 
 export default function DiscoverPage(){
@@ -25,7 +26,7 @@ export default function DiscoverPage(){
   const [status,setStatus]=useState('All')
 
   useEffect(()=>{
-    createClient().from('profiles').select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_top_student,interests,status')
+    createClient().from('profiles').select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_top_student,interests,status,last_seen')
       .order('is_featured',{ascending:false}).then(({data,error})=>{
         setStudents(!error&&data&&data.length>0?data:MOCK)
         setLoading(false)

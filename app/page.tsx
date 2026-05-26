@@ -18,6 +18,10 @@ const UNIS=['All','University of Nairobi','Kenyatta University','Strathmore Univ
 const YEARS=['All Years','1','2','3','4','5','6']
 
 function initials(n:string){return(n||'?').split(' ').map((x:string)=>x[0]).join('').toUpperCase().slice(0,2)}
+function isOnline(lastSeen:string|null):boolean{
+  if(!lastSeen) return false
+  return (Date.now() - new Date(lastSeen).getTime()) < 5 * 60 * 1000 // 5 minutes
+}
 
 export default function HomePage(){
   const [students,setStudents]=useState<any[]>([])
@@ -33,7 +37,7 @@ export default function HomePage(){
     createClient().from('announcements').select('*').order('created_at',{ascending:false}).limit(3)
       .then(({data})=>{ if(data&&data.length>0) setAnnouncements(data) })
     createClient().from('profiles')
-      .select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_top_student,interests,status')
+      .select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_top_student,interests,status,last_seen')
       .order('is_featured',{ascending:false})
       .order('is_premium',{ascending:false})
       .then(({data,error})=>{
