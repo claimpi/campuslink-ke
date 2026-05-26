@@ -74,12 +74,8 @@ export default function RegisterPage() {
       // Credit referrer KES 10
       if (referrerId) {
         await sb.from('referrals').insert([{ referrer_id: referrerId, referred_id: authData.user.id, amount: 10, status: 'credited' }])
-        await sb.rpc('increment_referral_earnings', { user_id: referrerId, amount: 10 }).catch(()=>{
-          // Fallback if RPC not set up
-          sb.from('profiles').select('referral_earnings').eq('id', referrerId).single().then(({data}) => {
-            sb.from('profiles').update({ referral_earnings: (data?.referral_earnings||0) + 10 }).eq('id', referrerId)
-          })
-        })
+        const { data: refData } = await sb.from('profiles').select('referral_earnings').eq('id', referrerId).single()
+        await sb.from('profiles').update({ referral_earnings: (refData?.referral_earnings||0) + 10 }).eq('id', referrerId)
       }
 
       localStorage.removeItem('ref_code')
