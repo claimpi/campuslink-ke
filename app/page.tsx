@@ -1,56 +1,38 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-browser'
-
-const MOCK = [
-  {id:'1',full_name:'Amina Wanjiku',university:'University of Nairobi',course:'Computer Science',year_of_study:'2',is_premium:true,is_featured:true,avatar_url:null,interests:['coding','AI']},
-  {id:'2',full_name:'Brian Ochieng',university:'Kenyatta University',course:'Business Administration',year_of_study:'3',is_top_student:true,avatar_url:null,interests:['football','chess']},
-  {id:'3',full_name:'Catherine Muthoni',university:'Strathmore University',course:'Law',year_of_study:'1',avatar_url:null,interests:['debate','reading']},
-  {id:'4',full_name:'Dennis Kipchoge',university:'JKUAT',course:'Engineering',year_of_study:'4',is_premium:true,avatar_url:null,interests:['robotics']},
-  {id:'5',full_name:'Esther Akinyi',university:'Moi University',course:'Medicine',year_of_study:'5',avatar_url:null,interests:['research']},
-  {id:'6',full_name:'Felix Njoroge',university:'Africa Nazarene University',course:'Mathematics',year_of_study:'2',avatar_url:null,interests:['music']},
-  {id:'7',full_name:'Grace Wambui',university:'Technical University of Kenya',course:'Software Engineering',year_of_study:'3',avatar_url:null,interests:['coding','design']},
-  {id:'8',full_name:'Henry Mutua',university:'Maseno University',course:'Economics',year_of_study:'2',avatar_url:null,interests:['business']},
-]
 
 const UNIS=['All','University of Nairobi','Kenyatta University','Strathmore University','JKUAT','Moi University','Africa Nazarene University','Technical University of Kenya','Maseno University','Dedan Kimathi University']
 const YEARS=['All Years','1','2','3','4','5','6']
 
 function initials(n:string){return(n||'?').split(' ').map((x:string)=>x[0]).join('').toUpperCase().slice(0,2)}
-function isOnline(lastSeen:string|null):boolean{
-  if(!lastSeen) return false
-  return (Date.now() - new Date(lastSeen).getTime()) < 5 * 60 * 1000 // 5 minutes
-}
+function isOnline(t:string|null):boolean{return t?(Date.now()-new Date(t).getTime())<5*60*1000:false}
 
 export default function HomePage(){
+  const router=useRouter()
   const [students,setStudents]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
   const [search,setSearch]=useState('')
   const [uni,setUni]=useState('All')
   const [year,setYear]=useState('All Years')
   const [status,setStatus]=useState('All')
-
   const [announcements,setAnnouncements]=useState<any[]>([])
 
-  const loadStudents = () => {
+  const loadStudents=()=>{
     createClient().from('profiles')
       .select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_top_student,interests,status,last_seen')
-      .order('is_featured',{ascending:false})
-      .order('is_premium',{ascending:false})
-      .then(({data,error})=>{
-        if(!error&&data&&data.length>0) setStudents(data)
-        setLoading(false)
-      })
+      .order('is_featured',{ascending:false}).order('is_premium',{ascending:false})
+      .then(({data,error})=>{ if(!error&&data&&data.length>0) setStudents(data); setLoading(false) })
   }
 
   useEffect(()=>{
     createClient().from('announcements').select('*').order('created_at',{ascending:false}).limit(3)
       .then(({data})=>{ if(data&&data.length>0) setAnnouncements(data) })
     loadStudents()
-    // Refresh every 30 seconds to update online dots
-    const interval = setInterval(loadStudents, 30000)
-    return () => clearInterval(interval)
+    const interval=setInterval(loadStudents,30000)
+    return ()=>clearInterval(interval)
   },[])
 
   const filtered=students.filter(s=>{
@@ -63,7 +45,7 @@ export default function HomePage(){
   })
 
   return(
-    <div style={{maxWidth:'1200px',margin:'0 auto',padding:'28px 20px'}}>
+    <div style={{maxWidth:'1200px',margin:'0 auto',padding:'24px 16px'}}>
 
       {/* Announcements */}
       {announcements.map(a=>(
@@ -73,12 +55,12 @@ export default function HomePage(){
             <span style={{fontWeight:'700',color:'#0f172a',fontSize:'14px'}}>{a.title}</span>
             {a.content&&<p style={{fontSize:'13px',color:'#64748b',marginTop:'2px',lineHeight:'1.5'}}>{a.content}</p>}
           </div>
-          <button onClick={()=>setAnnouncements(aa=>aa.filter(x=>x.id!==a.id))} style={{background:'none',border:'none',color:'#94a3b8',cursor:'pointer',fontSize:'16px',flexShrink:0,padding:'0 2px',lineHeight:'1'}}>✕</button>
+          <button onClick={()=>setAnnouncements(aa=>aa.filter(x=>x.id!==a.id))} style={{background:'none',border:'none',color:'#94a3b8',cursor:'pointer',fontSize:'16px',flexShrink:0}}>✕</button>
         </div>
       ))}
 
-      {/* Top bar */}
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'20px',flexWrap:'wrap',gap:'12px'}}>
+      {/* Header */}
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px',flexWrap:'wrap',gap:'10px'}}>
         <div>
           <h1 style={{fontSize:'22px',fontWeight:'800',color:'#0f172a',marginBottom:'2px'}}>Students</h1>
           <p style={{fontSize:'13px',color:'#94a3b8'}}>{filtered.length} students across Kenyan universities</p>
@@ -86,21 +68,18 @@ export default function HomePage(){
         <Link href="/register" style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'9px 20px',borderRadius:'8px',fontWeight:'600',fontSize:'13px',boxShadow:'0 2px 8px rgba(249,115,22,0.3)'}}>Join Free</Link>
       </div>
 
-      {/* Search + filters */}
-      <div style={{display:'flex',gap:'10px',flexWrap:'wrap',marginBottom:'24px'}}>
+      {/* Filters */}
+      <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'20px'}}>
         <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by name, course or university..."
-          style={{flex:1,minWidth:'220px',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'10px 14px',fontSize:'14px',outline:'none',background:'#fff',color:'#0f172a'}}
+          style={{flex:1,minWidth:'200px',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'9px 14px',fontSize:'14px',outline:'none',background:'#fff',color:'#0f172a'}}
           onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
-        <select value={uni} onChange={e=>setUni(e.target.value)}
-          style={{border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'10px 14px',fontSize:'14px',outline:'none',background:'#fff',color:'#374151',cursor:'pointer'}}>
+        <select value={uni} onChange={e=>setUni(e.target.value)} style={{border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'9px 12px',fontSize:'13px',outline:'none',background:'#fff',color:'#374151',cursor:'pointer'}}>
           {UNIS.map(u=><option key={u}>{u}</option>)}
         </select>
-        <select value={year} onChange={e=>setYear(e.target.value)}
-          style={{border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'10px 14px',fontSize:'14px',outline:'none',background:'#fff',color:'#374151',cursor:'pointer'}}>
+        <select value={year} onChange={e=>setYear(e.target.value)} style={{border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'9px 12px',fontSize:'13px',outline:'none',background:'#fff',color:'#374151',cursor:'pointer'}}>
           {YEARS.map(y=><option key={y}>{y}</option>)}
         </select>
-        <select value={status} onChange={e=>setStatus(e.target.value)}
-          style={{border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'10px 14px',fontSize:'14px',outline:'none',background:'#fff',color:'#374151',cursor:'pointer'}}>
+        <select value={status} onChange={e=>setStatus(e.target.value)} style={{border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'9px 12px',fontSize:'13px',outline:'none',background:'#fff',color:'#374151',cursor:'pointer'}}>
           <option value="All">All Status</option>
           <option value="single">💚 Single</option>
           <option value="taken">❤️ Taken</option>
@@ -108,71 +87,72 @@ export default function HomePage(){
         </select>
       </div>
 
-      {/* Student grid */}
-      {loading ? (
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:'14px'}}>
-          {[...Array(8)].map((_,i)=>(
-            <div key={i} style={{background:'#fff',borderRadius:'14px',border:'1px solid #e2e8f0',height:'240px',animation:'pulse 1.5s ease infinite'}}/>
-          ))}
-          <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}`}</style>
+      {/* Grid */}
+      {loading?(
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:'12px'}}>
+          {[...Array(8)].map((_,i)=><div key={i} style={{background:'#fff',borderRadius:'14px',border:'1px solid #e2e8f0',height:'160px',opacity:0.5}}/>)}
         </div>
-      ) : filtered.length===0 ? (
-        <div style={{textAlign:'center',padding:'80px 20px',background:'#fff',borderRadius:'16px',border:'1px solid #e2e8f0'}}>
-          <p style={{fontSize:'16px',fontWeight:'600',color:'#374151',marginBottom:'6px'}}>No students found</p>
-          <p style={{fontSize:'14px',color:'#94a3b8'}}>Try a different search or filter</p>
-        </div>
-      ) : (
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:'14px'}}>
-          {filtered.map(s=>(
-            <div key={s.id} style={{background:'#fff',borderRadius:'14px',border:`1px solid ${s.is_featured?'#ddd6fe':s.is_top_student?'#fed7aa':'#e2e8f0'}`,overflow:'hidden',transition:'transform 0.15s,box-shadow 0.15s'}}
-              onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.transform='translateY(-2px)';(e.currentTarget as HTMLElement).style.boxShadow='0 8px 24px rgba(0,0,0,0.09)'}}
-              onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.transform='none';(e.currentTarget as HTMLElement).style.boxShadow='none'}}>
-              {s.is_featured&&<div style={{background:'#fff7ed',color:'#ea580c',fontSize:'10px',fontWeight:'700',textAlign:'center',padding:'4px',letterSpacing:'0.5px',borderBottom:'1px solid #fed7aa'}}>FEATURED</div>}
-              {s.is_top_student&&!s.is_featured&&<div style={{background:'#fff7ed',color:'#ea580c',fontSize:'10px',fontWeight:'700',textAlign:'center',padding:'4px',letterSpacing:'0.5px',borderBottom:'1px solid #fed7aa'}}>TOP STUDENT</div>}
+      ):(
+        <>
+          {filtered.length===0?(
+            <div style={{textAlign:'center',padding:'60px 20px',background:'#fff',borderRadius:'16px',border:'1px solid #e2e8f0'}}>
+              <p style={{fontSize:'16px',fontWeight:'600',color:'#374151',marginBottom:'6px'}}>No students found</p>
+              <p style={{fontSize:'14px',color:'#94a3b8'}}>Try a different search or filter</p>
+            </div>
+          ):(
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:'12px'}}>
+              {filtered.map(s=>(
+                <div key={s.id} style={{background:'#fff',borderRadius:'14px',border:`1px solid ${s.is_featured?'#fed7aa':s.is_top_student?'#fed7aa':'#e2e8f0'}`,overflow:'hidden',transition:'transform 0.15s,box-shadow 0.15s'}}
+                  onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.transform='translateY(-2px)';(e.currentTarget as HTMLElement).style.boxShadow='0 8px 24px rgba(0,0,0,0.09)'}}
+                  onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.transform='none';(e.currentTarget as HTMLElement).style.boxShadow='none'}}>
 
-              <div style={{padding:'14px'}}>
-                <div style={{display:'flex',gap:'12px',alignItems:'flex-start',marginBottom:'12px'}}>
-                  <div style={{position:'relative',flexShrink:0}}>
-                    {s.avatar_url
-                      ?<img src={s.avatar_url} style={{width:'50px',height:'50px',borderRadius:'12px',objectFit:'cover',border:'1px solid #f1f5f9'}}/>
-                      :<div style={{width:'50px',height:'50px',borderRadius:'12px',background:s.is_top_student?'#fff7ed':'#f1f5f9',color:s.is_top_student?'#ea580c':'#64748b',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'16px'}}>{initials(s.full_name)}</div>
-                    }
-                    {isOnline(s.last_seen)&&<div style={{position:'absolute',bottom:'2px',right:'2px',width:'11px',height:'11px',background:'#22c55e',borderRadius:'50%',border:'2px solid #fff'}}/>}
-                  </div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px',marginBottom:'2px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.full_name}</p>
-                    <p style={{fontSize:'12px',color:'#64748b',marginBottom:'1px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.course}</p>
-                    <p style={{fontSize:'11px',color:'#94a3b8',marginBottom:'6px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.university}</p>
-                    <div style={{display:'flex',flexWrap:'wrap',gap:'4px'}}>
+                  {s.is_featured&&<div style={{background:'#fff7ed',color:'#ea580c',fontSize:'10px',fontWeight:'700',textAlign:'center',padding:'4px',letterSpacing:'0.5px',borderBottom:'1px solid #fed7aa'}}>FEATURED</div>}
+                  {s.is_top_student&&!s.is_featured&&<div style={{background:'#fff7ed',color:'#ea580c',fontSize:'10px',fontWeight:'700',textAlign:'center',padding:'4px',letterSpacing:'0.5px',borderBottom:'1px solid #fed7aa'}}>TOP STUDENT</div>}
+
+                  <div style={{padding:'12px'}}>
+                    {/* Card row: avatar + info */}
+                    <div style={{display:'flex',gap:'10px',alignItems:'flex-start',marginBottom:'10px'}}>
+                      <div style={{position:'relative',flexShrink:0}}>
+                        {s.avatar_url
+                          ?<img src={s.avatar_url} style={{width:'48px',height:'48px',borderRadius:'10px',objectFit:'cover'}}/>
+                          :<div style={{width:'48px',height:'48px',borderRadius:'10px',background:s.is_top_student?'#fff7ed':'#f1f5f9',color:s.is_top_student?'#ea580c':'#64748b',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'15px'}}>{initials(s.full_name)}</div>
+                        }
+                        {isOnline(s.last_seen)&&<div style={{position:'absolute',bottom:'1px',right:'1px',width:'10px',height:'10px',background:'#22c55e',borderRadius:'50%',border:'2px solid #fff'}}/>}
+                      </div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <p style={{fontWeight:'700',color:'#0f172a',fontSize:'13px',marginBottom:'1px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.full_name}</p>
+                        <p style={{fontSize:'11px',color:'#64748b',marginBottom:'1px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.course}</p>
+                        <p style={{fontSize:'10px',color:'#94a3b8',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.university}</p>
+                      </div>
+                    </div>
+
+                    {/* Badges */}
+                    <div style={{display:'flex',flexWrap:'wrap',gap:'4px',marginBottom:'10px'}}>
                       <span style={{background:'#f8fafc',color:'#64748b',fontSize:'10px',padding:'2px 6px',borderRadius:'50px',border:'1px solid #e2e8f0'}}>Y{s.year_of_study}</span>
                       {s.is_premium&&<span style={{background:'#f5f3ff',color:'#7c3aed',fontSize:'10px',padding:'2px 6px',borderRadius:'50px',border:'1px solid #ddd6fe',fontWeight:'600'}}>Pro</span>}
                       {s.status==='single'&&<span style={{background:'#f0fdf4',color:'#16a34a',fontSize:'10px',padding:'2px 6px',borderRadius:'50px',border:'1px solid #bbf7d0',fontWeight:'600'}}>💚 Single</span>}
                       {s.status==='taken'&&<span style={{background:'#fef2f2',color:'#dc2626',fontSize:'10px',padding:'2px 6px',borderRadius:'50px',border:'1px solid #fecaca',fontWeight:'600'}}>❤️ Taken</span>}
                       {s.status==='complicated'&&<span style={{background:'#fff7ed',color:'#ea580c',fontSize:'10px',padding:'2px 6px',borderRadius:'50px',border:'1px solid #fed7aa',fontWeight:'600'}}>🤔</span>}
                     </div>
+
+                    {/* Buttons */}
+                    <div style={{display:'flex',gap:'6px'}}>
+                      <button onClick={()=>router.push(`/profile/${s.id}`)}
+                        style={{flex:1,padding:'7px',border:'1px solid #e2e8f0',borderRadius:'8px',background:'#fff',color:'#374151',fontSize:'12px',fontWeight:'600',cursor:'pointer'}}>
+                        View
+                      </button>
+                      <button onClick={()=>router.push(`/profile/${s.id}`)}
+                        style={{flex:1,padding:'7px',borderRadius:'8px',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',fontSize:'12px',fontWeight:'700',border:'none',cursor:'pointer'}}>
+                        Connect
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div style={{display:'flex',gap:'8px'}}>
-                  <button onClick={(e)=>{e.stopPropagation();router.push(`/profile/${s.id}`)}}
-                    style={{flex:1,padding:'8px',border:'1px solid #e2e8f0',borderRadius:'8px',background:'#fff',color:'#374151',fontSize:'13px',fontWeight:'600',cursor:'pointer'}}>
-                    View
-                  </button>
-                  <button onClick={(e)=>{e.stopPropagation();router.push(`/profile/${s.id}`)}}
-                    style={{flex:1,padding:'8px',borderRadius:'8px',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',fontSize:'13px',fontWeight:'700',border:'none',cursor:'pointer',boxShadow:'0 2px 8px rgba(249,115,22,0.3)'}}>
-                    Connect
-                  </button>
-                </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
-        {filtered.length===0&&(
-          <div style={{textAlign:'center',padding:'60px 20px',color:'#94a3b8'}}>
-            <p style={{fontSize:'18px',marginBottom:'8px'}}>No students found</p>
-            <p style={{fontSize:'14px'}}>Try adjusting your search or filters</p>
-          </div>
-        )}
-      </div>
+          )}
+        </>
+      )}
     </div>
   )
 }
