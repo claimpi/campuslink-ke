@@ -21,7 +21,7 @@ export default function EditProfile(){
   const [userEmail,setUserEmail]=useState('')
   const [avatarUrl,setAvatarUrl]=useState('')
   const [photos,setPhotos]=useState<string[]>([])
-  const [form,setForm]=useState({full_name:'',university:'',course:'',year_of_study:'1',whatsapp_number:'',bio:'',interests:'',status:''})
+  const [form,setForm]=useState({full_name:'',university:'',course:'',year_of_study:'1',whatsapp_number:'',bio:'',interests:'',status:'',tiktok:'',instagram:''})
   const set=(k:string)=>(e:any)=>setForm(f=>({...f,[k]:e.target.value}))
   const inp:React.CSSProperties={width:'100%',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'11px 14px',fontSize:'14px',outline:'none',background:'#fff',boxSizing:'border-box',color:'#0f172a'}
 
@@ -37,7 +37,7 @@ export default function EditProfile(){
           setPhotos(Array.isArray(data.photos)?data.photos:[])
           setForm({full_name:data.full_name||'',university:data.university||'',course:data.course||'',
             year_of_study:String(data.year_of_study||'1'),whatsapp_number:data.whatsapp_number||'',
-            bio:data.bio||'',interests:Array.isArray(data.interests)?data.interests.join(', '):(data.interests||''),status:data.status||''})
+            bio:data.bio||'',interests:Array.isArray(data.interests)?data.interests.join(', '):(data.interests||''),status:data.status||'',tiktok:data.tiktok||'',instagram:data.instagram||''})
         }
         setLoading(false)
       })
@@ -94,7 +94,7 @@ export default function EditProfile(){
       id:userId,
       email:userEmail, // include email to satisfy NOT NULL constraint
       full_name:form.full_name,university:form.university,course:form.course,
-      year_of_study:form.year_of_study,whatsapp_number:form.whatsapp_number,bio:form.bio,status:form.status,interests
+      year_of_study:form.year_of_study,whatsapp_number:form.whatsapp_number,bio:form.bio,status:form.status,tiktok:form.tiktok,instagram:form.instagram,interests
     },{onConflict:'id'})
     if(err) setError(err.message)
     else{setSuccess(true);setTimeout(()=>setSuccess(false),3000)}
@@ -212,6 +212,36 @@ export default function EditProfile(){
             <option value="taken">❤️ Taken</option>
             <option value="complicated">🤔 It's complicated</option>
           </select>
+        </div>
+        <div>
+          <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>TikTok Username <span style={{fontWeight:'400',color:'#94a3b8'}}>(free)</span></label>
+          <div style={{display:'flex',alignItems:'center',border:'1.5px solid #e2e8f0',borderRadius:'10px',overflow:'hidden'}}>
+            <span style={{padding:'11px 12px',background:'#f8fafc',color:'#94a3b8',fontSize:'13px',borderRight:'1px solid #e2e8f0'}}>@</span>
+            <input value={form.tiktok} onChange={set('tiktok')} placeholder="yourusername" style={{...inp,border:'none',borderRadius:0,flex:1}}/>
+          </div>
+        </div>
+        <div>
+          <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Instagram Username <span style={{fontWeight:'400',color:'#94a3b8'}}>(free)</span></label>
+          <div style={{display:'flex',alignItems:'center',border:'1.5px solid #e2e8f0',borderRadius:'10px',overflow:'hidden'}}>
+            <span style={{padding:'11px 12px',background:'#f8fafc',color:'#94a3b8',fontSize:'13px',borderRight:'1px solid #e2e8f0'}}>@</span>
+            <input value={form.instagram} onChange={set('instagram')} placeholder="yourusername" style={{...inp,border:'none',borderRadius:0,flex:1}}/>
+          </div>
+        </div>
+        <div>
+          <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>TikTok Username</label>
+          <div style={{position:'relative'}}>
+            <span style={{position:'absolute',left:'12px',top:'50%',transform:'translateY(-50%)',fontSize:'13px',color:'#94a3b8'}}>@</span>
+            <input value={form.tiktok} onChange={set('tiktok')} placeholder="yourusername" style={{...inp,paddingLeft:'28px'}}
+              onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
+          </div>
+        </div>
+        <div>
+          <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Instagram Username</label>
+          <div style={{position:'relative'}}>
+            <span style={{position:'absolute',left:'12px',top:'50%',transform:'translateY(-50%)',fontSize:'13px',color:'#94a3b8'}}>@</span>
+            <input value={form.instagram} onChange={set('instagram')} placeholder="yourusername" style={{...inp,paddingLeft:'28px'}}
+              onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
+          </div>
         </div>
         <div>
           <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Bio</label>
