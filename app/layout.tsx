@@ -1,6 +1,8 @@
 import './globals.css'
 import Navbar from '@/components/layout/Navbar'
 import BottomNav from '@/components/layout/BottomNav'
+import ToastContainer from '@/components/Toast'
+import InstallBanner from '@/components/InstallBanner'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -40,6 +42,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <p style={{marginTop:'8px'}}>© 2026 CampusLink KE</p>
         </footer>
         <BottomNav />
+        <ToastContainer />
+        <InstallBanner />
         <style>{`@media(max-width:767px){.desktop-footer{display:none}}`}</style>
       </body>
     </html>

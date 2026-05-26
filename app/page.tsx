@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-browser'
+import { toast } from '@/components/Toast'
 
 const UNIS=['All','University of Nairobi','Kenyatta University','Strathmore University','JKUAT','Moi University','Africa Nazarene University','Technical University of Kenya','Maseno University','Dedan Kimathi University']
 const YEARS=['All Years','1','2','3','4','5','6']
@@ -79,6 +80,7 @@ export default function HomePage(){
     await sb.from('friend_requests').insert([{sender_id:currentUserId,receiver_id:receiverId,status:'pending'}])
     setFriendStatuses(prev=>({...prev,[receiverId]:'pending_sent'}))
     setSendingTo(null)
+    toast('Friend request sent! ✅','success','👋')
     // Re-fetch to confirm from server
     loadFriendStatuses(currentUserId)
   }
