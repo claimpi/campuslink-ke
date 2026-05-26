@@ -19,6 +19,9 @@ export default function HomePage(){
   const [year,setYear]=useState('All Years')
   const [status,setStatus]=useState('All')
   const [announcements,setAnnouncements]=useState<any[]>([])
+  const [currentUserId,setCurrentUserId]=useState<string|null>(null)
+  const [friendStatuses,setFriendStatuses]=useState<Record<string,string>>({})
+  const [sendingTo,setSendingTo]=useState<string|null>(null)
 
   const loadStudents=()=>{
     createClient().from('profiles')
@@ -28,6 +31,23 @@ export default function HomePage(){
   }
 
   useEffect(()=>{
+    createClient().auth.getUser().then(({data:{user}})=>{
+      if(user){
+        setCurrentUserId(user.id)
+        createClient().from('friend_requests').select('receiver_id,sender_id,status')
+          .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+          .then(({data})=>{
+            const statuses:Record<string,string>={}
+            data?.forEach((r:any)=>{
+              const otherId = r.sender_id===user.id ? r.receiver_id : r.sender_id
+              if(r.status==='accepted') statuses[otherId]='friends'
+              else if(r.sender_id===user.id) statuses[otherId]='pending_sent'
+              else statuses[otherId]='pending_received'
+            })
+            setFriendStatuses(statuses)
+          })
+      }
+    })
     createClient().from('announcements').select('*').order('created_at',{ascending:false}).limit(3)
       .then(({data})=>{ if(data&&data.length>0) setAnnouncements(data) })
     loadStudents()
@@ -43,6 +63,15 @@ export default function HomePage(){
     const matchStatus=status==='All'||s.status===status
     return matchSearch&&matchUni&&matchYear&&matchStatus
   })
+
+  async function sendRequest(receiverId:string){
+    if(!currentUserId){router.push('/login');return}
+    setSendingTo(receiverId)
+    const sb=createClient()
+    await sb.from('friend_requests').insert([{sender_id:currentUserId,receiver_id:receiverId,status:'pending'}])
+    setFriendStatuses(prev=>({...prev,[receiverId]:'pending_sent'}))
+    setSendingTo(null)
+  }
 
   return(
     <div style={{maxWidth:'1200px',margin:'0 auto',padding:'24px 16px'}}>
@@ -142,10 +171,32 @@ export default function HomePage(){
                         className="sbtn" style={{flex:1,padding:'7px',border:'1px solid #e2e8f0',borderRadius:'8px',background:'#fff',color:'#374151',fontSize:'12px',fontWeight:'600',cursor:'pointer'}}>
                         View
                       </button>
-                      <button onClick={()=>router.push(`/profile/${s.id}`)}
-                        className="sbtn" style={{flex:1,padding:'7px',borderRadius:'8px',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',fontSize:'12px',fontWeight:'700',border:'none',cursor:'pointer'}}>
-                        Connect
-                      </button>
+                      {s.id===currentUserId ? (
+                        <button onClick={()=>router.push('/dashboard')}
+                          className="sbtn" style={{flex:1,padding:'7px',borderRadius:'8px',background:'#f1f5f9',color:'#64748b',fontSize:'12px',fontWeight:'600',border:'none',cursor:'pointer'}}>
+                          You
+                        </button>
+                      ) : friendStatuses[s.id]==='friends' ? (
+                        <button onClick={()=>router.push(`/profile/${s.id}`)}
+                          className="sbtn" style={{flex:1,padding:'7px',borderRadius:'8px',background:'#f0fdf4',color:'#16a34a',fontSize:'11px',fontWeight:'700',border:'1px solid #bbf7d0',cursor:'pointer'}}>
+                          ✅ Friends
+                        </button>
+                      ) : friendStatuses[s.id]==='pending_sent' ? (
+                        <button disabled
+                          className="sbtn" style={{flex:1,padding:'7px',borderRadius:'8px',background:'#fefce8',color:'#ca8a04',fontSize:'11px',fontWeight:'700',border:'1px solid #fde68a',cursor:'not-allowed'}}>
+                          ⏳ Pending
+                        </button>
+                      ) : friendStatuses[s.id]==='pending_received' ? (
+                        <button onClick={()=>router.push('/dashboard')}
+                          className="sbtn" style={{flex:1,padding:'7px',borderRadius:'8px',background:'#eff6ff',color:'#2563eb',fontSize:'11px',fontWeight:'700',border:'1px solid #bfdbfe',cursor:'pointer'}}>
+                          Accept
+                        </button>
+                      ) : (
+                        <button onClick={()=>sendRequest(s.id)} disabled={sendingTo===s.id}
+                          className="sbtn" style={{flex:1,padding:'7px',borderRadius:'8px',background:sendingTo===s.id?'#94a3b8':'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',fontSize:'12px',fontWeight:'700',border:'none',cursor:sendingTo===s.id?'not-allowed':'pointer'}}>
+                          {sendingTo===s.id?'...':'Connect'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
