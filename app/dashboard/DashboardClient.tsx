@@ -26,6 +26,25 @@ export default function DashboardClient(){
         const {data:np}=await sb.from('profiles').upsert({id:user.id,email:user.email,full_name:user.user_metadata?.full_name||user.email?.split('@')[0]||'Student'},{onConflict:'id'}).select().maybeSingle()
         setProfile(np)
       } else setProfile(data)
+
+      // Load pending friend requests sent TO this user
+      const {data:requests} = await sb.from('friend_requests')
+        .select('id,sender_id,status')
+        .eq('receiver_id', user.id)
+        .eq('status','pending')
+      
+      if(requests && requests.length > 0) {
+        // Get sender profiles
+        const senderIds = requests.map((r:any)=>r.sender_id)
+        const {data:senders} = await sb.from('profiles')
+          .select('id,full_name,university,avatar_url')
+          .in('id', senderIds)
+        const mapped = requests.map((r:any)=>({
+          ...r,
+          sender: senders?.find((s:any)=>s.id===r.sender_id)
+        }))
+        setFriendRequests(mapped)
+      }
       setLoading(false)
     }
     load()
