@@ -25,7 +25,9 @@ function ResetContent() {
     const { error } = await createClient().auth.updateUser({ password })
     if (error) { setError(error.message); setLoading(false); return }
     setDone(true)
-    setTimeout(() => router.push('/dashboard'), 3000)
+    // Force refresh session then redirect
+    await createClient().auth.refreshSession()
+    setTimeout(() => { router.push('/dashboard'); router.refresh() }, 1500)
   }
 
   return (
