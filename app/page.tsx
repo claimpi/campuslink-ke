@@ -94,7 +94,12 @@ export default function HomePage(){
           <h1 style={{fontSize:'22px',fontWeight:'800',color:'#0f172a',marginBottom:'2px'}}>Students</h1>
           <p style={{fontSize:'13px',color:'#94a3b8'}}>{filtered.length} students across Kenyan universities</p>
         </div>
-        <Link href="/register" style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'9px 20px',borderRadius:'8px',fontWeight:'600',fontSize:'13px',boxShadow:'0 2px 8px rgba(249,115,22,0.3)'}}>Join Free</Link>
+        {!currentUserId && (
+          <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+            <Link href="/login" style={{color:'#64748b',padding:'9px 16px',borderRadius:'8px',fontWeight:'600',fontSize:'13px',border:'1px solid #e2e8f0',background:'#fff'}}>Sign In</Link>
+            <Link href="/register" style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'9px 16px',borderRadius:'8px',fontWeight:'600',fontSize:'13px',boxShadow:'0 2px 8px rgba(249,115,22,0.3)'}}>Join Free</Link>
+          </div>
+        )}
       </div>
 
       {/* Filters */}
