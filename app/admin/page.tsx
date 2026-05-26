@@ -78,9 +78,18 @@ export default function AdminPage(){
   }
 
   async function deleteStudent(id:string){
-    if(!confirm('Delete this student?')) return
-    await createClient().from('profiles').delete().eq('id',id)
-    setStudents(ss=>ss.filter(s=>s.id!==id))
+    if(!confirm('Delete this student? This cannot be undone.')) return
+    const res = await fetch('/api/admin/delete-user', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: id })
+    })
+    if (res.ok) {
+      setStudents(ss=>ss.filter(s=>s.id!==id))
+    } else {
+      const data = await res.json()
+      alert('Delete failed: ' + (data.error || 'Unknown error'))
+    }
   }
 
   async function approveGroup(id:string){
