@@ -11,51 +11,65 @@ function urlBase64ToUint8Array(base64String: string) {
   return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)))
 }
 
-export default function PushNotifications() {
-  useEffect(() => {
-    async function setup() {
-      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
+async function saveSub(userId: string, sub: PushSubscription) {
+  const subJson = sub.toJSON()
+  const sb = createClient()
+  const { error } = await sb.from('push_subscriptions').upsert({
+    user_id: userId,
+    endpoint: subJson.endpoint,
+    p256dh: (subJson.keys as any)?.p256dh,
+    auth: (subJson.keys as any)?.auth,
+  }, { onConflict: 'user_id' })
+  if (error) console.error('Push sub save error:', error)
+  else console.log('Push subscription saved ✅')
+}
 
-      const sb = createClient()
-      const { data: { user } } = await sb.auth.getUser()
-      if (!user) return
+export async function setupPush(userId: string) {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    console.log('Push not supported')
+    return
+  }
 
-      // Register service worker
-      const reg = await navigator.serviceWorker.register('/sw.js')
-      await navigator.serviceWorker.ready
+  try {
+    // Register service worker
+    const reg = await navigator.serviceWorker.register('/sw.js')
+    await navigator.serviceWorker.ready
+    console.log('SW ready ✅')
 
-      // Check if already subscribed
-      const existing = await reg.pushManager.getSubscription()
-      if (existing) {
-        // Save to DB in case not saved yet
-        await saveSub(sb, user.id, existing)
-        return
-      }
+    // Check permission
+    let permission = Notification.permission
+    if (permission === 'default') {
+      permission = await Notification.requestPermission()
+    }
+    if (permission !== 'granted') {
+      console.log('Notification permission denied')
+      return
+    }
 
-      // Ask permission
-      const permission = await Notification.requestPermission()
-      if (permission !== 'granted') return
-
-      // Subscribe
-      const sub = await reg.pushManager.subscribe({
+    // Get or create subscription
+    let sub = await reg.pushManager.getSubscription()
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC)
       })
-
-      await saveSub(sb, user.id, sub)
+      console.log('New push subscription created ✅')
+    } else {
+      console.log('Existing push subscription found ✅')
     }
 
-    async function saveSub(sb: any, userId: string, sub: PushSubscription) {
-      const subJson = sub.toJSON()
-      await sb.from('push_subscriptions').upsert({
-        user_id: userId,
-        endpoint: subJson.endpoint,
-        p256dh: (subJson.keys as any)?.p256dh,
-        auth: (subJson.keys as any)?.auth,
-      }, { onConflict: 'user_id' })
-    }
+    await saveSub(userId, sub)
+  } catch (e) {
+    console.error('Push setup error:', e)
+  }
+}
 
-    setup().catch(console.error)
+export default function PushNotifications() {
+  useEffect(() => {
+    const sb = createClient()
+    sb.auth.getUser().then(({ data: { user } }) => {
+      if (user) setupPush(user.id)
+    })
   }, [])
 
   return null
