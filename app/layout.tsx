@@ -8,13 +8,13 @@ export const metadata: Metadata = {
   description: 'Connect with students across Kenyan universities. Find study partners, join WhatsApp groups and build your campus network.',
   icons: {
     icon: [
-      { url: '/favicon.ico' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' },
       { url: '/icon-16.png', sizes: '16x16', type: 'image/png' },
       { url: '/icon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icon-48.png', sizes: '48x48', type: 'image/png' },
     ],
-    apple: [
-      { url: '/icon-192.png' },
-    ],
+    apple: { url: '/icon-192.png', sizes: '192x192' },
     shortcut: '/favicon.ico',
   },
   manifest: '/manifest.json',
