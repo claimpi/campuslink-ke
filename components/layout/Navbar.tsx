@@ -22,7 +22,11 @@ export default function Navbar() {
         sb.from('profiles').select('full_name,is_premium,avatar_url').eq('id',user.id).maybeSingle().then(({data})=>setProfile(data))
       }
     })
-    return ()=>{ subscription.unsubscribe() }
+    const {data:{subscription}} = sb.auth.onAuthStateChange((_,session)=>{
+      setUser(session?.user||null)
+      if(!session?.user) setProfile(null)
+    })
+    return ()=>subscription.unsubscribe()
   },[])
 
   async function logout(){
