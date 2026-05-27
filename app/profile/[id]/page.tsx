@@ -53,7 +53,22 @@ export default function ProfilePage(){
     const {data,error}=await sb.from('friend_requests').insert([{
       sender_id:currentUser.id, receiver_id:id, status:'pending'
     }]).select().single()
-    if(!error){setFriendStatus('pending_sent');setRequestId(data.id)}
+    if(!error){
+      setFriendStatus('pending_sent')
+      setRequestId(data.id)
+      // Send push notification
+      const {data:me}=await sb.from('profiles').select('full_name').eq('id',currentUser.id).maybeSingle()
+      fetch('/api/push-notify',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          userId:id,
+          title:'New Friend Request 👋',
+          body:`${me?.full_name||'Someone'} wants to connect with you on CampusLink KE`,
+          url:'/dashboard'
+        })
+      }).then(r=>r.json()).then(d=>console.log('Push:',d)).catch(()=>{})
+    }
     setFriendLoading(false)
   }
 
