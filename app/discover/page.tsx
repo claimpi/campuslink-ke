@@ -14,7 +14,13 @@ const MOCK = [
 const UNIS = ['All Universities','University of Nairobi','Kenyatta University','Strathmore University','JKUAT','Moi University','Africa Nazarene University','Technical University of Kenya','Maseno University','Dedan Kimathi University']
 const YEARS = ['All Years','1','2','3','4','5','6']
 
-function isOnline(t:string|null){return t?(Date.now()-new Date(t).getTime())<5*60*1000:false}
+function onlineStatus(t:string|null):'online'|'recent'|'offline'{
+  if(!t) return 'offline'
+  const diff=Date.now()-new Date(t).getTime()
+  if(diff<10*60*1000) return 'online'
+  if(diff<24*60*60*1000) return 'recent'
+  return 'offline'
+}
 function initials(n:string){return n.split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2)}
 
 export default function DiscoverPage(){

@@ -9,7 +9,13 @@ const UNIS=['All','University of Nairobi','Kenyatta University','Strathmore Univ
 const YEARS=['All Years','1','2','3','4','5','6']
 
 function initials(n:string){return(n||'?').split(' ').map((x:string)=>x[0]).join('').toUpperCase().slice(0,2)}
-function isOnline(t:string|null):boolean{return t?(Date.now()-new Date(t).getTime())<5*60*1000:false}
+function onlineStatus(t:string|null):'online'|'recent'|'offline'{
+  if(!t) return 'offline'
+  const diff=Date.now()-new Date(t).getTime()
+  if(diff<10*60*1000) return 'online'      // 10 minutes
+  if(diff<24*60*60*1000) return 'recent'   // 24 hours
+  return 'offline'
+}
 
 export default function HomePage(){
   const router=useRouter()
@@ -179,7 +185,11 @@ export default function HomePage(){
                           ?<img src={s.avatar_url} className="savatar" style={{width:'48px',height:'48px',borderRadius:'10px',objectFit:'cover'}}/>
                           :<div className="savatar" style={{width:'48px',height:'48px',borderRadius:'10px',background:s.is_top_student?'#fff7ed':'#f1f5f9',color:s.is_top_student?'#ea580c':'#64748b',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'15px'}}>{initials(s.full_name)}</div>
                         }
-                        {isOnline(s.last_seen)&&<div style={{position:'absolute',bottom:'1px',right:'1px',width:'10px',height:'10px',background:'#22c55e',borderRadius:'50%',border:'2px solid #fff'}}/>}
+                        {onlineStatus(s.last_seen)!=='offline'&&(
+                      <div style={{position:'absolute',bottom:'1px',right:'1px',width:'10px',height:'10px',
+                        background:onlineStatus(s.last_seen)==='online'?'#22c55e':'#f59e0b',
+                        borderRadius:'50%',border:'2px solid #fff'}}/>
+                    )}
                       </div>
                       <div style={{flex:1,minWidth:0}}>
                         <p className="sname" style={{fontWeight:'700',color:'#0f172a',fontSize:'13px',marginBottom:'1px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.full_name}</p>
