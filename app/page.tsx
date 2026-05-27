@@ -84,7 +84,8 @@ export default function HomePage(){
     loadFriendStatuses(currentUserId)
     // Send push notification to receiver
     const {data:me}=await createClient().from('profiles').select('full_name').eq('id',currentUserId).maybeSingle()
-    fetch('/api/push-notify',{
+    console.log('Sending push to:', receiverId)
+    const pushRes = await fetch('/api/push-notify',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
@@ -93,7 +94,10 @@ export default function HomePage(){
         body:`${me?.full_name||'Someone'} wants to connect with you on CampusLink KE`,
         url:'/dashboard'
       })
-    }).then(r=>r.json()).then(d=>console.log('Push sent:',d)).catch(e=>console.error('Push failed:',e))
+    })
+    const pushData = await pushRes.json()
+    console.log('Push result:', pushData)
+    toast(pushData.sent > 0 ? 'Notification sent! 🔔' : 'Request sent (no push sub)','info')
   }
 
   return(
