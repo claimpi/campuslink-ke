@@ -16,21 +16,11 @@ export default function Navbar() {
 
   useEffect(()=>{
     const sb = createClient()
-    let interval: ReturnType<typeof setInterval>
-
     sb.auth.getUser().then(({data:{user}})=>{
       setUser(user)
       if(user){
         sb.from('profiles').select('full_name,is_premium,avatar_url').eq('id',user.id).maybeSingle().then(({data})=>setProfile(data))
-        // Update last_seen immediately then every 2 minutes
-        const ping = () => sb.from('profiles').update({last_seen: new Date().toISOString()}).eq('id', user.id)
-        ping()
-        interval = setInterval(ping, 2 * 60 * 1000)
-      }
-    })
-    const {data:{subscription}} = sb.auth.onAuthStateChange((_,session)=>{
-      setUser(session?.user||null)
-      if(!session?.user){setProfile(null);clearInterval(interval)}
+        // No last_seen tracking}
     })
     return ()=>{ subscription.unsubscribe(); clearInterval(interval) }
   },[])

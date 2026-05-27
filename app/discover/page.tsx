@@ -14,13 +14,7 @@ const MOCK = [
 const UNIS = ['All Universities','University of Nairobi','Kenyatta University','Strathmore University','JKUAT','Moi University','Africa Nazarene University','Technical University of Kenya','Maseno University','Dedan Kimathi University']
 const YEARS = ['All Years','1','2','3','4','5','6']
 
-function onlineStatus(t:string|null):'online'|'recent'|'offline'{
-  if(!t) return 'offline'
-  const diff=Date.now()-new Date(t).getTime()
-  if(diff<10*60*1000) return 'online'
-  if(diff<24*60*60*1000) return 'recent'
-  return 'offline'
-}
+
 function initials(n:string){return n.split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2)}
 
 export default function DiscoverPage(){
@@ -33,7 +27,7 @@ export default function DiscoverPage(){
 
   useEffect(()=>{
     const load = () => createClient().from('profiles')
-      .select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_top_student,interests,status,last_seen')
+      .select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_top_student,interests,status')
       .order('is_featured',{ascending:false}).then(({data,error})=>{
         if(!error&&data&&data.length>0) setStudents(data)
         setLoading(false)
@@ -109,8 +103,7 @@ export default function DiscoverPage(){
                           ?<img src={s.avatar_url} style={{width:'44px',height:'44px',borderRadius:'50%',objectFit:'cover'}}/>
                           :<div style={{width:'44px',height:'44px',borderRadius:'50%',background:'#fff7ed',color:'#ea580c',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'14px'}}>{initials(s.full_name||'?')}</div>
                         }
-                        {onlineStatus(s.last_seen)!=="offline"&&<div style={{position:'absolute',bottom:'1px',right:'1px',width:'12px',height:'12px',background:'#22c55e',borderRadius:'50%',border:'2px solid #fff',zIndex:1}}/>}
-                      </div>
+                                              </div>
                       <div>
                         <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px',lineHeight:'1.3'}}>{s.full_name}</p>
                         <div style={{display:'flex',gap:'4px',flexWrap:'wrap',marginTop:'5px'}}>

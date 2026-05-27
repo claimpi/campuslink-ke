@@ -149,10 +149,7 @@ export default function ProfilePage(){
                   ?<img src={profile.avatar_url} style={{width:'80px',height:'80px',borderRadius:'14px',objectFit:'cover',border:'1px solid #e2e8f0'}}/>
                   :<div style={{width:'80px',height:'80px',borderRadius:'14px',background:'#f8fafc',color:'#94a3b8',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'24px',border:'1px solid #e2e8f0'}}>{initials(profile.full_name)}</div>
                 }
-                {profile.last_seen&&(Date.now()-new Date(profile.last_seen).getTime())<24*60*60*1000&&(
-                  <div style={{position:'absolute',bottom:'4px',right:'4px',width:'14px',height:'14px',background:'#22c55e',borderRadius:'50%',border:'2px solid #fff'}}/>
-                )}
-              </div>
+                              </div>
               <div style={{paddingTop:'4px'}}>
                 <h1 style={{fontSize:'20px',fontWeight:'800',color:'#0f172a',marginBottom:'5px',lineHeight:'1.2'}}>{profile.full_name}</h1>
                 <div style={{display:'flex',gap:'5px',flexWrap:'wrap'}}>
