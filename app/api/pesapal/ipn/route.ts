@@ -31,6 +31,14 @@ export async function POST(req: NextRequest) {
     } else if (type === 'unlock') {
       // Mark the contact as unlocked for this user
       await sb.from('unlock_requests').upsert({requester_id:payment.user_id, target_id:payment.target_id, status:'approved'})
+      // Notify the person whose number was unlocked
+      if (payment.target_id) {
+        const {data:buyer}=await sb.from('profiles').select('full_name').eq('id',payment.user_id).maybeSingle()
+        await fetch(`${process.env.NEXT_PUBLIC_SITE_URL||'https://campuslink.co.ke'}/api/push-notify`,{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({userId:payment.target_id,title:'Someone unlocked your number! 💰',body:`${buyer?.full_name||'A student'} just paid KES 20 to connect with you`,url:'/dashboard'})
+        }).catch(()=>{})
+      }
     } else if (type === 'add_group') {
       // Approve the group listing
       if (payment.group_id) {

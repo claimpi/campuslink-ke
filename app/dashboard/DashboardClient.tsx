@@ -181,6 +181,11 @@ export default function DashboardClient(){
                   <button onClick={async()=>{
                     await createClient().from('friend_requests').update({status:'accepted'}).eq('id',req.id)
                     setFriendRequests(fr=>fr.filter(r=>r.id!==req.id))
+                    // Notify sender their request was accepted
+                    const {data:me}=await createClient().from('profiles').select('full_name').eq('id',user?.id).maybeSingle()
+                    fetch('/api/push-notify',{method:'POST',headers:{'Content-Type':'application/json'},
+                      body:JSON.stringify({userId:req.sender_id,title:'Friend Request Accepted! 🎉',body:`${me?.full_name||'Someone'} accepted your friend request. You can now unlock their number!`,url:`/profile/${user?.id}`})
+                    }).catch(()=>{})
                   }} style={{background:'#16a34a',color:'#fff',border:'none',borderRadius:'8px',padding:'7px 14px',fontSize:'13px',fontWeight:'700',cursor:'pointer'}}>Accept</button>
                   <button onClick={async()=>{
                     await createClient().from('friend_requests').update({status:'declined'}).eq('id',req.id)
