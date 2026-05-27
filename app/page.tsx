@@ -80,9 +80,20 @@ export default function HomePage(){
     await sb.from('friend_requests').insert([{sender_id:currentUserId,receiver_id:receiverId,status:'pending'}])
     setFriendStatuses(prev=>({...prev,[receiverId]:'pending_sent'}))
     setSendingTo(null)
-    toast('Friend request sent! ✅','success','👋')
-    // Re-fetch to confirm from server
+    toast('Friend request sent! 👋','success','👋')
     loadFriendStatuses(currentUserId)
+    // Send push notification to receiver
+    const {data:me}=await createClient().from('profiles').select('full_name').eq('id',currentUserId).maybeSingle()
+    fetch('/api/push-notify',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        userId:receiverId,
+        title:'New Friend Request 👋',
+        body:`${me?.full_name||'Someone'} wants to connect with you on CampusLink KE`,
+        url:'/dashboard'
+      })
+    }).then(r=>r.json()).then(d=>console.log('Push sent:',d)).catch(e=>console.error('Push failed:',e))
   }
 
   return(
