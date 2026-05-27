@@ -109,7 +109,7 @@ export default function DiscoverPage(){
                           ?<img src={s.avatar_url} style={{width:'44px',height:'44px',borderRadius:'50%',objectFit:'cover'}}/>
                           :<div style={{width:'44px',height:'44px',borderRadius:'50%',background:'#fff7ed',color:'#ea580c',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'14px'}}>{initials(s.full_name||'?')}</div>
                         }
-                        {isOnline(s.last_seen)&&<div style={{position:'absolute',bottom:'1px',right:'1px',width:'12px',height:'12px',background:'#22c55e',borderRadius:'50%',border:'2px solid #fff',zIndex:1}}/>}
+                        {onlineStatus(s.last_seen)!=="offline"&&<div style={{position:'absolute',bottom:'1px',right:'1px',width:'12px',height:'12px',background:'#22c55e',borderRadius:'50%',border:'2px solid #fff',zIndex:1}}/>}
                       </div>
                       <div>
                         <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px',lineHeight:'1.3'}}>{s.full_name}</p>
