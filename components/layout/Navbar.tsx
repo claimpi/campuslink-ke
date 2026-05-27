@@ -20,9 +20,9 @@ export default function Navbar() {
       setUser(user)
       if(user){
         sb.from('profiles').select('full_name,is_premium,avatar_url').eq('id',user.id).maybeSingle().then(({data})=>setProfile(data))
-        // No last_seen tracking}
+      }
     })
-    return ()=>{ subscription.unsubscribe(); clearInterval(interval) }
+    return ()=>{ subscription.unsubscribe() }
   },[])
 
   async function logout(){
