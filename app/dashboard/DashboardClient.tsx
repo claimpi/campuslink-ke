@@ -37,7 +37,7 @@ export default function DashboardClient(){
         // Get sender profiles
         const senderIds = requests.map((r:any)=>r.sender_id)
         const {data:senders} = await sb.from('profiles')
-          .select('id,full_name,university,avatar_url')
+          .select('id,full_name,university,course,avatar_url,whatsapp_number,bio,interests,is_premium,is_featured,is_top_student,profile_views,referral_code,referral_earnings')
           .in('id', senderIds)
         const mapped = requests.map((r:any)=>({
           ...r,
@@ -126,6 +126,34 @@ export default function DashboardClient(){
           </Link>
         ))}
       </div>
+
+      {/* Profile photo nudge */}
+      {!profile?.avatar_url&&(
+        <div style={{background:'linear-gradient(135deg,#fff7ed,#fef3c7)',border:'1px solid #fde68a',borderRadius:'14px',padding:'16px 20px',marginBottom:'16px',display:'flex',alignItems:'center',gap:'14px',flexWrap:'wrap'}}>
+          <div style={{width:'44px',height:'44px',borderRadius:'50%',background:'#f1f5f9',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'22px',flexShrink:0}}>📸</div>
+          <div style={{flex:1,minWidth:'180px'}}>
+            <p style={{fontWeight:'700',color:'#92400e',fontSize:'14px',marginBottom:'2px'}}>Add a profile photo!</p>
+            <p style={{fontSize:'12px',color:'#a16207'}}>Students with photos get <strong>3x more</strong> connection requests</p>
+          </div>
+          <a href="/dashboard/profile" style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'9px 18px',borderRadius:'9px',fontSize:'13px',fontWeight:'700',textDecoration:'none',flexShrink:0,boxShadow:'0 2px 8px rgba(249,115,22,0.3)'}}>
+            Add Photo →
+          </a>
+        </div>
+      )}
+
+      {/* WhatsApp nudge */}
+      {!profile?.whatsapp_number&&(
+        <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'14px',padding:'14px 20px',marginBottom:'16px',display:'flex',alignItems:'center',gap:'14px',flexWrap:'wrap'}}>
+          <span style={{fontSize:'22px',flexShrink:0}}>💬</span>
+          <div style={{flex:1,minWidth:'180px'}}>
+            <p style={{fontWeight:'700',color:'#166534',fontSize:'14px',marginBottom:'2px'}}>Add your WhatsApp number</p>
+            <p style={{fontSize:'12px',color:'#16a34a'}}>So students who connect with you can reach you</p>
+          </div>
+          <a href="/dashboard/profile" style={{background:'#16a34a',color:'#fff',padding:'9px 18px',borderRadius:'9px',fontSize:'13px',fontWeight:'700',textDecoration:'none',flexShrink:0}}>
+            Add Now →
+          </a>
+        </div>
+      )}
 
       {/* Friend Requests */}
       {friendRequests.length>0&&(
