@@ -213,8 +213,11 @@ export default function HomePage(){
             const isMatch=matches.has(s.id)
             return(
               <div key={s.id} onClick={()=>router.push(`/profile/${s.id}`)}
-                style={{position:'relative',aspectRatio:'3/4',borderRadius:'14px',overflow:'hidden',cursor:'pointer',background:'#f1f5f9',
-                  border:s.is_featured?'2px solid #f97316':'none'}}>
+                style={{position:'relative',borderRadius:'14px',overflow:'hidden',cursor:'pointer',background:'#f1f5f9',
+                  border:s.is_featured?'2px solid #f97316':'1px solid #e2e8f0',
+                  display:'flex',flexDirection:'column'}}>
+                {/* Photo area */}
+                <div style={{position:'relative',aspectRatio:'3/4',flexShrink:0}}>
                 {s.avatar_url
                   ?<img src={s.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
                   :<div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',
