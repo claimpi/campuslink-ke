@@ -61,6 +61,18 @@ export default function AdminPage(){
     setStudents(ss=>ss.map(s=>s.id===id?{...s,[field]:!val}:s))
   }
 
+  async function approveGift(id:string,userId:string,targetId:string,amount:number,giftType:string){
+    const sb=createClient()
+    await sb.from('payment_requests').update({status:'approved'}).eq('id',id)
+    // Credit receiver
+    const {data:recv}=await sb.from('profiles').select('gift_earnings').eq('id',targetId).maybeSingle()
+    await fetch('/api/admin/update-user',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({userId:targetId,field:'gift_earnings',value:(recv?.gift_earnings||0)+amount})})
+    // Insert into gifts table
+    await sb.from('gifts').insert([{sender_id:userId,receiver_id:targetId,gift_type:giftType,amount}])
+    setPayments(pp=>pp.map(p=>p.id===id?{...p,status:'approved'}:p))
+  }
+
   async function approvePayment(id:string,userId:string,type:string){
     // Update payment status
     await createClient().from('payment_requests').update({status:'approved'}).eq('id',id)
