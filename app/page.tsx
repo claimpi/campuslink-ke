@@ -19,6 +19,8 @@ export default function HomePage(){
   const [uni,setUni]=useState('All')
   const [year,setYear]=useState('All Years')
   const [status,setStatus]=useState('All')
+  const [gender,setGender]=useState('All')
+  const [lookingFor,setLookingFor]=useState('All')
   const [announcements,setAnnouncements]=useState<any[]>([])
   const [currentUserId,setCurrentUserId]=useState<string|null>(null)
   const [friendStatuses,setFriendStatuses]=useState<Record<string,string>>({})
@@ -70,7 +72,9 @@ export default function HomePage(){
     const matchUni=uni==='All'||s.university===uni
     const matchYear=year==='All Years'||String(s.year_of_study)===year
     const matchStatus=status==='All'||s.status===status
-    return matchSearch&&matchUni&&matchYear&&matchStatus
+    const matchGender=gender==='All'||s.gender===gender
+    const matchLooking=lookingFor==='All'||s.looking_for===lookingFor
+    return matchSearch&&matchUni&&matchYear&&matchStatus&&matchGender&&matchLooking
   })
 
   async function sendRequest(receiverId:string){
@@ -146,6 +150,19 @@ export default function HomePage(){
           <option value="taken">❤️ Taken</option>
           <option value="complicated">🤔 Complicated</option>
         </select>
+        <select value={gender} onChange={e=>setGender(e.target.value)} style={{border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'9px 12px',fontSize:'13px',outline:'none',background:'#fff',color:'#374151',cursor:'pointer'}}>
+          <option value="All">All Genders</option>
+          <option value="male">👨 Male</option>
+          <option value="female">👩 Female</option>
+          <option value="other">Other</option>
+        </select>
+        <select value={lookingFor} onChange={e=>setLookingFor(e.target.value)} style={{border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'9px 12px',fontSize:'13px',outline:'none',background:'#fff',color:'#374151',cursor:'pointer'}}>
+          <option value="All">Looking For</option>
+          <option value="friendship">👫 Friendship</option>
+          <option value="relationship">❤️ Relationship</option>
+          <option value="study">📚 Study Partner</option>
+          <option value="networking">🤝 Networking</option>
+        </select>
       </div>
 
       {/* Grid */}
@@ -190,7 +207,12 @@ export default function HomePage(){
                     {/* Badges */}
                     <div style={{display:'flex',flexWrap:'wrap',gap:'4px',marginBottom:'10px'}}>
                       <span style={{background:'#f8fafc',color:'#64748b',fontSize:'10px',padding:'2px 6px',borderRadius:'50px',border:'1px solid #e2e8f0'}}>Y{s.year_of_study}</span>
+                      {s.age&&<span style={{background:'#f8fafc',color:'#64748b',fontSize:'10px',padding:'2px 6px',borderRadius:'50px',border:'1px solid #e2e8f0'}}>{s.age}yrs</span>}
                       {s.is_premium&&<span style={{background:'#f5f3ff',color:'#7c3aed',fontSize:'10px',padding:'2px 6px',borderRadius:'50px',border:'1px solid #ddd6fe',fontWeight:'600'}}>Pro</span>}
+                      {s.looking_for==='friendship'&&<span style={{background:'#eff6ff',color:'#2563eb',fontSize:'10px',padding:'2px 6px',borderRadius:'50px',border:'1px solid #bfdbfe',fontWeight:'600'}}>👫 Friendship</span>}
+                      {s.looking_for==='relationship'&&<span style={{background:'#fef2f2',color:'#dc2626',fontSize:'10px',padding:'2px 6px',borderRadius:'50px',border:'1px solid #fecaca',fontWeight:'600'}}>❤️ Relationship</span>}
+                      {s.looking_for==='study'&&<span style={{background:'#f0fdf4',color:'#16a34a',fontSize:'10px',padding:'2px 6px',borderRadius:'50px',border:'1px solid #bbf7d0',fontWeight:'600'}}>📚 Study</span>}
+                      {s.looking_for==='networking'&&<span style={{background:'#fff7ed',color:'#ea580c',fontSize:'10px',padding:'2px 6px',borderRadius:'50px',border:'1px solid #fed7aa',fontWeight:'600'}}>🤝 Network</span>}
                       {s.status==='single'&&<span style={{background:'#f0fdf4',color:'#16a34a',fontSize:'10px',padding:'2px 6px',borderRadius:'50px',border:'1px solid #bbf7d0',fontWeight:'600'}}>💚 Single</span>}
                       {s.status==='taken'&&<span style={{background:'#fef2f2',color:'#dc2626',fontSize:'10px',padding:'2px 6px',borderRadius:'50px',border:'1px solid #fecaca',fontWeight:'600'}}>❤️ Taken</span>}
                       {s.status==='complicated'&&<span style={{background:'#fff7ed',color:'#ea580c',fontSize:'10px',padding:'2px 6px',borderRadius:'50px',border:'1px solid #fed7aa',fontWeight:'600'}}>🤔</span>}

@@ -170,6 +170,10 @@ export default function ProfilePage(){
               {profile.course&&<div style={{display:'flex',gap:'10px'}}><span style={{fontSize:'12px',color:'#94a3b8',width:'70px',flexShrink:0}}>Course</span><span style={{fontSize:'13px',color:'#374151',fontWeight:'500'}}>{profile.course}</span></div>}
               {profile.university&&<div style={{display:'flex',gap:'10px'}}><span style={{fontSize:'12px',color:'#94a3b8',width:'70px',flexShrink:0}}>University</span><span style={{fontSize:'13px',color:'#374151',fontWeight:'500'}}>{profile.university}</span></div>}
               {profile.year_of_study&&<div style={{display:'flex',gap:'10px'}}><span style={{fontSize:'12px',color:'#94a3b8',width:'70px',flexShrink:0}}>Year</span><span style={{fontSize:'13px',color:'#374151',fontWeight:'500'}}>Year {profile.year_of_study}</span></div>}
+              {profile.age&&<div style={{display:'flex',gap:'10px'}}><span style={{fontSize:'12px',color:'#94a3b8',width:'70px',flexShrink:0}}>Age</span><span style={{fontSize:'13px',color:'#374151',fontWeight:'500'}}>{profile.age} years</span></div>}
+              {profile.gender&&<div style={{display:'flex',gap:'10px'}}><span style={{fontSize:'12px',color:'#94a3b8',width:'70px',flexShrink:0}}>Gender</span><span style={{fontSize:'13px',color:'#374151',fontWeight:'500',textTransform:'capitalize'}}>{profile.gender}</span></div>}
+              {profile.location_name&&<div style={{display:'flex',gap:'10px'}}><span style={{fontSize:'12px',color:'#94a3b8',width:'70px',flexShrink:0}}>Location</span><span style={{fontSize:'13px',color:'#f97316',fontWeight:'500'}}>📍 {profile.location_name}</span></div>}
+              {profile.looking_for&&<div style={{display:'flex',gap:'10px'}}><span style={{fontSize:'12px',color:'#94a3b8',width:'70px',flexShrink:0}}>Looking</span><span style={{fontSize:'13px',color:'#374151',fontWeight:'500'}}>{profile.looking_for==='friendship'?'👫 Friendship':profile.looking_for==='relationship'?'❤️ Relationship':profile.looking_for==='study'?'📚 Study Partner':'🤝 Networking'}</span></div>}
             </div>
 
             {interests.length>0&&(

@@ -21,7 +21,7 @@ export default function EditProfile(){
   const [userEmail,setUserEmail]=useState('')
   const [avatarUrl,setAvatarUrl]=useState('')
   const [photos,setPhotos]=useState<string[]>([])
-  const [form,setForm]=useState({full_name:'',university:'',course:'',year_of_study:'1',whatsapp_number:'',bio:'',interests:'',status:'',tiktok:'',instagram:''})
+  const [form,setForm]=useState({full_name:'',university:'',course:'',year_of_study:'1',whatsapp_number:'',bio:'',interests:'',status:'',tiktok:'',instagram:'',age:'',gender:'',looking_for:'',location_name:''})
   const set=(k:string)=>(e:any)=>setForm(f=>({...f,[k]:e.target.value}))
   const inp:React.CSSProperties={width:'100%',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'11px 14px',fontSize:'14px',outline:'none',background:'#fff',boxSizing:'border-box',color:'#0f172a'}
 
@@ -37,7 +37,7 @@ export default function EditProfile(){
           setPhotos(Array.isArray(data.photos)?data.photos:[])
           setForm({full_name:data.full_name||'',university:data.university||'',course:data.course||'',
             year_of_study:String(data.year_of_study||'1'),whatsapp_number:data.whatsapp_number||'',
-            bio:data.bio||'',interests:Array.isArray(data.interests)?data.interests.join(', '):(data.interests||''),status:data.status||'',tiktok:data.tiktok||'',instagram:data.instagram||''})
+            bio:data.bio||'',interests:Array.isArray(data.interests)?data.interests.join(', '):(data.interests||''),status:data.status||'',tiktok:data.tiktok||'',instagram:data.instagram||'',age:data.age||'',gender:data.gender||'',looking_for:data.looking_for||'',location_name:data.location_name||''})
         }
         setLoading(false)
       })
@@ -94,7 +94,7 @@ export default function EditProfile(){
       id:userId,
       email:userEmail, // include email to satisfy NOT NULL constraint
       full_name:form.full_name,university:form.university,course:form.course,
-      year_of_study:form.year_of_study,whatsapp_number:form.whatsapp_number,bio:form.bio,status:form.status,tiktok:form.tiktok,instagram:form.instagram,interests
+      year_of_study:form.year_of_study,whatsapp_number:form.whatsapp_number,bio:form.bio,status:form.status,tiktok:form.tiktok,instagram:form.instagram,age:form.age?parseInt(form.age):null,gender:form.gender,looking_for:form.looking_for,location_name:form.location_name,interests
     },{onConflict:'id'})
     if(err) setError(err.message)
     else{setSuccess(true);setTimeout(()=>setSuccess(false),3000)}
@@ -226,6 +226,33 @@ export default function EditProfile(){
             <span style={{padding:'11px 12px',background:'#f8fafc',color:'#94a3b8',fontSize:'13px',borderRight:'1px solid #e2e8f0'}}>@</span>
             <input value={form.instagram} onChange={set('instagram')} placeholder="yourusername" style={{...inp,border:'none',borderRadius:0,flex:1}}/>
           </div>
+        </div>
+        <div>
+          <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Age</label>
+          <input type="number" value={form.age} onChange={set('age')} placeholder="e.g. 21" min="16" max="35" style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
+        </div>
+        <div>
+          <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Gender</label>
+          <select value={form.gender} onChange={set('gender')} style={inp}>
+            <option value="">Prefer not to say</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Looking For</label>
+          <select value={form.looking_for} onChange={set('looking_for')} style={inp}>
+            <option value="">Not specified</option>
+            <option value="friendship">👫 Friendship</option>
+            <option value="relationship">❤️ Relationship</option>
+            <option value="study">📚 Study Partner</option>
+            <option value="networking">🤝 Networking</option>
+          </select>
+        </div>
+        <div style={{gridColumn:'1/-1'}}>
+          <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Your Location <span style={{fontWeight:'400',color:'#94a3b8'}}>(town/area)</span></label>
+          <input value={form.location_name} onChange={set('location_name')} placeholder="e.g. Nairobi, Westlands" style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
         </div>
         <div>
           <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Bio</label>
