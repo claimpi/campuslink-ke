@@ -7,8 +7,8 @@ import PushNotifications from '@/components/PushNotifications'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'CampusLink KE — Kenyan Student Network',
-  description: 'Connect with students across Kenyan universities. Find study partners, join WhatsApp groups and build your campus network.',
+  title: 'CampusLink KE — Kenyan User Network',
+  description: 'Connect with users across Kenya. Find study partners, join WhatsApp groups and build your campus network.',
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },
@@ -39,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main style={{minHeight:'80vh'}}>{children}</main>
         <footer style={{background:'#0f172a',color:'#64748b',padding:'32px 20px',textAlign:'center',fontSize:'13px'}} className="desktop-footer">
           <p style={{color:'#94a3b8',fontWeight:'600',marginBottom:'4px'}}>CampusLink KE</p>
-          <p>Connecting Kenyan university students</p>
+          <p>Connecting Kenyan university users</p>
           <p style={{marginTop:'8px'}}>© 2026 CampusLink KE</p>
         </footer>
         <BottomNav />

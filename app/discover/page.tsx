@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase-browser'
 
 const MOCK = [
   {id:'1',full_name:'Amina Wanjiku',university:'University of Nairobi',course:'Computer Science',year_of_study:'2',is_premium:true,is_featured:true,avatar_url:null},
-  {id:'2',full_name:'Brian Ochieng',university:'Kenyatta University',course:'Business Administration',year_of_study:'3',is_top_student:true,avatar_url:null},
+  {id:'2',full_name:'Brian Ochieng',university:'Kenyatta University',course:'Business Administration',year_of_study:'3',is_verified:true,avatar_url:null},
   {id:'3',full_name:'Catherine Muthoni',university:'Strathmore University',course:'Law',year_of_study:'1',avatar_url:null},
   {id:'4',full_name:'Dennis Kipchoge',university:'JKUAT',course:'Engineering',year_of_study:'4',is_premium:true,avatar_url:null},
   {id:'5',full_name:'Esther Akinyi',university:'Moi University',course:'Medicine',year_of_study:'5',avatar_url:null},
@@ -18,7 +18,7 @@ const YEARS = ['All Years','1','2','3','4','5','6']
 function initials(n:string){return n.split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2)}
 
 export default function DiscoverPage(){
-  const [students,setStudents]=useState<any[]>([])
+  const [users,setPeople]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
   const [search,setSearch]=useState('')
   const [uni,setUni]=useState('All Universities')
@@ -27,9 +27,9 @@ export default function DiscoverPage(){
 
   useEffect(()=>{
     const load = () => createClient().from('profiles')
-      .select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_top_student,interests,status')
+      .select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_verified,interests,status')
       .order('is_featured',{ascending:false}).then(({data,error})=>{
-        if(!error&&data&&data.length>0) setStudents(data)
+        if(!error&&data&&data.length>0) setPeople(data)
         setLoading(false)
       })
     load()
@@ -37,7 +37,7 @@ export default function DiscoverPage(){
     return () => clearInterval(interval)
   },[])
 
-  const filtered = students.filter(s=>{
+  const filtered = users.filter(s=>{
     const q=search.toLowerCase()
     const matchSearch=!q||s.full_name?.toLowerCase().includes(q)||s.course?.toLowerCase().includes(q)
     const matchUni=uni==='All Universities'||s.university===uni
@@ -50,8 +50,8 @@ export default function DiscoverPage(){
 
   return(
     <div style={{maxWidth:'1200px',margin:'0 auto',padding:'32px 20px'}}>
-      <h1 style={{fontSize:'26px',fontWeight:'800',color:'#0f172a',marginBottom:'4px'}}>Browse Students</h1>
-      <p style={{color:'#64748b',fontSize:'14px',marginBottom:'28px'}}>{filtered.length} students found</p>
+      <h1 style={{fontSize:'26px',fontWeight:'800',color:'#0f172a',marginBottom:'4px'}}>Browse People</h1>
+      <p style={{color:'#64748b',fontSize:'14px',marginBottom:'28px'}}>{filtered.length} users found</p>
 
       <div style={{display:'flex',gap:'24px',flexWrap:'wrap'}}>
         {/* Filters */}
@@ -85,29 +85,29 @@ export default function DiscoverPage(){
             </div>
           ) : filtered.length===0 ? (
             <div style={{textAlign:'center',padding:'60px',color:'#94a3b8'}}>
-              <p style={{fontSize:'16px',fontWeight:'600',color:'#374151'}}>No students found</p>
+              <p style={{fontSize:'16px',fontWeight:'600',color:'#374151'}}>No users found</p>
               <p style={{fontSize:'14px',marginTop:'4px'}}>Try different filters</p>
             </div>
           ) : (
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:'14px'}}>
               {filtered.map(s=>(
-                <div key={s.id} style={{background:'#fff',borderRadius:'14px',border:`1px solid ${s.is_featured?'#c4b5fd':s.is_top_student?'#fed7aa':'#e2e8f0'}`,overflow:'hidden',transition:'box-shadow 0.2s,transform 0.2s'}}
+                <div key={s.id} style={{background:'#fff',borderRadius:'14px',border:`1px solid ${s.is_featured?'#c4b5fd':s.is_verified?'#fed7aa':'#e2e8f0'}`,overflow:'hidden',transition:'box-shadow 0.2s,transform 0.2s'}}
                   onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.boxShadow='0 8px 24px rgba(0,0,0,0.1)';(e.currentTarget as HTMLElement).style.transform='translateY(-2px)'}}
                   onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.boxShadow='none';(e.currentTarget as HTMLElement).style.transform='none'}}>
                   {s.is_featured&&<div style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',fontSize:'11px',fontWeight:'700',textAlign:'center',padding:'5px',letterSpacing:'0.5px'}}>FEATURED</div>}
-                  {s.is_top_student&&!s.is_featured&&<div style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',fontSize:'11px',fontWeight:'700',textAlign:'center',padding:'5px',letterSpacing:'0.5px'}}>TOP STUDENT</div>}
+                  {s.is_verified&&!s.is_featured&&<div style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',fontSize:'11px',fontWeight:'700',textAlign:'center',padding:'5px',letterSpacing:'0.5px'}}>TOP STUDENT</div>}
                   <div style={{padding:'18px'}}>
                     <div style={{display:'flex',gap:'12px',alignItems:'flex-start',marginBottom:'12px'}}>
                       <div style={{position:'relative',flexShrink:0}}>
                         {s.avatar_url
                           ?<img src={s.avatar_url} style={{width:'44px',height:'44px',borderRadius:'50%',objectFit:'cover'}}/>
-                          :<div style={{width:'44px',height:'44px',borderRadius:'50%',background:'#fff7ed',color:'#ea580c',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'14px'}}>{initials(s.full_name||'?')}</div>
+                          :<div style={{width:'44px',height:'44px',borderRadius:'50%',background:'#eff6ff',color:'#2563eb',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'14px'}}>{initials(s.full_name||'?')}</div>
                         }
                                               </div>
                       <div>
                         <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px',lineHeight:'1.3'}}>{s.full_name}</p>
                         <div style={{display:'flex',gap:'4px',flexWrap:'wrap',marginTop:'5px'}}>
-                          <span style={{background:'#fff7ed',color:'#ea580c',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',fontWeight:'600'}}>Y{s.year_of_study}</span>
+                          <span style={{background:'#eff6ff',color:'#2563eb',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',fontWeight:'600'}}>Y{s.year_of_study}</span>
                           {s.is_premium&&<span style={{background:'#f5f3ff',color:'#7c3aed',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',fontWeight:'600'}}>Premium</span>}
                         </div>
                       </div>

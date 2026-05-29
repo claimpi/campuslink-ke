@@ -171,7 +171,7 @@ export default function ProfilePage(){
   if(!profile) return(
     <div style={{textAlign:'center',padding:'80px 20px'}}>
       <p style={{fontSize:'18px',fontWeight:'700',color:'#0f172a',marginBottom:'8px'}}>Profile not found</p>
-      <Link href="/" style={{color:'#f97316',fontSize:'14px'}}>← Back to students</Link>
+      <Link href="/" style={{color:'#f97316',fontSize:'14px'}}>← Back to users</Link>
     </div>
   )
 
@@ -181,7 +181,7 @@ export default function ProfilePage(){
 
   return(
     <div style={{maxWidth:'780px',margin:'0 auto',padding:'28px 20px'}}>
-      <Link href="/" style={{fontSize:'13px',color:'#64748b',marginBottom:'20px',display:'inline-block'}}>← Back to students</Link>
+      <Link href="/" style={{fontSize:'13px',color:'#64748b',marginBottom:'20px',display:'inline-block'}}>← Back to users</Link>
 
       <div style={{background:'#fff',borderRadius:'20px',border:'1px solid #e2e8f0',overflow:'hidden',boxShadow:'0 2px 12px rgba(0,0,0,0.06)'}}>
         <div style={{display:'flex',flexWrap:'wrap'}}>
@@ -197,7 +197,7 @@ export default function ProfilePage(){
               <div style={{paddingTop:'4px'}}>
                 <h1 style={{fontSize:'20px',fontWeight:'800',color:'#0f172a',marginBottom:'5px',lineHeight:'1.2'}}>{profile.full_name}</h1>
                 <div style={{display:'flex',gap:'5px',flexWrap:'wrap'}}>
-                  {profile.is_top_student&&<span style={{background:'#fff7ed',color:'#ea580c',fontSize:'11px',padding:'3px 8px',borderRadius:'6px',fontWeight:'700',border:'1px solid #fed7aa'}}>Top Student</span>}
+                  {profile.is_verified&&<span style={{background:'#eff6ff',color:'#2563eb',fontSize:'11px',padding:'3px 8px',borderRadius:'6px',fontWeight:'700',border:'1px solid #bfdbfe'}}>Verified</span>}
                   {profile.is_premium&&<span style={{background:'#f5f3ff',color:'#7c3aed',fontSize:'11px',padding:'3px 8px',borderRadius:'6px',fontWeight:'700',border:'1px solid #ddd6fe'}}>Premium</span>}
                   {profile.is_featured&&<span style={{background:'#fff7ed',color:'#f97316',fontSize:'11px',padding:'3px 8px',borderRadius:'6px',fontWeight:'700',border:'1px solid #fed7aa'}}>Featured</span>}
                   {profile.status&&<span style={{fontSize:'11px',padding:'3px 8px',borderRadius:'6px',fontWeight:'700',

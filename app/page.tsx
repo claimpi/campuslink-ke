@@ -17,7 +17,7 @@ function calcDistance(lat1:number,lon1:number,lat2:number,lon2:number):number{
 
 export default function HomePage(){
  const router=useRouter()
- const [students,setStudents]=useState<any[]>([])
+ const [users,setPeople]=useState<any[]>([])
  const [loading,setLoading]=useState(true)
  const [search,setSearch]=useState('')
  const [gender,setGender]=useState('All')
@@ -46,12 +46,12 @@ export default function HomePage(){
  })
  }
 
- const loadStudents=()=>{
+ const loadPeople=()=>{
  createClient().from('profiles')
- .select('id,full_name,avatar_url,is_premium,is_featured,is_top_student,interests,status,age,gender,looking_for,location_name,latitude,longitude')
+ .select('id,full_name,avatar_url,is_premium,is_featured,is_verified,interests,status,age,gender,looking_for,location_name,latitude,longitude')
  .order('is_featured',{ascending:false})
  .order('is_premium',{ascending:false})
- .then(({data,error})=>{ if(!error&&data&&data.length>0) setStudents(data); setLoading(false) })
+ .then(({data,error})=>{ if(!error&&data&&data.length>0) setPeople(data); setLoading(false) })
  }
 
  useEffect(()=>{
@@ -72,8 +72,8 @@ export default function HomePage(){
  )
  }
 
- loadStudents()
- const interval=setInterval(loadStudents,30000)
+ loadPeople()
+ const interval=setInterval(loadPeople,30000)
  return ()=>clearInterval(interval)
  },[])
 
@@ -93,7 +93,7 @@ export default function HomePage(){
  }
 
  // Sort by distance if location available
- const sorted = [...students].sort((a,b)=>{
+ const sorted = [...users].sort((a,b)=>{
  if(!userLocation||!a.latitude||!b.latitude) return 0
  const da=calcDistance(userLocation.lat,userLocation.lng,a.latitude,a.longitude)
  const db=calcDistance(userLocation.lat,userLocation.lng,b.latitude,b.longitude)
@@ -132,7 +132,7 @@ export default function HomePage(){
  </h1>
  <p style={{fontSize:'13px',color:'#94a3b8'}}>
  {userLocation?`Sorted by distance from you · `:''}
- {filtered.length} students
+ {filtered.length} users
  </p>
  </div>
  {!currentUserId&&(
@@ -182,7 +182,7 @@ export default function HomePage(){
  return(
  <div key={s.id} onClick={()=>router.push(`/profile/${s.id}`)}
  style={{position:'relative',aspectRatio:'3/4',borderRadius:'14px',overflow:'hidden',cursor:'pointer',background:'#f1f5f9',
- border:s.is_featured?'2px solid #f97316':s.is_top_student?'2px solid #f97316':'none'}}>
+ border:s.is_featured?'2px solid #f97316':s.is_verified?'2px solid #f97316':'none'}}>
 
  {/* Photo */}
  {s.avatar_url
@@ -198,7 +198,7 @@ export default function HomePage(){
  {/* Badges top */}
  <div style={{position:'absolute',top:'8px',left:'8px',display:'flex',gap:'4px',flexWrap:'wrap'}}>
  {s.is_premium&&<span style={{background:'#7c3aed',color:'#fff',fontSize:'9px',padding:'2px 6px',borderRadius:'50px',fontWeight:'700'}}>PRO</span>}
- {s.is_top_student&&<span style={{background:'#f97316',color:'#fff',fontSize:'9px',padding:'2px 6px',borderRadius:'50px',fontWeight:'700'}}>TOP</span>}
+ {s.is_verified&&<span style={{background:'#f97316',color:'#fff',fontSize:'9px',padding:'2px 6px',borderRadius:'50px',fontWeight:'700'}}>TOP</span>}
  </div>
 
  {/* Distance top right */}
@@ -244,7 +244,7 @@ export default function HomePage(){
  {!loading&&filtered.length===0&&(
  <div style={{textAlign:'center',padding:'60px 20px',background:'#fff',borderRadius:'16px',border:'1px solid #e2e8f0'}}>
  <p style={{fontSize:'32px',marginBottom:'12px'}}></p>
- <p style={{fontSize:'16px',fontWeight:'600',color:'#374151',marginBottom:'6px'}}>No students found</p>
+ <p style={{fontSize:'16px',fontWeight:'600',color:'#374151',marginBottom:'6px'}}>No users found</p>
  <p style={{fontSize:'14px',color:'#94a3b8'}}>Try different filters</p>
  </div>
  )}

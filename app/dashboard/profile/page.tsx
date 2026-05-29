@@ -255,7 +255,7 @@ export default function EditProfile(){
         </div>
         <div>
           <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Bio</label>
-          <textarea value={form.bio} onChange={set('bio')} rows={3} placeholder="Tell other students about yourself..." style={{...inp,resize:'none'}} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
+          <textarea value={form.bio} onChange={set('bio')} rows={3} placeholder="Tell other users about yourself..." style={{...inp,resize:'none'}} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
         </div>
         <div>
           <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Interests <span style={{fontWeight:'400',color:'#94a3b8'}}>(comma separated)</span></label>

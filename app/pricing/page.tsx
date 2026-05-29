@@ -77,7 +77,7 @@ export default function PricingPage() {
           userEmail: user.email,
           userName: profile?.full_name || user.email,
           phone: profile?.whatsapp_number || '',
-          paymentType: planId === 'unlock' ? 'unlock' : planId === 'premium' ? 'premium' : planId === 'featured' ? 'featured' : planId === 'verified' ? 'top_student' : 'boost',
+          paymentType: planId === 'unlock' ? 'unlock' : planId === 'premium' ? 'premium' : planId === 'featured' ? 'featured' : planId === 'verified' ? 'verified' : 'boost',
           amount: price,
         })
       })

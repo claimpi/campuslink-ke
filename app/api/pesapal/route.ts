@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     let ipnId = process.env.PESAPAL_IPN_ID
     if (!ipnId) ipnId = await registerIPN(token)
 
-    const [firstName, ...rest] = (userName||'Student').split(' ')
+    const [firstName, ...rest] = (userName||'User').split(' ')
     const { redirectUrl, orderTrackingId } = await submitOrder({
       token, ipnId: ipnId!, amount, desc: LABELS[paymentType]||paymentType,
       ref, email: userEmail, phone: phone||'',

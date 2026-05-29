@@ -24,7 +24,7 @@ export default function DashboardClient(){
       setUser(user)
       const {data}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle()
       if(!data){
-        const {data:np}=await sb.from('profiles').upsert({id:user.id,email:user.email,full_name:user.user_metadata?.full_name||user.email?.split('@')[0]||'Student'},{onConflict:'id'}).select().maybeSingle()
+        const {data:np}=await sb.from('profiles').upsert({id:user.id,email:user.email,full_name:user.user_metadata?.full_name||user.email?.split('@')[0]||'User'},{onConflict:'id'}).select().maybeSingle()
         setProfile(np)
       } else setProfile(data)
 
@@ -38,7 +38,7 @@ export default function DashboardClient(){
         // Get sender profiles
         const senderIds = requests.map((r:any)=>r.sender_id)
         const {data:senders} = await sb.from('profiles')
-          .select('id,full_name,university,course,avatar_url,whatsapp_number,bio,interests,is_premium,is_featured,is_top_student,profile_views,referral_code,referral_earnings')
+          .select('id,full_name,university,course,avatar_url,whatsapp_number,bio,interests,is_premium,is_featured,is_verified,profile_views,referral_code,referral_earnings')
           .in('id', senderIds)
         const mapped = requests.map((r:any)=>({
           ...r,
@@ -66,7 +66,7 @@ export default function DashboardClient(){
     </div>
   )
 
-  const name=profile?.full_name||user?.email?.split('@')[0]||'Student'
+  const name=profile?.full_name||user?.email?.split('@')[0]||'User'
   const pct=[profile?.bio,profile?.whatsapp_number,profile?.university,profile?.course,(profile?.interests||[]).length>0].filter(Boolean).length*20
 
   return(
@@ -101,7 +101,7 @@ export default function DashboardClient(){
           {label:'Views',value:profile?.profile_views||0,bg:'#fff7ed',color:'#ea580c'},
           {label:'Status',value:profile?.is_premium?'Premium':'Free',bg:'#f5f3ff',color:'#7c3aed'},
           {label:'Featured',value:profile?.is_featured?'Yes':'No',bg:'#fefce8',color:'#ca8a04'},
-          {label:'Top Student',value:profile?.is_top_student?'Yes':'No',bg:'#f0fdf4',color:'#16a34a'},
+          {label:'Verified',value:profile?.is_verified?'Yes':'No',bg:'#f0fdf4',color:'#16a34a'},
         ].map(s=>(
           <div key={s.label} style={{background:'#fff',borderRadius:'12px',border:'1px solid #e2e8f0',padding:'16px'}}>
             <div style={{fontSize:'20px',fontWeight:'900',color:'#0f172a',marginBottom:'2px'}}>{String(s.value)}</div>
@@ -128,7 +128,7 @@ export default function DashboardClient(){
 
       {/* Actions */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:'12px',marginBottom:'20px'}}>
-        {[{href:'/dashboard/profile',t:'Edit Profile',d:'Update info & photo'},{href:'/discover',t:'Browse Students',d:'Find connections'},{href:'/groups',t:'WhatsApp Groups',d:'Join group chats'},{href:'/pricing',t:'Upgrade',d:'Premium & badges'}].map(a=>(
+        {[{href:'/dashboard/profile',t:'Edit Profile',d:'Update info & photo'},{href:'/discover',t:'Browse People',d:'Find connections'},{href:'/groups',t:'WhatsApp Groups',d:'Join group chats'},{href:'/pricing',t:'Upgrade',d:'Premium & badges'}].map(a=>(
           <Link key={a.href} href={a.href} style={{background:'#fff',borderRadius:'12px',border:'1px solid #e2e8f0',padding:'18px',display:'block'}}>
             <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px',marginBottom:'3px'}}>{a.t}</p>
             <p style={{fontSize:'12px',color:'#94a3b8'}}>{a.d}</p>
@@ -142,7 +142,7 @@ export default function DashboardClient(){
           <div style={{width:'44px',height:'44px',borderRadius:'50%',background:'#f1f5f9',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'22px',flexShrink:0}}></div>
           <div style={{flex:1,minWidth:'180px'}}>
             <p style={{fontWeight:'700',color:'#92400e',fontSize:'14px',marginBottom:'2px'}}>Add a profile photo!</p>
-            <p style={{fontSize:'12px',color:'#a16207'}}>Students with photos get <strong>3x more</strong> connection requests</p>
+            <p style={{fontSize:'12px',color:'#a16207'}}>People with photos get <strong>3x more</strong> connection requests</p>
           </div>
           <a href="/dashboard/profile" style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'9px 18px',borderRadius:'9px',fontSize:'13px',fontWeight:'700',textDecoration:'none',flexShrink:0,boxShadow:'0 2px 8px rgba(249,115,22,0.3)'}}>
             Add Photo →
@@ -156,7 +156,7 @@ export default function DashboardClient(){
           <span style={{fontSize:'22px',flexShrink:0}}></span>
           <div style={{flex:1,minWidth:'180px'}}>
             <p style={{fontWeight:'700',color:'#166534',fontSize:'14px',marginBottom:'2px'}}>Add your WhatsApp number</p>
-            <p style={{fontSize:'12px',color:'#16a34a'}}>So students who connect with you can reach you</p>
+            <p style={{fontSize:'12px',color:'#16a34a'}}>So users who connect with you can reach you</p>
           </div>
           <a href="/dashboard/profile" style={{background:'#16a34a',color:'#fff',padding:'9px 18px',borderRadius:'9px',fontSize:'13px',fontWeight:'700',textDecoration:'none',flexShrink:0}}>
             Add Now →
@@ -237,7 +237,7 @@ export default function DashboardClient(){
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'12px',marginBottom:'14px'}}>
             <div>
               <p style={{fontWeight:'700',color:'#0f172a',fontSize:'15px',marginBottom:'2px'}}>Your Referral Link</p>
-              <p style={{fontSize:'12px',color:'#94a3b8'}}>Earn KES 10 for every student who joins using your link</p>
+              <p style={{fontSize:'12px',color:'#94a3b8'}}>Earn KES 10 for every user who joins using your link</p>
             </div>
             <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
               <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'10px',padding:'8px 16px',textAlign:'center'}}>

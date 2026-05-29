@@ -30,12 +30,12 @@ function AnnouncementsList(){
   )
 }
 
-type Tab = 'students'|'payments'|'groups'|'announce'
+type Tab = 'users'|'payments'|'groups'|'announce'
 
 export default function AdminPage(){
   const router=useRouter()
-  const [tab,setTab]=useState<Tab>('students')
-  const [students,setStudents]=useState<any[]>([])
+  const [tab,setTab]=useState<Tab>('users')
+  const [users,setPeople]=useState<any[]>([])
   const [payments,setPayments]=useState<any[]>([])
   const [groups,setGroups]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
@@ -48,17 +48,17 @@ export default function AdminPage(){
     setLoading(true)
     const sb=createClient()
     const [{data:s},{data:p},{data:g}]=await Promise.all([
-      sb.from('profiles').select('id,full_name,email,university,course,year_of_study,is_premium,is_featured,is_top_student').order('created_at',{ascending:false}),
+      sb.from('profiles').select('id,full_name,email,university,course,year_of_study,is_premium,is_featured,is_verified').order('created_at',{ascending:false}),
       sb.from('payment_requests').select('*').order('created_at',{ascending:false}).limit(50),
       sb.from('whatsapp_groups').select('*').order('created_at',{ascending:false}),
     ])
-    setStudents(s||[]);setPayments(p||[]);setGroups(g||[])
+    setPeople(s||[]);setPayments(p||[]);setGroups(g||[])
     setLoading(false)
   }
 
   async function toggleBadge(id:string,field:string,val:boolean){
     await createClient().from('profiles').update({[field]:!val}).eq('id',id)
-    setStudents(ss=>ss.map(s=>s.id===id?{...s,[field]:!val}:s))
+    setPeople(ss=>ss.map(s=>s.id===id?{...s,[field]:!val}:s))
   }
 
   async function approveGift(id:string,userId:string,targetId:string,amount:number,giftType:string){
@@ -83,7 +83,7 @@ export default function AdminPage(){
     // Update payment status
     await createClient().from('payment_requests').update({status:'approved'}).eq('id',id)
     // Update profile badge via server API
-    const field = type==='premium'?'is_premium':type==='featured'?'is_featured':type==='top_student'?'is_top_student':null
+    const field = type==='premium'?'is_premium':type==='featured'?'is_featured':type==='verified'?'is_verified':null
     if(field){
       await fetch('/api/admin/update-user',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({userId,field,value:true})})
@@ -96,15 +96,15 @@ export default function AdminPage(){
     setPayments(pp=>pp.map(p=>p.id===id?{...p,status:'rejected'}:p))
   }
 
-  async function deleteStudent(id:string){
-    if(!confirm('Delete this student? This cannot be undone.')) return
+  async function deleteUser(id:string){
+    if(!confirm('Delete this user? This cannot be undone.')) return
     const res = await fetch('/api/admin/delete-user', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: id })
     })
     if (res.ok) {
-      setStudents(ss=>ss.filter(s=>s.id!==id))
+      setPeople(ss=>ss.filter(s=>s.id!==id))
     } else {
       const data = await res.json()
       alert('Delete failed: ' + (data.error || 'Unknown error'))
@@ -133,7 +133,7 @@ export default function AdminPage(){
   }
 
   const pendingPayments=payments.filter(p=>p.status==='pending').length
-  const stats=[{l:'Students',v:students.length},{l:'Premium',v:students.filter(s=>s.is_premium).length},{l:'Featured',v:students.filter(s=>s.is_featured).length},{l:'Pending',v:pendingPayments}]
+  const stats=[{l:'People',v:users.length},{l:'Premium',v:users.filter(s=>s.is_premium).length},{l:'Featured',v:users.filter(s=>s.is_featured).length},{l:'Pending',v:pendingPayments}]
 
   const tabStyle=(t:Tab):React.CSSProperties=>({padding:'9px 18px',borderRadius:'8px',fontSize:'14px',fontWeight:'600',border:'none',cursor:'pointer',background:tab===t?'#fff':'transparent',color:tab===t?'#0f172a':'#64748b',boxShadow:tab===t?'0 1px 4px rgba(0,0,0,0.08)':'none',transition:'all 0.2s'})
 
@@ -162,7 +162,7 @@ export default function AdminPage(){
 
       {/* Tabs */}
       <div style={{background:'#f8fafc',borderRadius:'10px',padding:'4px',display:'flex',gap:'2px',marginBottom:'20px',flexWrap:'wrap'}}>
-        <button onClick={()=>setTab('students')} style={tabStyle('students')}>Students</button>
+        <button onClick={()=>setTab('users')} style={tabStyle('users')}>People</button>
         <button onClick={()=>setTab('payments')} style={tabStyle('payments')}>
           Payments {pendingPayments>0&&<span style={{background:'#dc2626',color:'#fff',fontSize:'10px',padding:'1px 5px',borderRadius:'50px',marginLeft:'4px'}}>{pendingPayments}</span>}
         </button>
@@ -172,25 +172,25 @@ export default function AdminPage(){
 
       {loading?<div style={{textAlign:'center',padding:'40px',color:'#94a3b8'}}>Loading...</div>:(<>
 
-      {tab==='students'&&(
+      {tab==='users'&&(
         <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-          {students.length===0?<p style={{textAlign:'center',padding:'40px',color:'#94a3b8'}}>No students yet</p>:
-          students.map(s=>(
+          {users.length===0?<p style={{textAlign:'center',padding:'40px',color:'#94a3b8'}}>No users yet</p>:
+          users.map(s=>(
             <div key={s.id} style={{background:'#fff',borderRadius:'12px',border:'1px solid #e2e8f0',padding:'14px 16px',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'10px'}}>
               <div>
                 <p style={{fontWeight:'600',color:'#0f172a',fontSize:'14px'}}>{s.full_name}</p>
                 <p style={{fontSize:'12px',color:'#94a3b8'}}>{s.course} · {s.university}</p>
               </div>
               <div style={{display:'flex',gap:'6px',flexWrap:'wrap',alignItems:'center'}}>
-                {s.is_top_student&&<span style={{background:'#fff7ed',color:'#ea580c',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',fontWeight:'700',border:'1px solid #fed7aa'}}>Top</span>}
+                {s.is_verified&&<span style={{background:'#fff7ed',color:'#ea580c',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',fontWeight:'700',border:'1px solid #fed7aa'}}>Top</span>}
                 {s.is_premium&&<span style={{background:'#f5f3ff',color:'#7c3aed',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',fontWeight:'700',border:'1px solid #ddd6fe'}}>Pro</span>}
                 {s.is_featured&&<span style={{background:'#eff6ff',color:'#2563eb',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',fontWeight:'700',border:'1px solid #bfdbfe'}}>Feat</span>}
                 <span style={{background:'#f1f5f9',color:'#64748b',fontSize:'11px',padding:'2px 7px',borderRadius:'50px'}}>Y{s.year_of_study}</span>
                 <div style={{display:'flex',gap:'4px'}}>
-                  <button onClick={()=>toggleBadge(s.id,'is_top_student',s.is_top_student)} title="Toggle Top" style={{background:'#fff7ed',border:'none',borderRadius:'6px',padding:'5px 8px',cursor:'pointer',fontSize:'12px'}}></button>
+                  <button onClick={()=>toggleBadge(s.id,'is_verified',s.is_verified)} title="Toggle Top" style={{background:'#fff7ed',border:'none',borderRadius:'6px',padding:'5px 8px',cursor:'pointer',fontSize:'12px'}}></button>
                   <button onClick={()=>toggleBadge(s.id,'is_premium',s.is_premium)} title="Toggle Premium" style={{background:'#f5f3ff',border:'none',borderRadius:'6px',padding:'5px 8px',cursor:'pointer',fontSize:'12px'}}></button>
                   <button onClick={()=>toggleBadge(s.id,'is_featured',s.is_featured)} title="Toggle Featured" style={{background:'#eff6ff',border:'none',borderRadius:'6px',padding:'5px 8px',cursor:'pointer',fontSize:'12px'}}></button>
-                  <button onClick={()=>deleteStudent(s.id)} title="Delete" style={{background:'#fef2f2',border:'none',borderRadius:'6px',padding:'5px 8px',cursor:'pointer',fontSize:'12px',color:'#dc2626'}}></button>
+                  <button onClick={()=>deleteUser(s.id)} title="Delete" style={{background:'#fef2f2',border:'none',borderRadius:'6px',padding:'5px 8px',cursor:'pointer',fontSize:'12px',color:'#dc2626'}}></button>
                 </div>
               </div>
             </div>

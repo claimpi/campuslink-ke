@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
       await sb.from('profiles').update({is_premium:true, premium_expires_at:exp.toISOString()}).eq('id', payment.user_id)
     } else if (type === 'featured') {
       await sb.from('profiles').update({is_featured:true}).eq('id', payment.user_id)
-    } else if (type === 'top_student') {
-      await sb.from('profiles').update({is_top_student:true}).eq('id', payment.user_id)
+    } else if (type === 'verified') {
+      await sb.from('profiles').update({is_verified:true}).eq('id', payment.user_id)
     } else if (type === 'unlock') {
       // Mark the contact as unlocked for this user
       await sb.from('unlock_requests').upsert({requester_id:payment.user_id, target_id:payment.target_id, status:'approved'})
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
         const {data:buyer}=await sb.from('profiles').select('full_name').eq('id',payment.user_id).maybeSingle()
         await fetch(`${process.env.NEXT_PUBLIC_SITE_URL||'https://campuslink.co.ke'}/api/push-notify`,{
           method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({userId:payment.target_id,title:'Someone unlocked your number! 💰',body:`${buyer?.full_name||'A student'} just paid KES 20 to connect with you`,url:'/dashboard'})
+          body:JSON.stringify({userId:payment.target_id,title:'Someone unlocked your number! 💰',body:`${buyer?.full_name||'A user'} just paid KES 20 to connect with you`,url:'/dashboard'})
         }).catch(()=>{})
       }
     } else if (type && type.startsWith('gift_')) {
