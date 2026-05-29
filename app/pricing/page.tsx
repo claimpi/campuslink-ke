@@ -75,24 +75,64 @@ export default function PricingPage() {
       </div>
 
       {/* How it works */}
-      <div style={{background:'#fff',borderRadius:'20px',border:'1px solid #e2e8f0',padding:'40px',textAlign:'center'}}>
-        <h2 style={{fontSize:'22px',fontWeight:'800',color:'#0f172a',marginBottom:'32px'}}>How it works</h2>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'24px'}}>
+      <div style={{background:'#fff',borderRadius:'20px',border:'1px solid #e2e8f0',padding:'32px 24px',textAlign:'center'}}>
+        <h2 style={{fontSize:'22px',fontWeight:'800',color:'#0f172a',marginBottom:'8px'}}>How it works</h2>
+        <p style={{fontSize:'14px',color:'#94a3b8',marginBottom:'28px'}}>Pay via M-Pesa in 4 simple steps</p>
+
+        {/* Progress bar */}
+        <div style={{background:'#f1f5f9',borderRadius:'50px',height:'4px',marginBottom:'28px',overflow:'hidden'}}>
+          <div style={{background:'linear-gradient(90deg,#f97316,#ea580c)',height:'100%',width:'100%',borderRadius:'50px'}}/>
+        </div>
+
+        {/* 2x2 grid */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'16px',marginBottom:'28px'}}>
           {[
-            {n:'1',t:'Choose a plan',d:'Select the upgrade that suits you and click Pay'},
-            {n:'2',t:'M-Pesa prompt',d:'You receive an STK push. Enter your PIN to pay'},
-            {n:'3',t:'Instant verification',d:'Pesapal confirms your payment automatically'},
-            {n:'4',t:'Account updated',d:'Your account upgrades instantly — no waiting'},
-          ].map(s=>(
-            <div key={s.n} style={{display:'flex',flexDirection:'column',alignItems:'center'}}>
-              <div style={{width:'44px',height:'44px',borderRadius:'50%',background:'#fff7ed',border:'2px solid #fed7aa',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'800',fontSize:'18px',color:'#f97316',marginBottom:'12px'}}>{s.n}</div>
-              <p style={{fontWeight:'700',color:'#0f172a',fontSize:'15px',marginBottom:'6px'}}>{s.t}</p>
-              <p style={{fontSize:'13px',color:'#64748b',lineHeight:'1.5'}}>{s.d}</p>
+            {n:'1',icon:'📋',t:'Choose a plan',d:'Select the upgrade that suits you and click Pay'},
+            {n:'2',icon:'📱',t:'M-Pesa Prompt',d:'You receive an STK push on your phone. Enter your PIN'},
+            {n:'3',icon:'🛡️',t:'Verification',d:'Pesapal confirms your payment automatically'},
+            {n:'4',icon:'✅',t:'Account Updated',d:'Your account upgrades instantly — no waiting'},
+          ].map((s,i)=>(
+            <div key={s.n} style={{background:'#f8fafc',borderRadius:'14px',padding:'20px 16px',textAlign:'center',border:'1px solid #e2e8f0',position:'relative'}}>
+              {i < 3 && (
+                <div style={{position:'absolute',top:'50%',right:'-9px',transform:'translateY(-50%)',
+                  display:i===1?'none':'flex',
+                  width:'16px',height:'16px',alignItems:'center',justifyContent:'center',
+                  background:'#fff7ed',borderRadius:'50%',border:'1px solid #fed7aa',
+                  fontSize:'10px',color:'#f97316',zIndex:1,fontWeight:'700'}}>
+                </div>
+              )}
+              <div style={{fontSize:'24px',marginBottom:'8px'}}>{s.icon}</div>
+              <div style={{width:'28px',height:'28px',borderRadius:'50%',background:'linear-gradient(135deg,#f97316,#ea580c)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'800',fontSize:'13px',color:'#fff',margin:'0 auto 10px'}}>
+                {s.n}
+              </div>
+              <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px',marginBottom:'6px'}}>{s.t}</p>
+              <p style={{fontSize:'12px',color:'#64748b',lineHeight:'1.5'}}>{s.d}</p>
             </div>
           ))}
         </div>
-        <div style={{marginTop:'28px',background:'#f8fafc',borderRadius:'12px',padding:'14px 20px',fontSize:'13px',color:'#64748b'}}>
-          All payments via M-Pesa · Powered by Pesapal · Secure and instant
+
+        {/* Payment trust logos */}
+        <div style={{background:'#f8fafc',borderRadius:'12px',padding:'16px 20px',display:'flex',alignItems:'center',justifyContent:'center',gap:'20px',flexWrap:'wrap'}}>
+          <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+            <div style={{width:'36px',height:'36px',background:'#00a651',borderRadius:'8px',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:'900',fontSize:'11px'}}>M</div>
+            <div>
+              <p style={{fontSize:'12px',fontWeight:'700',color:'#0f172a'}}>M-Pesa</p>
+              <p style={{fontSize:'10px',color:'#94a3b8'}}>Safaricom</p>
+            </div>
+          </div>
+          <div style={{width:'1px',height:'32px',background:'#e2e8f0'}}/>
+          <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+            <div style={{width:'36px',height:'36px',background:'#1a56db',borderRadius:'8px',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:'900',fontSize:'11px'}}>PP</div>
+            <div>
+              <p style={{fontSize:'12px',fontWeight:'700',color:'#0f172a'}}>Pesapal</p>
+              <p style={{fontSize:'10px',color:'#94a3b8'}}>Secure payments</p>
+            </div>
+          </div>
+          <div style={{width:'1px',height:'32px',background:'#e2e8f0'}}/>
+          <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+            <div style={{width:'20px',height:'20px',background:'#16a34a',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'12px',fontWeight:'700'}}>s</div>
+            <p style={{fontSize:'12px',color:'#64748b',fontWeight:'600'}}>SSL Secured</p>
+          </div>
         </div>
       </div>
     </div>
