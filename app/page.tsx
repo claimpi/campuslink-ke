@@ -221,7 +221,7 @@ export default function HomePage(){
        style={{width:'32px',height:'26px',borderRadius:'6px',border:'none',cursor:'pointer',fontSize:'13px',
          background:matches.has(s.id)?'rgba(236,72,153,0.9)':likes.has(s.id)?'rgba(236,72,153,0.6)':'rgba(255,255,255,0.2)',
          flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
-       {matches.has(s.id)?'💗':likes.has(s.id)?'❤️':'🤍'}
+       <span style={{color:matches.has(s.id)||likes.has(s.id)?'#fff':'rgba(255,255,255,0.8)',fontSize:'14px'}}>{matches.has(s.id)||likes.has(s.id)?'♥':'♡'}</span>
      </button>
      <button onClick={e=>{e.stopPropagation();
        if(!friendStatuses[s.id]) sendRequest(s.id)
