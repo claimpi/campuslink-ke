@@ -38,7 +38,7 @@ export default function DashboardClient(){
         // Get sender profiles
         const senderIds = requests.map((r:any)=>r.sender_id)
         const {data:senders} = await sb.from('profiles')
-          .select('id,full_name,university,course,avatar_url,whatsapp_number,bio,interests,is_premium,is_featured,is_verified,profile_views,referral_code,referral_earnings')
+          .select('id,full_name,avatar_url,whatsapp_number,bio,interests,is_premium,is_featured,is_verified,profile_views,referral_code,referral_earnings,gift_earnings')
           .in('id', senderIds)
         const mapped = requests.map((r:any)=>({
           ...r,
@@ -231,9 +231,35 @@ export default function DashboardClient(){
         </div>
       )}
 
-      {/* Referral Section */}
+      {/* Referral & Earnings Section */}
       {profile?.referral_code&&(
         <div style={{background:'#fff',borderRadius:'14px',border:'1px solid #e2e8f0',padding:'20px',marginBottom:'16px'}}>
+          {/* Earnings Summary - Always visible */}
+          <div style={{background:'linear-gradient(135deg,#f0fdf4,#dcfce7)',borderRadius:'12px',padding:'16px',marginBottom:'16px',border:'1px solid #bbf7d0'}}>
+            <p style={{fontWeight:'800',color:'#0f172a',fontSize:'15px',marginBottom:'12px'}}>Your Earnings</p>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'8px',marginBottom:'14px'}}>
+              <div style={{background:'#fff',borderRadius:'10px',padding:'12px',textAlign:'center',border:'1px solid #bbf7d0'}}>
+                <p style={{fontSize:'20px',fontWeight:'900',color:'#16a34a'}}>{(profile?.referral_earnings||0)+(profile?.gift_earnings||0)}</p>
+                <p style={{fontSize:'10px',color:'#64748b',fontWeight:'600'}}>TOTAL KES</p>
+              </div>
+              <div style={{background:'#fff',borderRadius:'10px',padding:'12px',textAlign:'center',border:'1px solid #bbf7d0'}}>
+                <p style={{fontSize:'20px',fontWeight:'900',color:'#16a34a'}}>{profile?.referral_earnings||0}</p>
+                <p style={{fontSize:'10px',color:'#64748b',fontWeight:'600'}}>REFERRALS</p>
+              </div>
+              <div style={{background:'#fff',borderRadius:'10px',padding:'12px',textAlign:'center',border:'1px solid #ec4899'}}>
+                <p style={{fontSize:'20px',fontWeight:'900',color:'#ec4899'}}>{profile?.gift_earnings||0}</p>
+                <p style={{fontSize:'10px',color:'#64748b',fontWeight:'600'}}>GIFTS</p>
+              </div>
+            </div>
+            <WithdrawForm 
+              userId={user?.id} 
+              totalEarnings={(profile?.referral_earnings||0)+(profile?.gift_earnings||0)} 
+              referralEarnings={profile?.referral_earnings||0} 
+              giftEarnings={profile?.gift_earnings||0} 
+              phone={profile?.whatsapp_number||''}
+            />
+          </div>
+
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'12px',marginBottom:'14px'}}>
             <div>
               <p style={{fontWeight:'700',color:'#0f172a',fontSize:'15px',marginBottom:'2px'}}>Your Referral Link</p>
@@ -259,22 +285,13 @@ export default function DashboardClient(){
               Copy
             </button>
           </div>
-          {((profile.referral_earnings||0) + (profile.gift_earnings||0)) > 0 && (
-            <div style={{marginTop:'12px',background:'#f0fdf4',borderRadius:'8px',padding:'12px 14px'}}>
-              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px',flexWrap:'wrap',gap:'8px'}}>
-                <div>
-                  <p style={{fontSize:'13px',color:'#16a34a',fontWeight:'700'}}>Total Earnings: KES {(profile.referral_earnings||0)+(profile.gift_earnings||0)}</p>
-                  <p style={{fontSize:'11px',color:'#94a3b8'}}>Referrals: KES {profile.referral_earnings||0} · Gifts: KES {profile.gift_earnings||0}</p>
-                </div>
-                <a href={`https://wa.me/254790166252?text=Hello%20CampusLink%20KE%2C%20I%20want%20to%20withdraw%20my%20earnings%20of%20KES%20${(profile.referral_earnings||0)+(profile.gift_earnings||0)}.%20My%20account%20email%20is%20${user?.email}`}
-                  target="_blank" rel="noopener noreferrer"
-                  style={{background:'#16a34a',color:'#fff',padding:'8px 16px',borderRadius:'8px',fontSize:'12px',fontWeight:'700',textDecoration:'none'}}>
-                  Withdraw via WhatsApp
-                </a>
-              </div>
-              <p style={{fontSize:'11px',color:'#64748b'}}>Minimum withdrawal: KES 200 · Paid via M-Pesa within 24hrs</p>
-            </div>
-          )}
+          <WithdrawForm 
+            userId={user?.id} 
+            totalEarnings={(profile?.referral_earnings||0)+(profile?.gift_earnings||0)} 
+            referralEarnings={profile?.referral_earnings||0} 
+            giftEarnings={profile?.gift_earnings||0} 
+            phone={profile?.whatsapp_number||''}
+          />
         </div>
       )}
 
