@@ -290,3 +290,67 @@ export default function DashboardClient(){
     </div>
   )
 }
+
+function WithdrawForm({userId,totalEarnings,referralEarnings,giftEarnings,phone}:{userId:any,totalEarnings:number,referralEarnings:number,giftEarnings:number,phone:string}){
+  const [show,setShow]=useState(false)
+  const [amount,setAmount]=useState('')
+  const [phoneNum,setPhoneNum]=useState(phone)
+  const [loading,setLoading]=useState(false)
+  const [done,setDone]=useState(false)
+  const [error,setError]=useState('')
+
+  async function submit(e:React.FormEvent){
+    e.preventDefault()
+    setLoading(true);setError('')
+    const res=await fetch('/api/withdrawal',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({userId,amount:parseInt(amount),phone:phoneNum})})
+    const data=await res.json()
+    if(data.error){setError(data.error);setLoading(false);return}
+    setDone(true);setLoading(false)
+  }
+
+  if(totalEarnings<200) return(
+    <div style={{marginTop:'12px',background:'#f8fafc',borderRadius:'8px',padding:'10px 14px',fontSize:'12px',color:'#94a3b8',textAlign:'center'}}>
+      Earn KES {200-totalEarnings} more to unlock withdrawal (minimum KES 200)
+    </div>
+  )
+
+  return(
+    <div style={{marginTop:'12px'}}>
+      {!show&&!done&&(
+        <div style={{background:'#f0fdf4',borderRadius:'8px',padding:'12px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'8px'}}>
+          <div>
+            <p style={{fontSize:'13px',color:'#16a34a',fontWeight:'700'}}>Total Earnings: KES {totalEarnings}</p>
+            <p style={{fontSize:'11px',color:'#94a3b8'}}>Referrals: KES {referralEarnings} · Gifts: KES {giftEarnings}</p>
+          </div>
+          <button onClick={()=>setShow(true)} style={{background:'#16a34a',color:'#fff',padding:'8px 16px',borderRadius:'8px',fontSize:'12px',fontWeight:'700',border:'none',cursor:'pointer'}}>
+            Withdraw
+          </button>
+        </div>
+      )}
+      {show&&!done&&(
+        <form onSubmit={submit} style={{background:'#f0fdf4',borderRadius:'8px',padding:'14px',display:'flex',flexDirection:'column',gap:'10px'}}>
+          <p style={{fontSize:'13px',fontWeight:'700',color:'#16a34a'}}>Withdraw Earnings (Available: KES {totalEarnings})</p>
+          {error&&<p style={{fontSize:'12px',color:'#dc2626'}}>{error}</p>}
+          <input type="number" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="Amount (min KES 200)" min="200" max={totalEarnings} required
+            style={{border:'1px solid #bbf7d0',borderRadius:'8px',padding:'9px 12px',fontSize:'14px',outline:'none'}}/>
+          <input value={phoneNum} onChange={e=>setPhoneNum(e.target.value)} placeholder="M-Pesa number e.g. 0712345678" required
+            style={{border:'1px solid #bbf7d0',borderRadius:'8px',padding:'9px 12px',fontSize:'14px',outline:'none'}}/>
+          <p style={{fontSize:'11px',color:'#64748b'}}>Paid to your M-Pesa within 24 hours after admin approval</p>
+          <div style={{display:'flex',gap:'8px'}}>
+            <button type="button" onClick={()=>setShow(false)} style={{flex:1,background:'#fff',border:'1px solid #e2e8f0',borderRadius:'8px',padding:'9px',fontSize:'13px',cursor:'pointer',color:'#64748b'}}>Cancel</button>
+            <button type="submit" disabled={loading} style={{flex:2,background:'#16a34a',color:'#fff',border:'none',borderRadius:'8px',padding:'9px',fontSize:'13px',fontWeight:'700',cursor:'pointer'}}>
+              {loading?'Submitting...':'Request Withdrawal'}
+            </button>
+          </div>
+        </form>
+      )}
+      {done&&(
+        <div style={{background:'#f0fdf4',borderRadius:'8px',padding:'12px 14px',textAlign:'center'}}>
+          <p style={{fontSize:'13px',fontWeight:'700',color:'#16a34a'}}>Withdrawal request submitted!</p>
+          <p style={{fontSize:'11px',color:'#64748b',marginTop:'4px'}}>You will receive KES {amount} on {phoneNum} within 24 hours</p>
+        </div>
+      )}
+    </div>
+  )
+}

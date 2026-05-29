@@ -73,6 +73,12 @@ export default function AdminPage(){
     setPayments(pp=>pp.map(p=>p.id===id?{...p,status:'approved'}:p))
   }
 
+  async function approveWithdrawal(id:string){
+    await fetch('/api/admin/update-user',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({userId:id,field:'withdrawal_status',value:'paid'})})
+    setPayments(pp=>pp.map(p=>p.id===id?{...p,status:'approved'}:p))
+  }
+
   async function approvePayment(id:string,userId:string,type:string){
     // Update payment status
     await createClient().from('payment_requests').update({status:'approved'}).eq('id',id)
