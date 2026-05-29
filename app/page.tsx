@@ -127,7 +127,7 @@ export default function HomePage(){
  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'14px',flexWrap:'wrap',gap:'8px'}}>
  <div>
  <h1 style={{fontSize:'22px',fontWeight:'800',color:'#0f172a',marginBottom:'2px'}}>
- {userLocation?'Nearby Students':'Students'}
+ 'People Nearby'
  {locating&&<span style={{fontSize:'12px',color:'#94a3b8',fontWeight:'400',marginLeft:'8px'}}> Getting location...</span>}
  </h1>
  <p style={{fontSize:'13px',color:'#94a3b8'}}>
