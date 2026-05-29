@@ -1,130 +1,156 @@
 'use client'
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
+import { toast } from '@/components/Toast'
 
-const MOCK = [
-  {id:'1',full_name:'Amina Wanjiku',university:'University of Nairobi',course:'Computer Science',year_of_study:'2',is_premium:true,is_featured:true,avatar_url:null},
-  {id:'2',full_name:'Brian Ochieng',university:'Kenyatta University',course:'Business Administration',year_of_study:'3',is_verified:true,avatar_url:null},
-  {id:'3',full_name:'Catherine Muthoni',university:'Strathmore University',course:'Law',year_of_study:'1',avatar_url:null},
-  {id:'4',full_name:'Dennis Kipchoge',university:'JKUAT',course:'Engineering',year_of_study:'4',is_premium:true,avatar_url:null},
-  {id:'5',full_name:'Esther Akinyi',university:'Moi University',course:'Medicine',year_of_study:'5',avatar_url:null},
-  {id:'6',full_name:'Felix Njoroge',university:'Africa Nazarene University',course:'Mathematics',year_of_study:'2',avatar_url:null},
-]
-const UNIS = ['All Universities','University of Nairobi','Kenyatta University','Strathmore University','JKUAT','Moi University','Africa Nazarene University','Technical University of Kenya','Maseno University','Dedan Kimathi University']
-const YEARS = ['All Years','1','2','3','4','5','6']
-
-
-function initials(n:string){return n.split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2)}
+function initials(n:string){return(n||'?').split(' ').map((x:string)=>x[0]).join('').toUpperCase().slice(0,2)}
+function calcDistance(lat1:number,lon1:number,lat2:number,lon2:number):number{
+  const R=6371
+  const dLat=(lat2-lat1)*Math.PI/180
+  const dLon=(lon2-lon1)*Math.PI/180
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2
+  return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)))
+}
 
 export default function DiscoverPage(){
-  const [users,setPeople]=useState<any[]>([])
-  const [loading,setLoading]=useState(true)
-  const [search,setSearch]=useState('')
-  const [uni,setUni]=useState('All Universities')
-  const [year,setYear]=useState('All Years')
-  const [status,setStatus]=useState('All')
+  const router = useRouter()
+  const [people, setPeople] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [gender, setGender] = useState('All')
+  const [lookingFor, setLookingFor] = useState('All')
+  const [status, setStatus] = useState('All')
+  const [currentUserId, setCurrentUserId] = useState<string|null>(null)
+  const [friendStatuses, setFriendStatuses] = useState<Record<string,string>>({})
+  const [sendingTo, setSendingTo] = useState<string|null>(null)
+  const [userLocation, setUserLocation] = useState<{lat:number,lng:number}|null>(null)
 
   useEffect(()=>{
-    const load = () => createClient().from('profiles')
-      .select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_verified,interests,status')
-      .order('is_featured',{ascending:false}).then(({data,error})=>{
-        if(!error&&data&&data.length>0) setPeople(data)
-        setLoading(false)
-      })
-    load()
-    const interval = setInterval(load, 30000)
-    return () => clearInterval(interval)
+    createClient().auth.getUser().then(({data:{user}})=>{
+      if(user){
+        setCurrentUserId(user.id)
+        createClient().from('friend_requests').select('receiver_id,sender_id,status')
+          .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+          .not('status','eq','declined')
+          .then(({data})=>{
+            const s:Record<string,string>={}
+            data?.forEach((r:any)=>{
+              const other=r.sender_id===user.id?r.receiver_id:r.sender_id
+              if(r.status==='accepted') s[other]='friends'
+              else if(r.sender_id===user.id) s[other]='pending_sent'
+              else s[other]='pending_received'
+            })
+            setFriendStatuses(s)
+          })
+      }
+    })
+    if(navigator.geolocation) navigator.geolocation.getCurrentPosition(p=>setUserLocation({lat:p.coords.latitude,lng:p.coords.longitude}),()=>{})
+    createClient().from('profiles')
+      .select('id,full_name,avatar_url,is_premium,is_featured,is_verified,age,gender,looking_for,location_name,latitude,longitude,status')
+      .order('is_featured',{ascending:false}).order('is_premium',{ascending:false})
+      .then(({data})=>{ if(data) setPeople(data); setLoading(false) })
   },[])
 
-  const filtered = users.filter(s=>{
-    const q=search.toLowerCase()
-    const matchSearch=!q||s.full_name?.toLowerCase().includes(q)||s.course?.toLowerCase().includes(q)
-    const matchUni=uni==='All Universities'||s.university===uni
-    const matchYear=year==='All Years'||String(s.year_of_study)===year
-    const matchStatus=status==='All'||s.status===status
-    return matchSearch&&matchUni&&matchYear&&matchStatus
+  async function sendRequest(receiverId:string){
+    if(!currentUserId){router.push('/login');return}
+    setSendingTo(receiverId)
+    const sb=createClient()
+    await sb.from('friend_requests').insert([{sender_id:currentUserId,receiver_id:receiverId,status:'pending'}])
+    setFriendStatuses(prev=>({...prev,[receiverId]:'pending_sent'}))
+    setSendingTo(null)
+    toast('Friend request sent!','success')
+    const {data:me}=await sb.from('profiles').select('full_name').eq('id',currentUserId).maybeSingle()
+    fetch('/api/push-notify',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({userId:receiverId,title:'New Friend Request',body:`${me?.full_name||'Someone'} wants to connect with you`,url:'/dashboard'})
+    }).catch(()=>{})
+  }
+
+  const sorted=[...people].sort((a,b)=>{
+    if(!userLocation||!a.latitude||!b.latitude) return 0
+    return calcDistance(userLocation.lat,userLocation.lng,a.latitude,a.longitude)-calcDistance(userLocation.lat,userLocation.lng,b.latitude,b.longitude)
   })
 
-  const sel:React.CSSProperties={width:'100%',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'10px 14px',fontSize:'14px',outline:'none',background:'#fff',color:'#0f172a'}
+  const filtered=sorted.filter(s=>{
+    const q=search.toLowerCase()
+    return(!q||s.full_name?.toLowerCase().includes(q)||s.location_name?.toLowerCase().includes(q))
+      &&(gender==='All'||s.gender===gender)
+      &&(lookingFor==='All'||s.looking_for===lookingFor)
+      &&(status==='All'||s.status===status)
+  })
 
   return(
-    <div style={{maxWidth:'1200px',margin:'0 auto',padding:'32px 20px'}}>
-      <h1 style={{fontSize:'26px',fontWeight:'800',color:'#0f172a',marginBottom:'4px'}}>Browse People</h1>
-      <p style={{color:'#64748b',fontSize:'14px',marginBottom:'28px'}}>{filtered.length} users found</p>
-
-      <div style={{display:'flex',gap:'24px',flexWrap:'wrap'}}>
-        {/* Filters */}
-        <aside style={{width:'200px',flexShrink:0}}>
-          <div style={{background:'#fff',borderRadius:'14px',border:'1px solid #e2e8f0',padding:'20px',position:'sticky',top:'72px'}}>
-            <p style={{fontSize:'13px',fontWeight:'700',color:'#0f172a',marginBottom:'14px',textTransform:'uppercase',letterSpacing:'0.5px'}}>Filters</p>
-            <div style={{marginBottom:'14px'}}>
-              <label style={{fontSize:'12px',fontWeight:'600',color:'#64748b',display:'block',marginBottom:'5px'}}>University</label>
-              <select value={uni} onChange={e=>setUni(e.target.value)} style={sel}>
-                {UNIS.map(u=><option key={u}>{u}</option>)}
-              </select>
-            </div>
-            <div style={{marginBottom:'16px'}}>
-              <label style={{fontSize:'12px',fontWeight:'600',color:'#64748b',display:'block',marginBottom:'5px'}}>Year</label>
-              <select value={year} onChange={e=>setYear(e.target.value)} style={sel}>
-                {YEARS.map(y=><option key={y}>{y}</option>)}
-              </select>
-            </div>
-            <button onClick={()=>{setUni('All Universities');setYear('All Years');setSearch('')}} style={{width:'100%',background:'none',border:'1px solid #e2e8f0',borderRadius:'8px',padding:'8px',fontSize:'13px',color:'#64748b',cursor:'pointer'}}>Clear</button>
-          </div>
-        </aside>
-
-        <div style={{flex:1,minWidth:0}}>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by name or course..."
-            style={{width:'100%',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'11px 16px',fontSize:'14px',outline:'none',marginBottom:'20px',boxSizing:'border-box'}}
-            onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
-
-          {loading ? (
-            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:'14px'}}>
-              {[1,2,3,4,5,6].map(i=><div key={i} style={{background:'#fff',borderRadius:'14px',border:'1px solid #e2e8f0',height:'220px',animation:'pulse 1.5s ease infinite'}}/>)}
-            </div>
-          ) : filtered.length===0 ? (
-            <div style={{textAlign:'center',padding:'60px',color:'#94a3b8'}}>
-              <p style={{fontSize:'16px',fontWeight:'600',color:'#374151'}}>No users found</p>
-              <p style={{fontSize:'14px',marginTop:'4px'}}>Try different filters</p>
-            </div>
-          ) : (
-            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:'14px'}}>
-              {filtered.map(s=>(
-                <div key={s.id} style={{background:'#fff',borderRadius:'14px',border:`1px solid ${s.is_featured?'#c4b5fd':s.is_verified?'#fed7aa':'#e2e8f0'}`,overflow:'hidden',transition:'box-shadow 0.2s,transform 0.2s'}}
-                  onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.boxShadow='0 8px 24px rgba(0,0,0,0.1)';(e.currentTarget as HTMLElement).style.transform='translateY(-2px)'}}
-                  onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.boxShadow='none';(e.currentTarget as HTMLElement).style.transform='none'}}>
-                  {s.is_featured&&<div style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',fontSize:'11px',fontWeight:'700',textAlign:'center',padding:'5px',letterSpacing:'0.5px'}}>FEATURED</div>}
-                  {s.is_verified&&!s.is_featured&&<div style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',fontSize:'11px',fontWeight:'700',textAlign:'center',padding:'5px',letterSpacing:'0.5px'}}>TOP STUDENT</div>}
-                  <div style={{padding:'18px'}}>
-                    <div style={{display:'flex',gap:'12px',alignItems:'flex-start',marginBottom:'12px'}}>
-                      <div style={{position:'relative',flexShrink:0}}>
-                        {s.avatar_url
-                          ?<img src={s.avatar_url} style={{width:'44px',height:'44px',borderRadius:'50%',objectFit:'cover'}}/>
-                          :<div style={{width:'44px',height:'44px',borderRadius:'50%',background:'#eff6ff',color:'#2563eb',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'14px'}}>{initials(s.full_name||'?')}</div>
-                        }
-                                              </div>
-                      <div>
-                        <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px',lineHeight:'1.3'}}>{s.full_name}</p>
-                        <div style={{display:'flex',gap:'4px',flexWrap:'wrap',marginTop:'5px'}}>
-                          <span style={{background:'#eff6ff',color:'#2563eb',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',fontWeight:'600'}}>Y{s.year_of_study}</span>
-                          {s.is_premium&&<span style={{background:'#f5f3ff',color:'#7c3aed',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',fontWeight:'600'}}>Premium</span>}
-                        </div>
-                      </div>
-                    </div>
-                    <p style={{fontSize:'12px',color:'#64748b',marginBottom:'3px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.course}</p>
-                    <p style={{fontSize:'12px',color:'#94a3b8',marginBottom:'14px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.university}</p>
-                    <div style={{display:'flex',gap:'7px'}}>
-                      <Link href={`/profile/${s.id}`} style={{flex:1,textAlign:'center',border:'1px solid #e2e8f0',color:'#374151',padding:'8px',borderRadius:'8px',fontSize:'13px',fontWeight:'600'}}>View</Link>
-                      <Link href={`/profile/${s.id}#unlock`} style={{flex:1,textAlign:'center',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'8px',borderRadius:'8px',fontSize:'13px',fontWeight:'600'}}>Connect</Link>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+    <div style={{maxWidth:'900px',margin:'0 auto',padding:'24px 16px'}}>
+      <div style={{marginBottom:'20px'}}>
+        <h1 style={{fontSize:'24px',fontWeight:'800',color:'#0f172a',marginBottom:'4px'}}>Discover People</h1>
+        <p style={{fontSize:'13px',color:'#94a3b8'}}>{filtered.length} people · {userLocation?'sorted by distance':''}</p>
       </div>
+
+      {/* Filters */}
+      <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'20px'}}>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search name or location..."
+          style={{flex:1,minWidth:'160px',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'9px 14px',fontSize:'14px',outline:'none',background:'#fff'}}
+          onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
+        <select value={gender} onChange={e=>setGender(e.target.value)} style={{border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'9px 12px',fontSize:'13px',outline:'none',background:'#fff',cursor:'pointer'}}>
+          <option value="All">All Genders</option>
+          <option value="male">Men</option>
+          <option value="female">Women</option>
+        </select>
+        <select value={lookingFor} onChange={e=>setLookingFor(e.target.value)} style={{border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'9px 12px',fontSize:'13px',outline:'none',background:'#fff',cursor:'pointer'}}>
+          <option value="All">Looking For</option>
+          <option value="friendship">Friendship</option>
+          <option value="relationship">Relationship</option>
+          <option value="study">Study Partner</option>
+          <option value="networking">Networking</option>
+        </select>
+        <select value={status} onChange={e=>setStatus(e.target.value)} style={{border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'9px 12px',fontSize:'13px',outline:'none',background:'#fff',cursor:'pointer'}}>
+          <option value="All">All Status</option>
+          <option value="single">Single</option>
+          <option value="taken">Taken</option>
+        </select>
+      </div>
+
+      {/* Photo Grid */}
+      {loading?(
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'8px'}}>
+          {[...Array(9)].map((_,i)=><div key={i} style={{aspectRatio:'3/4',borderRadius:'14px',background:'#f1f5f9'}}/>)}
+        </div>
+      ):(
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))',gap:'10px'}}>
+          {filtered.map(s=>{
+            const dist=userLocation&&s.latitude&&s.longitude?calcDistance(userLocation.lat,userLocation.lng,s.latitude,s.longitude):null
+            return(
+              <div key={s.id} onClick={()=>router.push(`/profile/${s.id}`)}
+                style={{position:'relative',aspectRatio:'3/4',borderRadius:'14px',overflow:'hidden',cursor:'pointer',background:'#f1f5f9',
+                  border:s.is_featured?'2px solid #f97316':'none'}}>
+                {s.avatar_url
+                  ?<img src={s.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                  :<div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',background:`linear-gradient(135deg,#f97316,#ea580c)`,color:'#fff',fontSize:'32px',fontWeight:'900'}}>{initials(s.full_name)}</div>
+                }
+                <div style={{position:'absolute',bottom:0,left:0,right:0,height:'55%',background:'linear-gradient(to top,rgba(0,0,0,0.85),transparent)'}}/>
+                {s.is_premium&&<div style={{position:'absolute',top:'8px',left:'8px',background:'#7c3aed',color:'#fff',fontSize:'9px',padding:'2px 6px',borderRadius:'50px',fontWeight:'700'}}>PRO</div>}
+                {s.is_verified&&<div style={{position:'absolute',top:'8px',right:'8px',background:'#2563eb',color:'#fff',fontSize:'9px',padding:'2px 6px',borderRadius:'50px',fontWeight:'700'}}>Verified</div>}
+                {dist!==null&&<div style={{position:'absolute',top:s.is_premium?'28px':'8px',right:'8px',background:'rgba(0,0,0,0.5)',color:'#fff',fontSize:'9px',padding:'2px 6px',borderRadius:'50px'}}>{dist}km</div>}
+                <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'10px'}}>
+                  <p style={{color:'#fff',fontWeight:'700',fontSize:'14px',marginBottom:'2px'}}>{s.full_name?.split(' ')[0]}{s.age?`, ${s.age}`:''}</p>
+                  {s.location_name&&<p style={{color:'rgba(255,255,255,0.75)',fontSize:'10px',marginBottom:'6px'}}>{s.location_name}</p>}
+                  {s.id!==currentUserId&&(
+                    <button onClick={e=>{e.stopPropagation();
+                      if(!friendStatuses[s.id]) sendRequest(s.id)
+                      else if(friendStatuses[s.id]==='friends') router.push(`/profile/${s.id}`)
+                      else if(friendStatuses[s.id]==='pending_received') router.push('/dashboard')
+                    }} style={{width:'100%',padding:'6px',borderRadius:'8px',border:'none',cursor:'pointer',fontSize:'12px',fontWeight:'700',
+                      background:friendStatuses[s.id]==='friends'?'rgba(22,163,74,0.9)':friendStatuses[s.id]==='pending_sent'?'rgba(202,138,4,0.9)':friendStatuses[s.id]==='pending_received'?'rgba(37,99,235,0.9)':'rgba(249,115,22,0.95)',
+                      color:'#fff'}}>
+                      {sendingTo===s.id?'...':friendStatuses[s.id]==='friends'?'Friends':friendStatuses[s.id]==='pending_sent'?'Pending':friendStatuses[s.id]==='pending_received'?'Accept':'Connect'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
