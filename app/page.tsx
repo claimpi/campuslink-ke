@@ -92,7 +92,6 @@ export default function HomePage(){
  }).then(r=>r.json()).then(d=>console.log('Push sent:',d)).catch(e=>console.error('Push failed:',e))
  }
 
- // Sort by distance if location available
   async function handleLike(receiverId:string, name:string){
     if(!currentUserId){router.push('/login');return}
     if(likes.has(receiverId)) return
