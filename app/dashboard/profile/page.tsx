@@ -34,8 +34,7 @@ export default function EditProfile(){
         if(data){
           setAvatarUrl(data.avatar_url||'')
           setPhotos(Array.isArray(data.photos)?data.photos:[])
-          setForm({full_name:data.full_name||'',university:data.university||'',course:data.course||'',
-            year_of_study:String(data.year_of_study||'1'),whatsapp_number:data.whatsapp_number||'',
+          setForm({full_name:data.full_name||'',whatsapp_number:data.whatsapp_number||'',
             bio:data.bio||'',interests:Array.isArray(data.interests)?data.interests.join(', '):(data.interests||''),status:data.status||'',tiktok:data.tiktok||'',instagram:data.instagram||'',age:data.age||'',gender:data.gender||'',looking_for:data.looking_for||'',location_name:data.location_name||'',latitude:data.latitude||'',longitude:data.longitude||''})
         }
         setLoading(false)
