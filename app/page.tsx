@@ -214,25 +214,29 @@ export default function HomePage(){
  {s.looking_for==='friendship'?' Friends':s.looking_for==='relationship'?' Relationship':s.looking_for==='study'?' Study':' Network'}
  </p>}
 
- {/* Connect button */}
+ {/* Buttons row */}
  {s.id!==currentUserId&&(
- <button onClick={e=>{e.stopPropagation();
- if(friendStatuses[s.id]==='none'||!friendStatuses[s.id]) sendRequest(s.id)
- else if(friendStatuses[s.id]==='friends') router.push(`/profile/${s.id}`)
- else if(friendStatuses[s.id]==='pending_received') router.push('/dashboard')
- }}
- style={{width:'100%',padding:'4px',borderRadius:'6px',border:'none',cursor:'pointer',fontSize:'11px',fontWeight:'700',
- background:friendStatuses[s.id]==='friends'?'rgba(22,163,74,0.9)':
- friendStatuses[s.id]==='pending_sent'?'rgba(202,138,4,0.9)':
- friendStatuses[s.id]==='pending_received'?'rgba(37,99,235,0.9)':
- 'rgba(249,115,22,0.95)',
- color:'#fff',backdropFilter:'blur(4px)'}}>
- {sendingTo===s.id?'...':
- friendStatuses[s.id]==='friends'?' Friends':
- friendStatuses[s.id]==='pending_sent'?' Pending':
- friendStatuses[s.id]==='pending_received'?'Accept':
- 'Connect'}
- </button>
+   <div style={{display:'flex',gap:'4px'}}>
+     <button onClick={e=>{e.stopPropagation();handleLike(s.id,s.full_name)}}
+       style={{width:'32px',height:'26px',borderRadius:'6px',border:'none',cursor:'pointer',fontSize:'13px',
+         background:matches.has(s.id)?'rgba(236,72,153,0.9)':likes.has(s.id)?'rgba(236,72,153,0.6)':'rgba(255,255,255,0.2)',
+         flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
+       {matches.has(s.id)?'💗':likes.has(s.id)?'❤️':'🤍'}
+     </button>
+     <button onClick={e=>{e.stopPropagation();
+       if(!friendStatuses[s.id]) sendRequest(s.id)
+       else if(friendStatuses[s.id]==='friends') router.push(`/profile/${s.id}`)
+       else if(friendStatuses[s.id]==='pending_received') router.push('/dashboard')
+     }} style={{flex:1,height:'26px',borderRadius:'6px',border:'none',cursor:'pointer',fontSize:'10px',fontWeight:'700',
+       background:friendStatuses[s.id]==='friends'?'rgba(22,163,74,0.85)':
+         friendStatuses[s.id]==='pending_sent'?'rgba(202,138,4,0.85)':
+         friendStatuses[s.id]==='pending_received'?'rgba(37,99,235,0.85)':'rgba(249,115,22,0.9)',
+       color:'#fff'}}>
+       {sendingTo===s.id?'...':friendStatuses[s.id]==='friends'?'Friends':
+         friendStatuses[s.id]==='pending_sent'?'Pending':
+         friendStatuses[s.id]==='pending_received'?'Accept':'Connect'}
+     </button>
+   </div>
  )}
  </div>
  </div>
