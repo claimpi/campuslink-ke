@@ -54,12 +54,14 @@ export async function GET(request: NextRequest) {
           }).eq('id', profile.referred_by)
 
           // Insert referral record
-          await sbAdmin.from('referrals').insert([{
-            referrer_id: profile.referred_by,
-            referred_id: userId,
-            amount: 20,
-            status: 'credited'
-          }]).catch(() => {})
+          try {
+            await sbAdmin.from('referrals').insert([{
+              referrer_id: profile.referred_by,
+              referred_id: userId,
+              amount: 20,
+              status: 'credited'
+            }])
+          } catch {}
 
           // Mark as credited so we don't double-credit
           await sbAdmin.from('profiles').update({
