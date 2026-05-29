@@ -236,15 +236,8 @@ export default function HomePage(){
                 {dist!==null&&<div style={{position:'absolute',top:'6px',right:'6px',background:'rgba(0,0,0,0.5)',color:'#fff',fontSize:'9px',padding:'2px 6px',borderRadius:'50px'}}>{dist}km</div>}
 
                 {/* Bottom info - frosted glass */}
-                <div style={{position:'absolute',bottom:'6px',left:'6px',right:'6px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'4px'}}>
-                  {/* Name pill */}
-                  <div style={{background:'rgba(255,255,255,0.18)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',
-                    borderRadius:'50px',padding:'3px 10px',border:'1px solid rgba(255,255,255,0.3)',flex:1,minWidth:0}}>
-                    <p style={{color:'#fff',fontWeight:'700',fontSize:'10px',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',
-                      textShadow:'0 1px 2px rgba(0,0,0,0.3)'}}>
-                      {s.full_name?.split(' ')[0]}{s.age?`, ${s.age}`:''}
-                    </p>
-                  </div>
+                <div style={{position:'absolute',bottom:'6px',left:'6px',right:'6px',display:'flex',alignItems:'center',justifyContent:'flex-end',gap:'4px'}}>
+
                   {/* Action buttons */}
                   {s.id!==currentUserId&&(
                     <div style={{display:'flex',gap:'3px',flexShrink:0}}>
