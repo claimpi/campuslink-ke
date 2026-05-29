@@ -109,7 +109,7 @@ export default function EditProfile(){
     const {error:err}=await createClient().from('profiles').upsert({
       id:userId,
       email:userEmail, // include email to satisfy NOT NULL constraint
-      full_name:form.full_name,university:form.university,course:form.course,
+      full_name:form.full_name,
       whatsapp_number:form.whatsapp_number,bio:form.bio,status:form.status,tiktok:form.tiktok,instagram:form.instagram,age:form.age?parseInt(form.age):null,gender:form.gender,looking_for:form.looking_for,location_name:form.location_name,latitude:form.latitude?parseFloat(form.latitude):null,longitude:form.longitude?parseFloat(form.longitude):null,interests
     },{onConflict:'id'})
     if(err) setError(err.message)
