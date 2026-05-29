@@ -224,8 +224,7 @@ export default function HomePage(){
                   </div>
                 }
 
-                {/* Gradient overlay */}
-                <div style={{position:'absolute',bottom:0,left:0,right:0,height:'38%',background:'linear-gradient(to top,rgba(0,0,0,0.8),transparent)'}}/>
+
 
                 {/* Top badges */}
                 <div style={{position:'absolute',top:'6px',left:'6px',display:'flex',gap:'3px'}}>
@@ -236,19 +235,26 @@ export default function HomePage(){
                 {/* Distance */}
                 {dist!==null&&<div style={{position:'absolute',top:'6px',right:'6px',background:'rgba(0,0,0,0.5)',color:'#fff',fontSize:'9px',padding:'2px 6px',borderRadius:'50px'}}>{dist}km</div>}
 
-                {/* Bottom info */}
-                <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'6px 7px 6px'}}>
-                  <p style={{color:'#fff',fontWeight:'700',fontSize:'11px',marginBottom:'4px',textShadow:'0 1px 3px rgba(0,0,0,0.5)'}}>
-                    {s.full_name?.split(' ')[0]}{s.age?`, ${s.age}`:''}
-                  </p>
+                {/* Bottom info - frosted glass */}
+                <div style={{position:'absolute',bottom:'6px',left:'6px',right:'6px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'4px'}}>
+                  {/* Name pill */}
+                  <div style={{background:'rgba(255,255,255,0.18)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',
+                    borderRadius:'50px',padding:'3px 10px',border:'1px solid rgba(255,255,255,0.3)',flex:1,minWidth:0}}>
+                    <p style={{color:'#fff',fontWeight:'700',fontSize:'10px',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',
+                      textShadow:'0 1px 2px rgba(0,0,0,0.3)'}}>
+                      {s.full_name?.split(' ')[0]}{s.age?`, ${s.age}`:''}
+                    </p>
+                  </div>
+                  {/* Action buttons */}
                   {s.id!==currentUserId&&(
-                    <div style={{display:'flex',gap:'3px'}}>
+                    <div style={{display:'flex',gap:'3px',flexShrink:0}}>
                       <button onClick={e=>{e.stopPropagation();handleLike(s.id)}}
-                        style={{width:'26px',height:'22px',borderRadius:'5px',border:'none',cursor:'pointer',
-                          background:isMatch?'rgba(236,72,153,0.9)':isLiked?'rgba(236,72,153,0.6)':'rgba(255,255,255,0.15)',
+                        style={{width:'26px',height:'26px',borderRadius:'50%',border:'1px solid rgba(255,255,255,0.3)',cursor:'pointer',
+                          background:isMatch?'rgba(236,72,153,0.85)':isLiked?'rgba(236,72,153,0.6)':'rgba(255,255,255,0.18)',
+                          backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',
                           display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
                           transition:'all 0.2s',transform:liking===s.id?'scale(1.2)':'scale(1)'}}>
-                        <svg width="12" height="11" viewBox="0 0 24 21" fill={isLiked||isMatch?'#fff':'none'} stroke={isLiked||isMatch?'#fff':'rgba(255,255,255,0.8)'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="11" height="10" viewBox="0 0 24 21" fill={isLiked||isMatch?'#fff':'none'} stroke={isLiked||isMatch?'#fff':'rgba(255,255,255,0.9)'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M12 21C12 21 2 13.5 2 7a5 5 0 0 1 10 0 5 5 0 0 1 10 0c0 6.5-10 14-10 14z"/>
                         </svg>
                       </button>
@@ -256,11 +262,13 @@ export default function HomePage(){
                         if(!friendStatuses[s.id]) sendRequest(s.id)
                         else if(friendStatuses[s.id]==='friends') router.push(`/profile/${s.id}`)
                         else if(friendStatuses[s.id]==='pending_received') router.push('/dashboard')
-                      }} style={{flex:1,height:'24px',borderRadius:'5px',border:'none',cursor:'pointer',fontSize:'9px',fontWeight:'700',
-                        background:friendStatuses[s.id]==='friends'?'rgba(22,163,74,0.85)':
-                          friendStatuses[s.id]==='pending_sent'?'rgba(202,138,4,0.85)':
-                          friendStatuses[s.id]==='pending_received'?'rgba(37,99,235,0.85)':'rgba(249,115,22,0.9)',
-                        color:'#fff'}}>
+                      }} style={{height:'26px',borderRadius:'50px',border:'1px solid rgba(255,255,255,0.3)',cursor:'pointer',
+                        padding:'0 8px',fontSize:'9px',fontWeight:'700',
+                        backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',
+                        background:friendStatuses[s.id]==='friends'?'rgba(22,163,74,0.75)':
+                          friendStatuses[s.id]==='pending_sent'?'rgba(202,138,4,0.75)':
+                          friendStatuses[s.id]==='pending_received'?'rgba(37,99,235,0.75)':'rgba(249,115,22,0.8)',
+                        color:'#fff',whiteSpace:'nowrap'}}>
                         {sendingTo===s.id?'...':friendStatuses[s.id]==='friends'?'Friends':
                           friendStatuses[s.id]==='pending_sent'?'Pending':
                           friendStatuses[s.id]==='pending_received'?'Accept':'Connect'}
