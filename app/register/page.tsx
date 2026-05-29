@@ -129,11 +129,47 @@ export default function RegisterPage() {
 
         {step===2&&(
           <form onSubmit={handleRegister} style={{display:'flex',flexDirection:'column',gap:'13px'}}>
+            <div>
+              <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>WhatsApp</label>
+              <input value={form.whatsapp} onChange={set('whatsapp')} placeholder="+254712345678" style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
+            </div>
+            <div>
+              <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Age</label>
+              <input type="number" value={form.age||''} onChange={set('age')} placeholder="e.g. 21" min="16" max="60" style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
+            </div>
+            <div>
+              <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Gender</label>
+              <select value={form.gender||''} onChange={set('gender')} style={inp}>
+                <option value="">Prefer not to say</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Looking For</label>
+              <select value={form.looking_for||''} onChange={set('looking_for')} style={inp}>
+                <option value="">Not specified</option>
+                <option value="friendship">Friendship</option>
+                <option value="relationship">Relationship</option>
+                <option value="study">Study Partner</option>
+                <option value="networking">Networking</option>
+              </select>
+            </div>
+            <div>
+              <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Bio <span style={{fontWeight:'400',color:'#94a3b8'}}>(optional)</span></label>
+              <textarea value={form.bio} onChange={set('bio')} rows={2} placeholder="Tell others about yourself..." style={{...inp,resize:'none'}}/>
+            </div>
+            <div>
+              <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Interests <span style={{fontWeight:'400',color:'#94a3b8'}}>(comma separated)</span></label>
+              <input value={form.interests} onChange={set('interests')} placeholder="football, coding, music" style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
+            </div>
             <div style={{display:'flex',gap:'8px',marginTop:'4px'}}>
-              <button type="button" onClick={()=>{setStep(1);setError('')}} style={{flex:1,border:'1.5px solid #e2e8f0',background:'#fff',color:'#64748b',padding:'12px',borderRadius:'10px',fontWeight:'600',fontSize:'14px',cursor:'pointer'}}>← Back</button>
-              <button type="submit" style={{flex:2,background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'12px',borderRadius:'10px',fontWeight:'700',fontSize:'14px',border:'none',cursor:'pointer'}}>
-                Continue to Photo
+              <button type="button" onClick={()=>{setStep(1);setError('')}} style={{flex:1,border:'1.5px solid #e2e8f0',background:'#fff',color:'#64748b',padding:'12px',borderRadius:'10px',fontWeight:'600',fontSize:'14px',cursor:'pointer'}}>Back</button>
+              <button type="submit" disabled={loading} style={{flex:2,background:loading?'#94a3b8':'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'12px',borderRadius:'10px',fontWeight:'700',fontSize:'14px',border:'none',cursor:loading?'not-allowed':'pointer'}}>
+                {loading?'Creating account...':'Continue to Photo'}
               </button>
+            </div>
           </form>
         )}
 
