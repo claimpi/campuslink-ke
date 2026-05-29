@@ -93,28 +93,28 @@ export default function HomePage(){
  }
 
  // Sort by distance if location available
- const sorted = [...users].sort((a,b)=>{
+  async function handleLike(receiverId:string, name:string){
+    if(!currentUserId){router.push('/login');return}
+    if(likes.has(receiverId)) return
+    setLiking(receiverId)
+    setLikes(prev=>new Set([...prev,receiverId]))
+    const res=await fetch('/api/like',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({senderId:currentUserId,receiverId})})
+    const data=await res.json()
+    if(data.isMatch){
+      setMatches(prev=>new Set([...prev,receiverId]))
+      setShowMatch(receiverId)
+      setTimeout(()=>setShowMatch(null),4000)
+    }
+    setLiking(null)
+  }
+
+  const sorted = [...users].sort((a,b)=>{
  if(!userLocation||!a.latitude||!b.latitude) return 0
  const da=calcDistance(userLocation.lat,userLocation.lng,a.latitude,a.longitude)
  const db=calcDistance(userLocation.lat,userLocation.lng,b.latitude,b.longitude)
  return da-db
  })
-
- async function handleLike(receiverId:string, name:string){
-  if(!currentUserId){router.push('/login');return}
-  if(likes.has(receiverId)) return
-  setLiking(receiverId)
-  setLikes(prev=>new Set([...prev,receiverId]))
-  const res=await fetch('/api/like',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({senderId:currentUserId,receiverId})})
-  const data=await res.json()
-  if(data.isMatch){
-    setMatches(prev=>new Set([...prev,receiverId]))
-    setShowMatch(receiverId)
-    setTimeout(()=>setShowMatch(null),4000)
-  }
-  setLiking(null)
- }
 
  const filtered=sorted.filter(s=>{
  const q=search.toLowerCase()
