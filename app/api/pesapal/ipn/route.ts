@@ -39,6 +39,24 @@ export async function POST(req: NextRequest) {
           body:JSON.stringify({userId:payment.target_id,title:'Someone unlocked your number! 💰',body:`${buyer?.full_name||'A student'} just paid KES 20 to connect with you`,url:'/dashboard'})
         }).catch(()=>{})
       }
+    } else if (type && type.startsWith('gift_')) {
+      // Gift received - save to gifts table and credit receiver
+      if (payment.target_id) {
+        const giftType = type.replace('gift_','').charAt(0).toUpperCase() + type.replace('gift_','').slice(1)
+        await sb.from('gifts').insert([{
+          sender_id: payment.user_id, receiver_id: payment.target_id,
+          gift_type: giftType, amount: payment.amount || 0
+        }])
+        // Add to receiver's gift earnings
+        const { data: recv } = await sb.from('profiles').select('gift_earnings').eq('id', payment.target_id).maybeSingle()
+        await sb.from('profiles').update({ gift_earnings: (recv?.gift_earnings||0) + (payment.amount||0) }).eq('id', payment.target_id)
+        // Notify receiver
+        const { data: sender } = await sb.from('profiles').select('full_name').eq('id', payment.user_id).maybeSingle()
+        await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/push-notify`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ userId: payment.target_id, title: `You received a ${giftType}!`, body: `${sender?.full_name||'Someone'} sent you a virtual ${giftType}`, url: '/dashboard' })
+        }).catch(()=>{})
+      }
     } else if (type === 'add_group') {
       // Approve the group listing
       if (payment.group_id) {

@@ -42,7 +42,7 @@ export default function ProfilePage(){
           userEmail:currentUser.email,
           userName:currentUser.email,
           phone:'',
-          paymentType:'gift',
+          paymentType:`gift_${giftType.toLowerCase()}`,
           targetId:id,
           amount:price,
           giftType

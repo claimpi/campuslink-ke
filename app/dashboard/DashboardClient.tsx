@@ -259,14 +259,20 @@ export default function DashboardClient(){
               Copy
             </button>
           </div>
-          {(profile.referral_earnings||0) > 0 && (
-            <div style={{marginTop:'12px',background:'#f0fdf4',borderRadius:'8px',padding:'10px 14px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-              <p style={{fontSize:'13px',color:'#16a34a',fontWeight:'600'}}>You have KES {profile.referral_earnings} in earnings</p>
-              <a href={`https://wa.me/254790166252?text=Hello%20CampusLink%20KE%2C%20I%20want%20to%20withdraw%20my%20referral%20earnings%20of%20KES%20${profile.referral_earnings}.%20My%20referral%20code%20is%20${profile.referral_code}`}
-                target="_blank" rel="noopener noreferrer"
-                style={{background:'#16a34a',color:'#fff',padding:'7px 14px',borderRadius:'7px',fontSize:'12px',fontWeight:'700'}}>
-                Withdraw via WhatsApp
-              </a>
+          {((profile.referral_earnings||0) + (profile.gift_earnings||0)) > 0 && (
+            <div style={{marginTop:'12px',background:'#f0fdf4',borderRadius:'8px',padding:'12px 14px'}}>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px',flexWrap:'wrap',gap:'8px'}}>
+                <div>
+                  <p style={{fontSize:'13px',color:'#16a34a',fontWeight:'700'}}>Total Earnings: KES {(profile.referral_earnings||0)+(profile.gift_earnings||0)}</p>
+                  <p style={{fontSize:'11px',color:'#94a3b8'}}>Referrals: KES {profile.referral_earnings||0} · Gifts: KES {profile.gift_earnings||0}</p>
+                </div>
+                <a href={`https://wa.me/254790166252?text=Hello%20CampusLink%20KE%2C%20I%20want%20to%20withdraw%20my%20earnings%20of%20KES%20${(profile.referral_earnings||0)+(profile.gift_earnings||0)}.%20My%20account%20email%20is%20${user?.email}`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{background:'#16a34a',color:'#fff',padding:'8px 16px',borderRadius:'8px',fontSize:'12px',fontWeight:'700',textDecoration:'none'}}>
+                  Withdraw via WhatsApp
+                </a>
+              </div>
+              <p style={{fontSize:'11px',color:'#64748b'}}>Minimum withdrawal: KES 200 · Paid via M-Pesa within 24hrs</p>
             </div>
           )}
         </div>
