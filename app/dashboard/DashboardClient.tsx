@@ -15,6 +15,8 @@ export default function DashboardClient(){
   const [loading,setLoading]=useState(true)
   const [friendRequests,setFriendRequests]=useState<any[]>([])
   const [gifts,setGifts]=useState<any[]>([])
+  const [matches,setMatches]=useState<any[]>([])
+  const [likesReceived,setLikesReceived]=useState(0)
 
   useEffect(()=>{
     async function load(){
@@ -53,6 +55,21 @@ export default function DashboardClient(){
         .order('created_at',{ascending:false})
         .limit(10)
       setGifts(giftsData||[])
+
+      // Load matches
+      const {data:myLikes}=await sb.from('likes').select('receiver_id').eq('sender_id',user.id)
+      const likedIds=(myLikes||[]).map((l:any)=>l.receiver_id)
+      if(likedIds.length>0){
+        const {data:theyLikedMe}=await sb.from('likes').select('sender_id').eq('receiver_id',user.id).in('sender_id',likedIds)
+        const matchIds=(theyLikedMe||[]).map((l:any)=>l.sender_id)
+        if(matchIds.length>0){
+          const {data:matchProfiles}=await sb.from('profiles').select('id,full_name,avatar_url').in('id',matchIds)
+          setMatches(matchProfiles||[])
+        }
+      }
+      // Likes received count
+      const {count}=await sb.from('likes').select('*',{count:'exact',head:true}).eq('receiver_id',user.id)
+      setLikesReceived(count||0)
 
       setLoading(false)
     }
@@ -163,6 +180,44 @@ export default function DashboardClient(){
           </a>
         </div>
       )}
+
+      {/* Likes & Matches */}
+      <div style={{background:'#fff',borderRadius:'14px',border:'1px solid #fce7f3',padding:'20px',marginBottom:'16px'}}>
+        <div style={{display:'flex',gap:'12px',marginBottom:'14px'}}>
+          <div style={{flex:1,background:'#fdf2f8',borderRadius:'10px',padding:'14px',textAlign:'center'}}>
+            <p style={{fontSize:'24px',fontWeight:'900',color:'#ec4899'}}>{likesReceived}</p>
+            <p style={{fontSize:'11px',color:'#94a3b8',fontWeight:'600'}}>PEOPLE LIKED YOU</p>
+          </div>
+          <div style={{flex:1,background:'#fdf2f8',borderRadius:'10px',padding:'14px',textAlign:'center'}}>
+            <p style={{fontSize:'24px',fontWeight:'900',color:'#be185d'}}>{matches.length}</p>
+            <p style={{fontSize:'11px',color:'#94a3b8',fontWeight:'600'}}>MUTUAL MATCHES</p>
+          </div>
+        </div>
+        {matches.length>0&&(
+          <div>
+            <p style={{fontSize:'13px',fontWeight:'700',color:'#be185d',marginBottom:'10px'}}>Your Matches</p>
+            <div style={{display:'flex',gap:'10px',overflowX:'auto',paddingBottom:'4px'}}>
+              {matches.map((m:any)=>(
+                <a key={m.id} href={`/profile/${m.id}`} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'6px',textDecoration:'none',flexShrink:0}}>
+                  <div style={{position:'relative'}}>
+                    {m.avatar_url
+                      ?<img src={m.avatar_url} style={{width:'56px',height:'56px',borderRadius:'50%',objectFit:'cover',border:'2px solid #ec4899'}}/>
+                      :<div style={{width:'56px',height:'56px',borderRadius:'50%',background:'linear-gradient(135deg,#ec4899,#be185d)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:'800',fontSize:'18px',border:'2px solid #ec4899'}}>
+                        {(m.full_name||'?')[0].toUpperCase()}
+                      </div>
+                    }
+                    <div style={{position:'absolute',bottom:0,right:0,background:'#ec4899',borderRadius:'50%',width:'16px',height:'16px',border:'2px solid #fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'8px'}}>💗</div>
+                  </div>
+                  <p style={{fontSize:'11px',color:'#374151',fontWeight:'600',maxWidth:'56px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{m.full_name?.split(' ')[0]}</p>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+        {matches.length===0&&(
+          <p style={{fontSize:'13px',color:'#94a3b8',textAlign:'center',padding:'8px 0'}}>Like someone and wait for them to like back — that's a match!</p>
+        )}
+      </div>
 
       {/* Friend Requests */}
       {friendRequests.length>0&&(
