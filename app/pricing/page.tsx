@@ -67,16 +67,9 @@ export default function PricingPage() {
         <p style={{fontSize:'16px',color:'#64748b',maxWidth:'480px',margin:'0 auto',lineHeight:'1.6'}}>Pay via M-Pesa and your account upgrades instantly — no manual approval needed.</p>
       </div>
 
-      {/* Top row - 3 plans */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'20px',marginBottom:'20px'}}>
-        {plans.slice(0,3).map(plan=>(
-          <PlanCard key={plan.id} plan={plan} loading={loading} onPay={handlePay}/>
-        ))}
-      </div>
-
-      {/* Bottom row - 2 plans */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'20px',marginBottom:'52px'}}>
-        {plans.slice(3).map(plan=>(
+      {/* All plans - equal 5 columns */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:'20px',marginBottom:'52px'}}>
+        {plans.map(plan=>(
           <PlanCard key={plan.id} plan={plan} loading={loading} onPay={handlePay}/>
         ))}
       </div>
