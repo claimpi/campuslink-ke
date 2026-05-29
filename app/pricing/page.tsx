@@ -87,10 +87,10 @@ export default function PricingPage() {
         {/* 2x2 grid */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'16px',marginBottom:'28px'}}>
           {[
-            {n:'1',icon:'📋',t:'Choose a plan',d:'Select the upgrade that suits you and click Pay'},
-            {n:'2',icon:'📱',t:'M-Pesa Prompt',d:'You receive an STK push on your phone. Enter your PIN'},
-            {n:'3',icon:'🛡️',t:'Verification',d:'Pesapal confirms your payment automatically'},
-            {n:'4',icon:'✅',t:'Account Updated',d:'Your account upgrades instantly — no waiting'},
+            {n:'1',t:'Choose a plan',d:'Select the upgrade that suits you and click Pay'},
+            {n:'2',t:'M-Pesa Prompt',d:'You receive an STK push on your phone. Enter your PIN'},
+            {n:'3',t:'Verification',d:'Pesapal confirms your payment automatically'},
+            {n:'4',t:'Account Updated',d:'Your account upgrades instantly — no waiting'},
           ].map((s,i)=>(
             <div key={s.n} style={{background:'#f8fafc',borderRadius:'14px',padding:'20px 16px',textAlign:'center',border:'1px solid #e2e8f0',position:'relative'}}>
               {i < 3 && (
@@ -101,7 +101,6 @@ export default function PricingPage() {
                   fontSize:'10px',color:'#f97316',zIndex:1,fontWeight:'700'}}>
                 </div>
               )}
-              <div style={{fontSize:'24px',marginBottom:'8px'}}>{s.icon}</div>
               <div style={{width:'28px',height:'28px',borderRadius:'50%',background:'linear-gradient(135deg,#f97316,#ea580c)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'800',fontSize:'13px',color:'#fff',margin:'0 auto 10px'}}>
                 {s.n}
               </div>
