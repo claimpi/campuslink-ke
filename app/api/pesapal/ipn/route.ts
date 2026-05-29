@@ -45,11 +45,12 @@ export async function POST(req: NextRequest) {
         const giftType = type.replace('gift_','').charAt(0).toUpperCase() + type.replace('gift_','').slice(1)
         await sb.from('gifts').insert([{
           sender_id: payment.user_id, receiver_id: payment.target_id,
-          gift_type: giftType, amount: payment.amount || 0
+          gift_type: giftType, amount: payment.amount || 0, status: 'completed'
         }])
         // Add to receiver's gift earnings
         const { data: recv } = await sb.from('profiles').select('gift_earnings').eq('id', payment.target_id).maybeSingle()
-        await sb.from('profiles').update({ gift_earnings: (recv?.gift_earnings||0) + (payment.amount||0) }).eq('id', payment.target_id)
+        const giftAmount = payment.amount || 0
+        await sb.from('profiles').update({ gift_earnings: (recv?.gift_earnings||0) + giftAmount }).eq('id', payment.target_id)
         // Notify receiver
         const { data: sender } = await sb.from('profiles').select('full_name').eq('id', payment.user_id).maybeSingle()
         await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/push-notify`, {

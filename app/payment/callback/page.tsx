@@ -30,10 +30,17 @@ function CallbackContent() {
 
           if (payment?.target_id) {
             setTargetId(payment.target_id)
-            // Get the target's whatsapp number
-            const { data: profile } = await sb.from('profiles')
-              .select('whatsapp_number,full_name').eq('id', payment.target_id).maybeSingle()
-            if (profile?.whatsapp_number) setWhatsapp(profile.whatsapp_number)
+            // Check if it's a gift payment
+            if (payment.type && payment.type.startsWith('gift_')) {
+              // Gift payment - don't show whatsapp number
+              const giftType = payment.type.replace('gift_','').charAt(0).toUpperCase() + payment.type.replace('gift_','').slice(1)
+              setWhatsapp(`GIFT:${giftType}`)
+            } else {
+              // Unlock payment - show whatsapp number
+              const { data: profile } = await sb.from('profiles')
+                .select('whatsapp_number,full_name').eq('id', payment.target_id).maybeSingle()
+              if (profile?.whatsapp_number) setWhatsapp(profile.whatsapp_number)
+            }
           } else {
             // Not an unlock - redirect to dashboard after 3s
             setTimeout(() => router.push('/dashboard'), 3000)
