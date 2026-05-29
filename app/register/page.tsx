@@ -16,6 +16,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [refCode, setRefCode] = useState('')
+  const [registeredUserId, setRegisteredUserId] = useState('')
   const [form, setForm] = useState({name:'',email:'',password:'',confirmPassword:'',university:'',course:'',year:'1',whatsapp:'',interests:'',bio:''})
   const set = (k:string) => (e:any) => setForm(f=>({...f,[k]:e.target.value}))
   const inp:React.CSSProperties = {width:'100%',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'11px 14px',fontSize:'14px',outline:'none',background:'#fff',boxSizing:'border-box',color:'#0f172a'}
@@ -85,7 +86,9 @@ export default function RegisterPage() {
       }
 
       localStorage.removeItem('ref_code')
-      router.push('/dashboard?welcome=true')
+      setRegisteredUserId(authData.user.id)
+      setLoading(false)
+      setStep(3)
     } catch (err: any) {
       setError(err.message || 'Something went wrong.')
       setLoading(false)
@@ -198,14 +201,15 @@ export default function RegisterPage() {
               setUploadingPhoto(true);setError('')
               try{
                 const sb=createClient()
-                const {data:{user}}=await sb.auth.getUser()
-                if(!user){setError('Session expired');setUploadingPhoto(false);return}
+                // Use the registered user ID directly - no need for active session
+                const uid = registeredUserId
+                if(!uid){setError('Session expired, please register again');setUploadingPhoto(false);return}
                 const ext=photoFile.name.split('.').pop()
-                const path=`${user.id}/avatar.${ext}`
+                const path=`${uid}/avatar.${ext}`
                 const {error:upErr}=await sb.storage.from('avatars').upload(path,photoFile,{upsert:true})
                 if(upErr){setError('Upload failed: '+upErr.message);setUploadingPhoto(false);return}
                 const {data:{publicUrl}}=sb.storage.from('avatars').getPublicUrl(path)
-                await sb.from('profiles').update({avatar_url:publicUrl}).eq('id',user.id)
+                await sb.from('profiles').update({avatar_url:publicUrl}).eq('id',uid)
                 window.location.href='/dashboard?welcome=true'
               }catch(e:any){setError(e.message);setUploadingPhoto(false)}
             }} disabled={uploadingPhoto||!photoFile}
