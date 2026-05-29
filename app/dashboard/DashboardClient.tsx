@@ -14,6 +14,7 @@ export default function DashboardClient(){
   const [profile,setProfile]=useState<any>(null)
   const [loading,setLoading]=useState(true)
   const [friendRequests,setFriendRequests]=useState<any[]>([])
+  const [gifts,setGifts]=useState<any[]>([])
 
   useEffect(()=>{
     async function load(){
@@ -45,6 +46,14 @@ export default function DashboardClient(){
         }))
         setFriendRequests(mapped)
       }
+      // Load gifts received
+      const {data:giftsData} = await sb.from('gifts')
+        .select('id,gift_type,amount,message,created_at,profiles!gifts_sender_id_fkey(full_name,avatar_url)')
+        .eq('receiver_id', user.id)
+        .order('created_at',{ascending:false})
+        .limit(10)
+      setGifts(giftsData||[])
+
       setLoading(false)
     }
     load()
@@ -192,6 +201,30 @@ export default function DashboardClient(){
                     setFriendRequests(fr=>fr.filter(r=>r.id!==req.id))
                   }} style={{background:'#fef2f2',border:'1px solid #fecaca',color:'#dc2626',borderRadius:'8px',padding:'7px 14px',fontSize:'13px',fontWeight:'700',cursor:'pointer'}}>Decline</button>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Gifts Received */}
+      {gifts.length>0&&(
+        <div style={{background:'#fff',borderRadius:'14px',border:'1px solid #fce7f3',padding:'20px',marginBottom:'16px'}}>
+          <p style={{fontWeight:'700',color:'#be185d',fontSize:'15px',marginBottom:'14px'}}>
+            Gifts Received
+            <span style={{background:'#ec4899',color:'#fff',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',marginLeft:'6px'}}>{gifts.length}</span>
+          </p>
+          <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+            {gifts.map((g:any)=>(
+              <div key={g.id} style={{display:'flex',alignItems:'center',gap:'12px',background:'#fdf2f8',borderRadius:'10px',padding:'10px 14px'}}>
+                <span style={{fontSize:'24px',flexShrink:0}}>
+                  {g.gift_type==='Rose'?'🌹':g.gift_type==='Heart'?'❤️':g.gift_type==='Star'?'⭐':g.gift_type==='Crown'?'👑':'💎'}
+                </span>
+                <div style={{flex:1}}>
+                  <p style={{fontSize:'13px',fontWeight:'600',color:'#be185d'}}>{g.profiles?.full_name||'Someone'} sent you a {g.gift_type}</p>
+                  <p style={{fontSize:'11px',color:'#94a3b8'}}>{new Date(g.created_at).toLocaleDateString()}</p>
+                </div>
+                <span style={{fontSize:'12px',fontWeight:'700',color:'#ec4899'}}>KES {g.amount}</span>
               </div>
             ))}
           </div>

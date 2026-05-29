@@ -20,6 +20,39 @@ export default function ProfilePage(){
   const [requestId,setRequestId]=useState<string|null>(null)
   const [friendLoading,setFriendLoading]=useState(false)
   const [copied,setCopied]=useState(false)
+  const [showGifts,setShowGifts]=useState(false)
+  const [sendingGift,setSendingGift]=useState<string|null>(null)
+  const [giftSent,setGiftSent]=useState<string|null>(null)
+
+  const GIFTS = [
+    {type:'Rose',icon:'rose.png',price:20,label:'Rose'},
+    {type:'Heart',icon:'heart.png',price:50,label:'Heart'},
+    {type:'Star',icon:'star.png',price:100,label:'Star'},
+    {type:'Crown',icon:'crown.png',price:200,label:'Crown'},
+    {type:'Diamond',icon:'diamond.png',price:500,label:'Diamond'},
+  ]
+
+  async function sendGift(giftType:string, price:number){
+    if(!currentUser){router.push('/login');return}
+    setSendingGift(giftType)
+    try{
+      const res = await fetch('/api/pesapal',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          userId:currentUser.id,
+          userEmail:currentUser.email,
+          userName:currentUser.email,
+          phone:'',
+          paymentType:'gift',
+          targetId:id,
+          amount:price,
+          giftType
+        })
+      })
+      const data = await res.json()
+      if(data.redirectUrl) window.location.href=data.redirectUrl
+      else{alert(data.error||'Payment failed');setSendingGift(null)}
+    }catch{alert('Something went wrong');setSendingGift(null)}
+  }
 
   useEffect(()=>{
     const sb=createClient()
@@ -216,6 +249,34 @@ export default function ProfilePage(){
               </div>
             )}
             <p style={{fontSize:'12px',color:'#cbd5e1',marginBottom:'12px'}}>{profile.profile_views||0} profile views</p>
+
+            {/* Gift button */}
+            {!isOwnProfile&&currentUser&&(
+              <div style={{marginBottom:'12px'}}>
+                <button onClick={()=>setShowGifts(!showGifts)}
+                  style={{background:'linear-gradient(135deg,#ec4899,#be185d)',color:'#fff',border:'none',borderRadius:'10px',padding:'8px 16px',fontSize:'13px',fontWeight:'700',cursor:'pointer',width:'100%'}}>
+                  Send a Virtual Gift
+                </button>
+                {showGifts&&(
+                  <div style={{background:'#fff',border:'1px solid #fce7f3',borderRadius:'12px',padding:'16px',marginTop:'10px'}}>
+                    <p style={{fontSize:'13px',fontWeight:'700',color:'#be185d',marginBottom:'12px',textAlign:'center'}}>Choose a gift to send</p>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'8px'}}>
+                      {GIFTS.map(g=>(
+                        <button key={g.type} onClick={()=>sendGift(g.type,g.price)} disabled={sendingGift===g.type}
+                          style={{background:sendingGift===g.type?'#f1f5f9':'#fdf2f8',border:'1px solid #fce7f3',borderRadius:'10px',padding:'10px 6px',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:'4px'}}>
+                          <span style={{fontSize:'22px'}}>
+                            {g.type==='Rose'?'🌹':g.type==='Heart'?'❤️':g.type==='Star'?'⭐':g.type==='Crown'?'👑':'💎'}
+                          </span>
+                          <span style={{fontSize:'9px',fontWeight:'700',color:'#be185d'}}>{g.label}</span>
+                          <span style={{fontSize:'9px',color:'#94a3b8'}}>KES {g.price}</span>
+                        </button>
+                      ))}
+                    </div>
+                    {giftSent&&<p style={{textAlign:'center',fontSize:'12px',color:'#16a34a',marginTop:'10px',fontWeight:'600'}}>Gift sent successfully!</p>}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Share buttons */}
             <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
