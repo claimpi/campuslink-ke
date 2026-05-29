@@ -45,14 +45,13 @@ export default function RegisterPage() {
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
-    if(step === 2) { setError(''); setStep(3); return }
     setLoading(true); setError('')
     const sb = createClient()
     try {
       const { data: authData, error: authError } = await sb.auth.signUp({
         email: form.email.trim(),
         password: form.password,
-        options: { data: { full_name: form.name }, emailRedirectTo: 'https://campuslink-ke.vercel.app/auth/callback' }
+        options: { data: { full_name: form.name }, emailRedirectTo: 'https://www.campuslink.co.ke/auth/callback' }
       })
       if (authError) { setError(authError.message); setLoading(false); return }
       if (!authData.user) { setError('Registration failed.'); setLoading(false); return }
@@ -65,9 +64,6 @@ export default function RegisterPage() {
         id: authData.user.id,
         email: form.email.trim(),
         full_name: form.name,
-        university: form.university,
-        course: form.course,
-        year_of_study: form.year,
         whatsapp_number: form.whatsapp,
         bio: form.bio,
         interests,
