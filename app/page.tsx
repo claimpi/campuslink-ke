@@ -244,11 +244,13 @@ export default function HomePage(){
                   {s.id!==currentUserId&&(
                     <div style={{display:'flex',gap:'3px'}}>
                       <button onClick={e=>{e.stopPropagation();handleLike(s.id)}}
-                        style={{width:'28px',height:'24px',borderRadius:'5px',border:'none',cursor:'pointer',fontSize:'12px',
-                          background:isMatch?'rgba(236,72,153,0.9)':isLiked?'rgba(236,72,153,0.6)':'rgba(255,255,255,0.2)',
+                        style={{width:'26px',height:'22px',borderRadius:'5px',border:'none',cursor:'pointer',
+                          background:isMatch?'rgba(236,72,153,0.9)':isLiked?'rgba(236,72,153,0.6)':'rgba(255,255,255,0.15)',
                           display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
-                          color:'#fff',fontWeight:'700'}}>
-                        {isMatch?'M':isLiked?'L':'+'}
+                          transition:'all 0.2s',transform:liking===s.id?'scale(1.2)':'scale(1)'}}>
+                        <svg width="12" height="11" viewBox="0 0 24 21" fill={isLiked||isMatch?'#fff':'none'} stroke={isLiked||isMatch?'#fff':'rgba(255,255,255,0.8)'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 21C12 21 2 13.5 2 7a5 5 0 0 1 10 0 5 5 0 0 1 10 0c0 6.5-10 14-10 14z"/>
+                        </svg>
                       </button>
                       <button onClick={e=>{e.stopPropagation();
                         if(!friendStatuses[s.id]) sendRequest(s.id)
