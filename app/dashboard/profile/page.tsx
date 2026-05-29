@@ -13,6 +13,7 @@ export default function EditProfile(){
   const photosRef=useRef<HTMLInputElement>(null)
   const [loading,setLoading]=useState(true)
   const [saving,setSaving]=useState(false)
+  const [locating,setLocating]=useState(false)
   const [uploadingAvatar,setUploadingAvatar]=useState(false)
   const [uploadingPhotos,setUploadingPhotos]=useState(false)
   const [success,setSuccess]=useState(false)
@@ -21,7 +22,7 @@ export default function EditProfile(){
   const [userEmail,setUserEmail]=useState('')
   const [avatarUrl,setAvatarUrl]=useState('')
   const [photos,setPhotos]=useState<string[]>([])
-  const [form,setForm]=useState({full_name:'',university:'',course:'',year_of_study:'1',whatsapp_number:'',bio:'',interests:'',status:'',tiktok:'',instagram:'',age:'',gender:'',looking_for:'',location_name:''})
+  const [form,setForm]=useState({full_name:'',university:'',course:'',year_of_study:'1',whatsapp_number:'',bio:'',interests:'',status:'',tiktok:'',instagram:'',age:'',gender:'',looking_for:'',location_name:'',latitude:'',longitude:''})
   const set=(k:string)=>(e:any)=>setForm(f=>({...f,[k]:e.target.value}))
   const inp:React.CSSProperties={width:'100%',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'11px 14px',fontSize:'14px',outline:'none',background:'#fff',boxSizing:'border-box',color:'#0f172a'}
 
@@ -37,7 +38,7 @@ export default function EditProfile(){
           setPhotos(Array.isArray(data.photos)?data.photos:[])
           setForm({full_name:data.full_name||'',university:data.university||'',course:data.course||'',
             year_of_study:String(data.year_of_study||'1'),whatsapp_number:data.whatsapp_number||'',
-            bio:data.bio||'',interests:Array.isArray(data.interests)?data.interests.join(', '):(data.interests||''),status:data.status||'',tiktok:data.tiktok||'',instagram:data.instagram||'',age:data.age||'',gender:data.gender||'',looking_for:data.looking_for||'',location_name:data.location_name||''})
+            bio:data.bio||'',interests:Array.isArray(data.interests)?data.interests.join(', '):(data.interests||''),status:data.status||'',tiktok:data.tiktok||'',instagram:data.instagram||'',age:data.age||'',gender:data.gender||'',looking_for:data.looking_for||'',location_name:data.location_name||'',latitude:data.latitude||'',longitude:data.longitude||''})
         }
         setLoading(false)
       })
@@ -87,6 +88,24 @@ export default function EditProfile(){
     setPhotos(updated)
   }
 
+  async function getLocation(){
+    if(!navigator.geolocation){alert('Geolocation not supported');return}
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(async(pos)=>{
+      const {latitude,longitude}=pos.coords
+      // Reverse geocode to get location name
+      try{
+        const res=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`)
+        const data=await res.json()
+        const town=data.address?.town||data.address?.city||data.address?.county||data.address?.state||'Kenya'
+        setForm(f=>({...f,location_name:town,latitude:String(latitude),longitude:String(longitude)}))
+      }catch{
+        setForm(f=>({...f,location_name:'Kenya',latitude:String(latitude),longitude:String(longitude)}))
+      }
+      setLocating(false)
+    },()=>{alert('Could not get location');setLocating(false)})
+  }
+
   async function handleSave(e:React.FormEvent){
     e.preventDefault();setSaving(true);setError('');setSuccess(false)
     const interests=form.interests.split(',').map(i=>i.trim()).filter(Boolean)
@@ -94,7 +113,7 @@ export default function EditProfile(){
       id:userId,
       email:userEmail, // include email to satisfy NOT NULL constraint
       full_name:form.full_name,university:form.university,course:form.course,
-      year_of_study:form.year_of_study,whatsapp_number:form.whatsapp_number,bio:form.bio,status:form.status,tiktok:form.tiktok,instagram:form.instagram,age:form.age?parseInt(form.age):null,gender:form.gender,looking_for:form.looking_for,location_name:form.location_name,interests
+      year_of_study:form.year_of_study,whatsapp_number:form.whatsapp_number,bio:form.bio,status:form.status,tiktok:form.tiktok,instagram:form.instagram,age:form.age?parseInt(form.age):null,gender:form.gender,looking_for:form.looking_for,location_name:form.location_name,latitude:form.latitude?parseFloat(form.latitude):null,longitude:form.longitude?parseFloat(form.longitude):null,interests
     },{onConflict:'id'})
     if(err) setError(err.message)
     else{setSuccess(true);setTimeout(()=>setSuccess(false),3000)}
@@ -251,8 +270,15 @@ export default function EditProfile(){
           </select>
         </div>
         <div style={{gridColumn:'1/-1'}}>
-          <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Your Location <span style={{fontWeight:'400',color:'#94a3b8'}}>(town/area)</span></label>
-          <input value={form.location_name} onChange={set('location_name')} placeholder="e.g. Nairobi, Westlands" style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
+          <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Your Location</label>
+          <div style={{display:'flex',gap:'8px'}}>
+            <input value={form.location_name} onChange={set('location_name')} placeholder="e.g. Nairobi, Westlands" style={{...inp,flex:1}} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
+            <button type="button" onClick={getLocation} disabled={locating}
+              style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',border:'none',borderRadius:'10px',padding:'0 14px',fontSize:'13px',fontWeight:'600',cursor:'pointer',flexShrink:0,whiteSpace:'nowrap'}}>
+              {locating?'Detecting...':'📍 Detect'}
+            </button>
+          </div>
+          {form.latitude&&<p style={{fontSize:'11px',color:'#16a34a',marginTop:'4px'}}>✅ GPS location saved</p>}
         </div>
         <div>
           <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Bio</label>

@@ -10,6 +10,16 @@ const YEARS=['All Years','1','2','3','4','5','6']
 
 function initials(n:string){return(n||'?').split(' ').map((x:string)=>x[0]).join('').toUpperCase().slice(0,2)}
 
+function calcDistance(lat1:number,lon1:number,lat2:number,lon2:number):number{
+  const R=6371 // Earth radius km
+  const dLat=(lat2-lat1)*Math.PI/180
+  const dLon=(lon2-lon1)*Math.PI/180
+  const a=Math.sin(dLat/2)*Math.sin(dLat/2)+
+    Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+    Math.sin(dLon/2)*Math.sin(dLon/2)
+  return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)))
+}
+
 
 export default function HomePage(){
   const router=useRouter()
@@ -21,6 +31,7 @@ export default function HomePage(){
   const [status,setStatus]=useState('All')
   const [gender,setGender]=useState('All')
   const [lookingFor,setLookingFor]=useState('All')
+  const [userLocation,setUserLocation]=useState<{lat:number,lng:number}|null>(null)
   const [announcements,setAnnouncements]=useState<any[]>([])
   const [currentUserId,setCurrentUserId]=useState<string|null>(null)
   const [friendStatuses,setFriendStatuses]=useState<Record<string,string>>({})
@@ -61,6 +72,12 @@ export default function HomePage(){
       }
     })
 
+    // Get user's current location for distance calculation
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(pos=>{
+        setUserLocation({lat:pos.coords.latitude,lng:pos.coords.longitude})
+      },()=>{})
+    }
     loadStudents()
     const interval=setInterval(loadStudents,30000)
     return ()=>clearInterval(interval)
