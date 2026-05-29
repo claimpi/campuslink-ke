@@ -129,14 +129,11 @@ export default function RegisterPage() {
 
         {step===2&&(
           <form onSubmit={handleRegister} style={{display:'flex',flexDirection:'column',gap:'13px'}}>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
-              
             <div style={{display:'flex',gap:'8px',marginTop:'4px'}}>
               <button type="button" onClick={()=>{setStep(1);setError('')}} style={{flex:1,border:'1.5px solid #e2e8f0',background:'#fff',color:'#64748b',padding:'12px',borderRadius:'10px',fontWeight:'600',fontSize:'14px',cursor:'pointer'}}>← Back</button>
               <button type="submit" style={{flex:2,background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'12px',borderRadius:'10px',fontWeight:'700',fontSize:'14px',border:'none',cursor:'pointer'}}>
                 Continue to Photo
               </button>
-            </div>
           </form>
         )}
 
