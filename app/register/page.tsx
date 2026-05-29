@@ -15,7 +15,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [refCode, setRefCode] = useState('')
   const [registeredUserId, setRegisteredUserId] = useState('')
-  const [form, setForm] = useState({name:'',email:'',password:'',confirmPassword:'',whatsapp:'',interests:'',bio:''})
+  const [form, setForm] = useState({name:'',email:'',password:'',confirmPassword:'',whatsapp:'',interests:'',bio:'',age:'',gender:'',looking_for:''})
   const set = (k:string) => (e:any) => setForm(f=>({...f,[k]:e.target.value}))
   const inp:React.CSSProperties = {width:'100%',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'11px 14px',fontSize:'14px',outline:'none',background:'#fff',boxSizing:'border-box',color:'#0f172a'}
 
