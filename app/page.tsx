@@ -286,4 +286,77 @@ export default function HomePage(){
       )}
     </div>
   )
+}            {filtered.map(s=>{
+              const dist=userLocation&&s.latitude&&s.longitude
+                ?calcDistance(userLocation.lat,userLocation.lng,s.latitude,s.longitude):null
+              const isLiked=likes.has(s.id)
+              const isMatch=matches.has(s.id)
+              return(
+                <div key={s.id} style={{borderRadius:'14px',overflow:'hidden',cursor:'pointer',
+                  border:s.is_featured?'2px solid #f97316':'1px solid #e2e8f0',
+                  background:'#f1f5f9',display:'flex',flexDirection:'column'}}>
+                  {/* Photo */}
+                  <div style={{position:'relative',aspectRatio:'3/4'}} onClick={()=>router.push(`/profile/${s.id}`)}>
+                    {s.avatar_url
+                      ?<img src={s.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                      :<div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',
+                        background:`linear-gradient(135deg,${s.is_premium?'#7c3aed':'#f97316'},${s.is_premium?'#6d28d9':'#ea580c'})`,
+                        color:'#fff',fontSize:'28px',fontWeight:'900'}}>
+                        {initials(s.full_name)}
+                      </div>
+                    }
+                    {s.is_premium&&<div style={{position:'absolute',top:'6px',left:'6px',background:'#7c3aed',color:'#fff',fontSize:'9px',padding:'2px 5px',borderRadius:'50px',fontWeight:'700'}}>PRO</div>}
+                    {s.is_verified&&<div style={{position:'absolute',top:'6px',left:s.is_premium?'38px':'6px',background:'#2563eb',color:'#fff',fontSize:'9px',padding:'2px 5px',borderRadius:'50px',fontWeight:'700'}}>Verified</div>}
+                    {dist!==null&&<div style={{position:'absolute',top:'6px',right:'6px',background:'rgba(0,0,0,0.5)',color:'#fff',fontSize:'9px',padding:'2px 6px',borderRadius:'50px'}}>{dist}km</div>}
+                  </div>
+                  {/* Action bar */}
+                  <div style={{background:'#fff',padding:'6px 8px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'6px'}}>
+                    <div style={{flex:1,minWidth:0}} onClick={()=>router.push(`/profile/${s.id}`)}>
+                      <p style={{fontSize:'11px',fontWeight:'700',color:'#0f172a',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                        {s.full_name?.split(' ')[0]}{s.age?`, ${s.age}`:''}
+                      </p>
+                      {s.location_name&&<p style={{fontSize:'9px',color:'#94a3b8',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{s.location_name}</p>}
+                    </div>
+                    {s.id!==currentUserId&&(
+                      <div style={{display:'flex',gap:'4px',flexShrink:0}}>
+                        <button onClick={e=>{e.stopPropagation();handleLike(s.id)}}
+                          style={{width:'26px',height:'26px',borderRadius:'50%',border:`1.5px solid ${isMatch||isLiked?'#ec4899':'#e2e8f0'}`,cursor:'pointer',
+                            background:isMatch?'#ec4899':isLiked?'#fdf2f8':'#fff',
+                            display:'flex',alignItems:'center',justifyContent:'center',
+                            transition:'all 0.2s',transform:liking===s.id?'scale(1.2)':'scale(1)'}}>
+                          <svg width="11" height="10" viewBox="0 0 24 21" fill={isLiked||isMatch?'#ec4899':'none'} stroke={isLiked||isMatch?'#ec4899':'#94a3b8'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 21C12 21 2 13.5 2 7a5 5 0 0 1 10 0 5 5 0 0 1 10 0c0 6.5-10 14-10 14z"/>
+                          </svg>
+                        </button>
+                        <button onClick={e=>{e.stopPropagation();
+                          if(!friendStatuses[s.id]) sendRequest(s.id)
+                          else if(friendStatuses[s.id]==='friends') router.push(`/profile/${s.id}`)
+                          else if(friendStatuses[s.id]==='pending_received') router.push('/dashboard')
+                        }} style={{height:'26px',borderRadius:'50px',border:'none',cursor:'pointer',
+                          padding:'0 8px',fontSize:'9px',fontWeight:'700',whiteSpace:'nowrap',
+                          background:friendStatuses[s.id]==='friends'?'#16a34a':
+                            friendStatuses[s.id]==='pending_sent'?'#ca8a04':
+                            friendStatuses[s.id]==='pending_received'?'#2563eb':'#f97316',
+                          color:'#fff'}}>
+                          {sendingTo===s.id?'...':friendStatuses[s.id]==='friends'?'Friends':
+                            friendStatuses[s.id]==='pending_sent'?'Pending':
+                            friendStatuses[s.id]==='pending_received'?'Accept':'Connect'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+      )}
+
+      {!loading&&filtered.length===0&&(
+        <div style={{textAlign:'center',padding:'60px 20px',background:'#fff',borderRadius:'16px',border:'1px solid #e2e8f0'}}>
+          <p style={{fontSize:'16px',fontWeight:'600',color:'#374151',marginBottom:'6px'}}>No people found</p>
+          <p style={{fontSize:'14px',color:'#94a3b8'}}>Try different filters</p>
+        </div>
+      )}
+    </div>
+  )
 }
