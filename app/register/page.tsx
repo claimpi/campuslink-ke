@@ -4,8 +4,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 
-const UNIS=['Africa Nazarene University','Dedan Kimathi University','Egerton University','JKUAT','Kenyatta University','Kisii University','Laikipia University','Maseno University','Meru University','Moi University','Mount Kenya University','Multimedia University','Pwani University','Rongo University','Strathmore University','Technical University of Kenya','University of Nairobi','University of Eldoret','University of Embu','Zetech University','Other']
-const COURSES=['Accounting','Architecture','Business Administration','Civil Engineering','Computer Science','Electrical Engineering','Education','Finance','Journalism','Law','Marketing','Mathematics','Medicine','Nursing','Pharmacy','Psychology','Software Engineering']
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -17,7 +15,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [refCode, setRefCode] = useState('')
   const [registeredUserId, setRegisteredUserId] = useState('')
-  const [form, setForm] = useState({name:'',email:'',password:'',confirmPassword:'',university:'',course:'',year:'1',whatsapp:'',interests:'',bio:''})
+  const [form, setForm] = useState({name:'',email:'',password:'',confirmPassword:'',whatsapp:'',interests:'',bio:''})
   const set = (k:string) => (e:any) => setForm(f=>({...f,[k]:e.target.value}))
   const inp:React.CSSProperties = {width:'100%',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'11px 14px',fontSize:'14px',outline:'none',background:'#fff',boxSizing:'border-box',color:'#0f172a'}
 
@@ -132,39 +130,7 @@ export default function RegisterPage() {
         {step===2&&(
           <form onSubmit={handleRegister} style={{display:'flex',flexDirection:'column',gap:'13px'}}>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
-              <div style={{gridColumn:'1/-1'}}>
-                <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>University *</label>
-                <select value={form.university} onChange={set('university')} required style={inp}>
-                  <option value="">Select your university...</option>
-                  {UNIS.map(u=><option key={u}>{u}</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Course</label>
-                <select value={form.course} onChange={set('course')} style={inp}>
-                  <option value="">Select...</option>
-                  {COURSES.map(c=><option key={c}>{c}</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Year</label>
-                <select value={form.year} onChange={set('year')} style={inp}>
-                  {['1','2','3','4','5','6'].map(y=><option key={y} value={y}>Year {y}</option>)}
-                </select>
-              </div>
-              <div style={{gridColumn:'1/-1'}}>
-                <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>WhatsApp</label>
-                <input value={form.whatsapp} onChange={set('whatsapp')} placeholder="+254712345678" style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
-              </div>
-              <div style={{gridColumn:'1/-1'}}>
-                <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Interests <span style={{fontWeight:'400',color:'#94a3b8'}}>(comma separated)</span></label>
-                <input value={form.interests} onChange={set('interests')} placeholder="football, coding, music" style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
-              </div>
-              <div style={{gridColumn:'1/-1'}}>
-                <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Bio <span style={{fontWeight:'400',color:'#94a3b8'}}>(optional)</span></label>
-                <textarea value={form.bio} onChange={set('bio')} rows={2} placeholder="Tell others about yourself..." style={{...inp,resize:'none'}}/>
-              </div>
-            </div>
+              
             <div style={{display:'flex',gap:'8px',marginTop:'4px'}}>
               <button type="button" onClick={()=>{setStep(1);setError('')}} style={{flex:1,border:'1.5px solid #e2e8f0',background:'#fff',color:'#64748b',padding:'12px',borderRadius:'10px',fontWeight:'600',fontSize:'14px',cursor:'pointer'}}>← Back</button>
               <button type="submit" style={{flex:2,background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'12px',borderRadius:'10px',fontWeight:'700',fontSize:'14px',border:'none',cursor:'pointer'}}>
