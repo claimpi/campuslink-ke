@@ -39,20 +39,21 @@ export default function ProfilePage(){
           })
       }
     })
-    sb.from('profiles').select('*').eq('id',id as string).maybeSingle().then(({data})=>{
-      setLoading(false)
-      // Only count views from other users (not self)
-      if(data){
-        setProfile(data)
-        if(!user || user.id !== id){
-          // Use server API to bypass RLS
-          fetch('/api/profile-view',{method:'POST',headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({profileId:id,currentViews:data.profile_views||0})
-          }).then(r=>r.json()).then(d=>{
-            if(d.views) setProfile((p:any)=>({...p,profile_views:d.views}))
-          }).catch(()=>{})
+    sb.auth.getUser().then(({data:{user:viewer}})=>{
+      sb.from('profiles').select('*').eq('id',id as string).maybeSingle().then(({data})=>{
+        setLoading(false)
+        if(data){
+          setProfile(data)
+          // Only count views from other users (not self)
+          if(!viewer || viewer.id !== id){
+            fetch('/api/profile-view',{method:'POST',headers:{'Content-Type':'application/json'},
+              body:JSON.stringify({profileId:id,currentViews:data.profile_views||0})
+            }).then(r=>r.json()).then(d=>{
+              if(d.views) setProfile((p:any)=>({...p,profile_views:d.views}))
+            }).catch(()=>{})
+          }
         }
-      }
+      })
     })
   },[id])
 
