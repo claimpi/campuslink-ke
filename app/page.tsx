@@ -48,7 +48,7 @@ export default function HomePage(){
 
  const loadStudents=()=>{
  createClient().from('profiles')
- .select('id,full_name,university,course,year_of_study,avatar_url,is_premium,is_featured,is_top_student,interests,status,age,gender,looking_for,location_name,latitude,longitude')
+ .select('id,full_name,avatar_url,is_premium,is_featured,is_top_student,interests,status,age,gender,looking_for,location_name,latitude,longitude')
  .order('is_featured',{ascending:false})
  .order('is_premium',{ascending:false})
  .then(({data,error})=>{ if(!error&&data&&data.length>0) setStudents(data); setLoading(false) })
@@ -102,8 +102,8 @@ export default function HomePage(){
 
  const filtered=sorted.filter(s=>{
  const q=search.toLowerCase()
- const matchSearch=!q||s.full_name?.toLowerCase().includes(q)||s.course?.toLowerCase().includes(q)||s.university?.toLowerCase().includes(q)
- const matchGender=gender==='All'||s.gender===gender
+ const matchSearch=!q||s.full_name?.toLowerCase().includes(q)||s.location_name?.toLowerCase().includes(q)
+    const matchGender=gender==='All'||s.gender===gender
  const matchLooking=lookingFor==='All'||s.looking_for===lookingFor
  const matchStatus=status==='All'||s.status===status
  return matchSearch&&matchGender&&matchLooking&&matchStatus

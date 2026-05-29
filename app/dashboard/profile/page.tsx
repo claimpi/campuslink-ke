@@ -4,8 +4,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 
-const UNIS=['Africa Nazarene University','Dedan Kimathi University','Egerton University','JKUAT','Kenyatta University','Kisii University','Laikipia University','Maseno University','Meru University','Moi University','Mount Kenya University','Multimedia University','Pwani University','Rongo University','Strathmore University','Technical University of Kenya','University of Nairobi','University of Eldoret','University of Embu','Zetech University','Other']
-const COURSES=['Accounting','Architecture','Business Administration','Civil Engineering','Computer Science','Electrical Engineering','Education','Finance','Journalism','Law','Marketing','Mathematics','Medicine','Nursing','Pharmacy','Psychology','Software Engineering']
 
 export default function EditProfile(){
   const router=useRouter()
@@ -22,7 +20,7 @@ export default function EditProfile(){
   const [userEmail,setUserEmail]=useState('')
   const [avatarUrl,setAvatarUrl]=useState('')
   const [photos,setPhotos]=useState<string[]>([])
-  const [form,setForm]=useState({full_name:'',university:'',course:'',year_of_study:'1',whatsapp_number:'',bio:'',interests:'',status:'',tiktok:'',instagram:'',age:'',gender:'',looking_for:'',location_name:'',latitude:'',longitude:''})
+  const [form,setForm]=useState({full_name:'',whatsapp_number:'',bio:'',interests:'',status:'',tiktok:'',instagram:'',age:'',gender:'',looking_for:'',location_name:'',latitude:'',longitude:''})
   const set=(k:string)=>(e:any)=>setForm(f=>({...f,[k]:e.target.value}))
   const inp:React.CSSProperties={width:'100%',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'11px 14px',fontSize:'14px',outline:'none',background:'#fff',boxSizing:'border-box',color:'#0f172a'}
 
@@ -198,31 +196,7 @@ export default function EditProfile(){
           <input value={form.full_name} onChange={set('full_name')} required style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
         </div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
-          <div>
-            <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>University</label>
-            <select value={form.university} onChange={set('university')} style={inp}>
-              <option value="">Select...</option>
-              {UNIS.map(u=><option key={u}>{u}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Course</label>
-            <select value={form.course} onChange={set('course')} style={inp}>
-              <option value="">Select...</option>
-              {COURSES.map(c=><option key={c}>{c}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Year</label>
-            <select value={form.year_of_study} onChange={set('year_of_study')} style={inp}>
-              {['1','2','3','4','5','6'].map(y=><option key={y} value={y}>Year {y}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>WhatsApp</label>
-            <input value={form.whatsapp_number} onChange={set('whatsapp_number')} placeholder="+254..." style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
-          </div>
-        </div>
+          
         <div>
           <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Relationship Status</label>
           <select value={form.status} onChange={set('status')} style={inp}>
