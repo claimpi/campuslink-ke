@@ -33,13 +33,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
         <meta name="apple-mobile-web-app-title" content="CampusLink KE"/>
         <meta property="og:title" content="CampusLink KE — Meet People in Kenya"/>
-        <meta property="og:description" content="Meet people near you in Kenya. Connect, chat and find your match on CampusLink KE."/>
+        <meta property="og:description" content="Connect, chat and find your match"/>
         <meta property="og:image" content="https://www.campuslink.co.ke/og-image.png"/>
+        <meta property="og:image:width" content="1200"/>
+        <meta property="og:image:height" content="630"/>
         <meta property="og:url" content="https://www.campuslink.co.ke"/>
         <meta property="og:type" content="website"/>
+        <meta property="og:site_name" content="CampusLink KE"/>
         <meta name="twitter:card" content="summary_large_image"/>
         <meta name="twitter:title" content="CampusLink KE — Meet People in Kenya"/>
-        <meta name="twitter:description" content="Meet people near you in Kenya. Connect, chat and find your match on CampusLink KE."/>
+        <meta name="twitter:description" content="Connect, chat and find your match"/>
         <meta name="twitter:image" content="https://www.campuslink.co.ke/og-image.png"/>
         <meta name="mobile-web-app-capable" content="yes"/>
       </head>
