@@ -207,7 +207,7 @@ export default function HomePage(){
  {/* Info bottom */}
  <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'6px 8px 6px'}}>
  <p style={{color:'#fff',fontWeight:'700',fontSize:'14px',lineHeight:'1.2',marginBottom:'3px',textShadow:'0 1px 3px rgba(0,0,0,0.5)'}}>
- {s.full_name?.split('')[0]}{s.age?`, ${s.age}`:''}
+ {s.full_name?.split(' ')[0]}{s.age?`, ${s.age}`:''}
  </p>
  {s.location_name&&<p style={{color:'rgba(255,255,255,0.8)',fontSize:'10px',marginBottom:'4px'}}> {s.location_name}</p>}
  {s.looking_for&&<p style={{color:'rgba(255,255,255,0.7)',fontSize:'10px',marginBottom:'6px'}}>
