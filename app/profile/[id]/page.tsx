@@ -40,9 +40,19 @@ export default function ProfilePage(){
       }
     })
     sb.from('profiles').select('*').eq('id',id as string).maybeSingle().then(({data})=>{
-      setProfile(data)
       setLoading(false)
-      if(data) sb.from('profiles').update({profile_views:(data.profile_views||0)+1}).eq('id',id as string)
+      // Only count views from other users (not self)
+      if(data){
+        setProfile(data)
+        if(!user || user.id !== id){
+          // Use server API to bypass RLS
+          fetch('/api/profile-view',{method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({profileId:id,currentViews:data.profile_views||0})
+          }).then(r=>r.json()).then(d=>{
+            if(d.views) setProfile((p:any)=>({...p,profile_views:d.views}))
+          }).catch(()=>{})
+        }
+      }
     })
   },[id])
 
