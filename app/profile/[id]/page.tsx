@@ -25,10 +25,10 @@ export default function ProfilePage(){
   const [giftSent,setGiftSent]=useState<string|null>(null)
 
   const GIFTS = [
-    {type:'Rose',icon:'rose.png',price:20,label:'Rose'},
-    {type:'Heart',icon:'heart.png',price:50,label:'Heart'},
-    {type:'Star',icon:'star.png',price:100,label:'Star'},
-    {type:'Crown',icon:'crown.png',price:200,label:'Crown'},
+    {type:'Rose',icon:'rose.png',price:30,label:'Rose'},
+    {type:'Heart',icon:'heart.png',price:60,label:'Heart'},
+    {type:'Star',icon:'star.png',price:120,label:'Star'},
+    {type:'Crown',icon:'crown.png',price:250,label:'Crown'},
     {type:'Diamond',icon:'diamond.png',price:500,label:'Diamond'},
   ]
 

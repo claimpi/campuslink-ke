@@ -73,7 +73,7 @@ function CallbackContent() {
         {status==='success'&&(
           <>
             <div style={{fontSize:'52px',marginBottom:'16px'}}>🎉</div>
-            <h2 style={{fontSize:'20px',fontWeight:'800',color:'#16a34a',marginBottom:'8px'}}>Payment Successful!</h2>
+            <h2 style={{fontSize:'20px',fontWeight:'800',color:'#16a34a',marginBottom:'8px'}}>{whatsapp?.startsWith('GIFT:')?'Gift Sent!':'Payment Successful!'}</h2>
 
             {whatsapp&&targetId ? (
               <>

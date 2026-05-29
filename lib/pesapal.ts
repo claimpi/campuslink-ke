@@ -35,5 +35,5 @@ export async function getStatus(token:string,trackingId:string){
   return r.json()
 }
 
-export const AMOUNTS:Record<string,number>={premium:299,featured:200,top_student:150,unlock:20,add_group:100,boost:50,gift_rose:20,gift_heart:50,gift_star:100,gift_crown:200,gift_diamond:500}
+export const AMOUNTS:Record<string,number>={premium:299,featured:200,top_student:150,unlock:20,add_group:100,boost:50,gift_rose:30,gift_heart:60,gift_star:120,gift_crown:250,gift_diamond:500}
 export const LABELS:Record<string,string>={premium:'Premium Membership',featured:'Featured Profile',top_student:'Verified Badge',unlock:'WhatsApp Unlock',add_group:'WhatsApp Group Listing',boost:'Profile Boost 24hrs',gift_rose:'Virtual Rose Gift',gift_heart:'Virtual Heart Gift',gift_star:'Virtual Star Gift',gift_crown:'Virtual Crown Gift',gift_diamond:'Virtual Diamond Gift'}
