@@ -100,6 +100,22 @@ export default function HomePage(){
  return da-db
  })
 
+ async function handleLike(receiverId:string, name:string){
+  if(!currentUserId){router.push('/login');return}
+  if(likes.has(receiverId)) return
+  setLiking(receiverId)
+  setLikes(prev=>new Set([...prev,receiverId]))
+  const res=await fetch('/api/like',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({senderId:currentUserId,receiverId})})
+  const data=await res.json()
+  if(data.isMatch){
+    setMatches(prev=>new Set([...prev,receiverId]))
+    setShowMatch(receiverId)
+    setTimeout(()=>setShowMatch(null),4000)
+  }
+  setLiking(null)
+ }
+
  const filtered=sorted.filter(s=>{
  const q=search.toLowerCase()
  const matchSearch=!q||s.full_name?.toLowerCase().includes(q)||s.location_name?.toLowerCase().includes(q)
