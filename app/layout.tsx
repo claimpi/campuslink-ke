@@ -7,8 +7,8 @@ import PushNotifications from '@/components/PushNotifications'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'CampusLink KE — Kenyan User Network',
-  description: 'Connect with users across Kenya. Find study partners, join WhatsApp groups and build your campus network.',
+  title: 'CampusLink KE — Meet People in Kenya',
+  description: 'Meet people near you in Kenya. Connect, chat and find your match on CampusLink KE.',
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },
