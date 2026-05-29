@@ -220,6 +220,11 @@ export default function EditProfile(){
           </div>
         </div>
         <div>
+          <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>WhatsApp Number</label>
+          <input value={form.whatsapp_number} onChange={set('whatsapp_number')} placeholder="+254712345678" style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
+          <p style={{fontSize:'11px',color:'#94a3b8',marginTop:'4px'}}>People will pay KES 20 to unlock this number</p>
+        </div>
+        <div>
           <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Age</label>
           <input type="number" value={form.age} onChange={set('age')} placeholder="e.g. 21" min="16" max="35" style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
         </div>
