@@ -8,11 +8,24 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'CampusLink KE — Meet People in Kenya',
-  description: 'Meet people near you in Kenya. Connect, chat and find your match on CampusLink KE.',
+  description: 'Connect, chat and find your match',
+  metadataBase: new URL('https://www.campuslink.co.ke'),
+  openGraph: {
+    title: 'CampusLink KE — Meet People in Kenya',
+    description: 'Connect, chat and find your match',
+    url: 'https://www.campuslink.co.ke',
+    siteName: 'CampusLink KE',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'CampusLink KE' }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'CampusLink KE — Meet People in Kenya',
+    description: 'Connect, chat and find your match',
+    images: ['/og-image.png'],
+  },
   icons: {
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: 'any' },
       { url: '/icon-16.png', sizes: '16x16', type: 'image/png' },
       { url: '/icon-32.png', sizes: '32x32', type: 'image/png' },
       { url: '/icon-48.png', sizes: '48x48', type: 'image/png' },
@@ -21,8 +34,6 @@ export const metadata: Metadata = {
     shortcut: '/favicon.ico',
   },
   manifest: '/manifest.json',
-  themeColor: '#f97316',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
