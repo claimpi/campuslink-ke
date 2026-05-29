@@ -30,13 +30,13 @@ export async function POST(req: NextRequest) {
     await sb.from('referrals').insert([{
       referrer_id: referrer.id,
       referred_id: newUserId,
-      amount: 10,
+      amount: 20,
       status: 'credited'
     }])
 
     // Update referrer earnings
     await sb.from('profiles').update({
-      referral_earnings: (referrer.referral_earnings || 0) + 10
+      referral_earnings: (referrer.referral_earnings || 0) + 20
     }).eq('id', referrer.id)
 
     // Update new user's referred_by

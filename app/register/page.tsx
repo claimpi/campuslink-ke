@@ -74,13 +74,14 @@ export default function RegisterPage() {
         referral_earnings: 0,
       }, { onConflict: 'id' })
 
-      // Credit referrer KES 10 via server API (bypasses RLS)
+      // Referral will be credited when user verifies their email (in auth callback)
+      // Store referral code in profile for later processing
       if (refCode) {
-        fetch('/api/referral', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ referralCode: refCode, newUserId: authData.user.id })
-        }).catch(() => {}) // Silent fail - don't block registration
+        const { data: referrer } = await sb.from('profiles')
+          .select('id').eq('referral_code', refCode.toUpperCase()).maybeSingle()
+        if (referrer) {
+          await sb.from('profiles').update({ referred_by: referrer.id }).eq('id', authData.user.id)
+        }
       }
 
       localStorage.removeItem('ref_code')

@@ -237,7 +237,7 @@ export default function DashboardClient(){
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'12px',marginBottom:'14px'}}>
             <div>
               <p style={{fontWeight:'700',color:'#0f172a',fontSize:'15px',marginBottom:'2px'}}>Your Referral Link</p>
-              <p style={{fontSize:'12px',color:'#94a3b8'}}>Earn KES 10 for every user who joins using your link</p>
+              <p style={{fontSize:'12px',color:'#94a3b8'}}>Earn KES 20 for every user who joins using your link</p>
             </div>
             <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
               <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'10px',padding:'8px 16px',textAlign:'center'}}>
