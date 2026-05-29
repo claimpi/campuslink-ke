@@ -127,7 +127,7 @@ export default function HomePage(){
  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'14px',flexWrap:'wrap',gap:'8px'}}>
  <div>
  <h1 style={{fontSize:'22px',fontWeight:'800',color:'#0f172a',marginBottom:'2px'}}>
- 'People Nearby'
+ People Nearby
  {locating&&<span style={{fontSize:'12px',color:'#94a3b8',fontWeight:'400',marginLeft:'8px'}}> Getting location...</span>}
  </h1>
  <p style={{fontSize:'13px',color:'#94a3b8'}}>
@@ -193,7 +193,7 @@ export default function HomePage(){
  }
 
  {/* Gradient overlay */}
- <div style={{position:'absolute',bottom:0,left:0,right:0,height:'55%',background:'linear-gradient(to top,rgba(0,0,0,0.85),transparent)'}}/>
+ <div style={{position:'absolute',bottom:0,left:0,right:0,height:'40%',background:'linear-gradient(to top,rgba(0,0,0,0.8),transparent)'}}/>
 
  {/* Badges top */}
  <div style={{position:'absolute',top:'8px',left:'8px',display:'flex',gap:'4px',flexWrap:'wrap'}}>
@@ -205,7 +205,7 @@ export default function HomePage(){
  {dist!==null&&<div style={{position:'absolute',top:'8px',right:'8px',background:'rgba(0,0,0,0.5)',color:'#fff',fontSize:'10px',padding:'3px 7px',borderRadius:'50px',fontWeight:'600'}}>{dist}km</div>}
 
  {/* Info bottom */}
- <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'10px 10px 8px'}}>
+ <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'6px 8px 6px'}}>
  <p style={{color:'#fff',fontWeight:'700',fontSize:'14px',lineHeight:'1.2',marginBottom:'3px',textShadow:'0 1px 3px rgba(0,0,0,0.5)'}}>
  {s.full_name?.split('')[0]}{s.age?`, ${s.age}`:''}
  </p>
@@ -221,7 +221,7 @@ export default function HomePage(){
  else if(friendStatuses[s.id]==='friends') router.push(`/profile/${s.id}`)
  else if(friendStatuses[s.id]==='pending_received') router.push('/dashboard')
  }}
- style={{width:'100%',padding:'6px',borderRadius:'8px',border:'none',cursor:'pointer',fontSize:'12px',fontWeight:'700',
+ style={{width:'100%',padding:'4px',borderRadius:'6px',border:'none',cursor:'pointer',fontSize:'11px',fontWeight:'700',
  background:friendStatuses[s.id]==='friends'?'rgba(22,163,74,0.9)':
  friendStatuses[s.id]==='pending_sent'?'rgba(202,138,4,0.9)':
  friendStatuses[s.id]==='pending_received'?'rgba(37,99,235,0.9)':
