@@ -122,7 +122,7 @@ export default function GroupsPage(){
           <div style={{background:'#fff',borderRadius:'20px',padding:'28px',width:'100%',maxWidth:'460px',maxHeight:'90vh',overflowY:'auto'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'6px'}}>
               <h2 style={{fontSize:'18px',fontWeight:'800',color:'#0f172a'}}>Add WhatsApp Group</h2>
-              <button onClick={()=>setShowAdd(false)} style={{background:'#f1f5f9',border:'none',borderRadius:'8px',padding:'6px 10px',cursor:'pointer',fontSize:'16px',color:'#64748b'}}>✕</button>
+              <button onClick={()=>setShowAdd(false)} style={{background:'#f1f5f9',border:'none',borderRadius:'8px',padding:'6px 10px',cursor:'pointer',fontSize:'16px',color:'#64748b'}}></button>
             </div>
             <p style={{fontSize:'13px',color:'#64748b',marginBottom:'20px'}}>Pay KES 100 via M-Pesa. Your group goes live automatically after payment.</p>
             <form onSubmit={handleAdd} style={{display:'flex',flexDirection:'column',gap:'12px'}}>

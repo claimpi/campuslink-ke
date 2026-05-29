@@ -75,7 +75,7 @@ export default function PricingPage(){
               <ul style={{listStyle:'none',display:'flex',flexDirection:'column',gap:'9px',marginBottom:'24px',flex:1}}>
                 {p.features.map(f=>(
                   <li key={f} style={{display:'flex',gap:'8px',alignItems:'flex-start',fontSize:'13px',color:'#374151'}}>
-                    <span style={{color:'#16a34a',fontWeight:'700',flexShrink:0,marginTop:'1px'}}>✓</span>{f}
+                    <span style={{color:'#16a34a',fontWeight:'700',flexShrink:0,marginTop:'1px'}}></span>{f}
                   </li>
                 ))}
               </ul>

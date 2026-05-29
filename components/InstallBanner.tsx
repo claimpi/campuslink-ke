@@ -49,8 +49,8 @@ export default function InstallBanner() {
       <div style={{ flex: 1 }}>
         <p style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a', marginBottom: '2px' }}>Install CampusLink KE</p>
         {isIOS
-          ? <p style={{ fontSize: '11px', color: '#64748b' }}>Tap <strong>Share</strong> then <strong>Add to Home Screen</strong> 📲</p>
-          : <p style={{ fontSize: '11px', color: '#64748b' }}>Add to your home screen for quick access 🚀</p>
+          ? <p style={{ fontSize: '11px', color: '#64748b' }}>Tap <strong>Share</strong> then <strong>Add to Home Screen</strong> </p>
+          : <p style={{ fontSize: '11px', color: '#64748b' }}>Add to your home screen for quick access </p>
         }
       </div>
       <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
@@ -60,7 +60,7 @@ export default function InstallBanner() {
           </button>
         )}
         <button onClick={dismiss} style={{ background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: '8px', padding: '7px 10px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}>
-          ✕
+          
         </button>
       </div>
     </div>

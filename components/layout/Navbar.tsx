@@ -57,7 +57,7 @@ export default function Navbar() {
         <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
           {user && pendingCount > 0 && (
             <a href="/dashboard" style={{position:'relative',display:'flex',alignItems:'center',textDecoration:'none'}}>
-              <span style={{fontSize:'20px'}}>🔔</span>
+              <span style={{fontSize:'20px'}}></span>
               <span style={{position:'absolute',top:'-4px',right:'-4px',background:'#ef4444',color:'#fff',fontSize:'10px',fontWeight:'800',borderRadius:'50%',width:'16px',height:'16px',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:'1'}}>
                 {pendingCount > 9 ? '9+' : pendingCount}
               </span>
@@ -89,7 +89,7 @@ export default function Navbar() {
               <Link href="/register" style={{padding:'9px 18px',fontSize:'14px',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',borderRadius:'8px',fontWeight:'600',boxShadow:'0 2px 8px rgba(249,115,22,0.3)'}}>Join Free</Link>
             </>
           )}
-          <button onClick={()=>setOpen(o=>!o)} className="mob-btn" style={{background:'none',border:'none',padding:'6px',fontSize:'18px',cursor:'pointer',color:'#374151'}}>☰</button>
+          <button onClick={()=>setOpen(o=>!o)} className="mob-btn" style={{background:'none',border:'none',padding:'6px',fontSize:'18px',cursor:'pointer',color:'#374151'}}></button>
         </div>
       </div>
 

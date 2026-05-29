@@ -112,7 +112,7 @@ export default function DashboardClient(){
         </div>
         <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
           {[{l:'University',d:!!profile?.university},{l:'Course',d:!!profile?.course},{l:'WhatsApp',d:!!profile?.whatsapp_number},{l:'Bio',d:!!profile?.bio},{l:'Interests',d:(profile?.interests||[]).length>0},{l:'Photo',d:!!profile?.avatar_url}].map(x=>(
-            <span key={x.l} style={{fontSize:'12px',padding:'3px 9px',borderRadius:'50px',background:x.d?'#f0fdf4':'#f8fafc',color:x.d?'#16a34a':'#94a3b8',border:`1px solid ${x.d?'#bbf7d0':'#e2e8f0'}`,fontWeight:'600'}}>{x.d?'✓':' '} {x.l}</span>
+            <span key={x.l} style={{fontSize:'12px',padding:'3px 9px',borderRadius:'50px',background:x.d?'#f0fdf4':'#f8fafc',color:x.d?'#16a34a':'#94a3b8',border:`1px solid ${x.d?'#bbf7d0':'#e2e8f0'}`,fontWeight:'600'}}>{x.d?'':' '} {x.l}</span>
           ))}
         </div>
       </div>
@@ -130,7 +130,7 @@ export default function DashboardClient(){
       {/* Profile photo nudge */}
       {!profile?.avatar_url&&(
         <div style={{background:'linear-gradient(135deg,#fff7ed,#fef3c7)',border:'1px solid #fde68a',borderRadius:'14px',padding:'16px 20px',marginBottom:'16px',display:'flex',alignItems:'center',gap:'14px',flexWrap:'wrap'}}>
-          <div style={{width:'44px',height:'44px',borderRadius:'50%',background:'#f1f5f9',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'22px',flexShrink:0}}>📸</div>
+          <div style={{width:'44px',height:'44px',borderRadius:'50%',background:'#f1f5f9',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'22px',flexShrink:0}}></div>
           <div style={{flex:1,minWidth:'180px'}}>
             <p style={{fontWeight:'700',color:'#92400e',fontSize:'14px',marginBottom:'2px'}}>Add a profile photo!</p>
             <p style={{fontSize:'12px',color:'#a16207'}}>Students with photos get <strong>3x more</strong> connection requests</p>
@@ -144,7 +144,7 @@ export default function DashboardClient(){
       {/* WhatsApp nudge */}
       {!profile?.whatsapp_number&&(
         <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'14px',padding:'14px 20px',marginBottom:'16px',display:'flex',alignItems:'center',gap:'14px',flexWrap:'wrap'}}>
-          <span style={{fontSize:'22px',flexShrink:0}}>💬</span>
+          <span style={{fontSize:'22px',flexShrink:0}}></span>
           <div style={{flex:1,minWidth:'180px'}}>
             <p style={{fontWeight:'700',color:'#166534',fontSize:'14px',marginBottom:'2px'}}>Add your WhatsApp number</p>
             <p style={{fontSize:'12px',color:'#16a34a'}}>So students who connect with you can reach you</p>
@@ -184,7 +184,7 @@ export default function DashboardClient(){
                     // Notify sender their request was accepted
                     const {data:me}=await createClient().from('profiles').select('full_name').eq('id',user?.id).maybeSingle()
                     fetch('/api/push-notify',{method:'POST',headers:{'Content-Type':'application/json'},
-                      body:JSON.stringify({userId:req.sender_id,title:'Friend Request Accepted! 🎉',body:`${me?.full_name||'Someone'} accepted your friend request. You can now unlock their number!`,url:`/profile/${user?.id}`})
+                      body:JSON.stringify({userId:req.sender_id,title:'Friend Request Accepted! ',body:`${me?.full_name||'Someone'} accepted your friend request. You can now unlock their number!`,url:`/profile/${user?.id}`})
                     }).catch(()=>{})
                   }} style={{background:'#16a34a',color:'#fff',border:'none',borderRadius:'8px',padding:'7px 14px',fontSize:'13px',fontWeight:'700',cursor:'pointer'}}>Accept</button>
                   <button onClick={async()=>{

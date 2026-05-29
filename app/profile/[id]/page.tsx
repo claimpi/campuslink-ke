@@ -63,7 +63,7 @@ export default function ProfilePage(){
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
           userId:id,
-          title:'New Friend Request 👋',
+          title:'New Friend Request ',
           body:`${me?.full_name||'Someone'} wants to connect with you on CampusLink KE`,
           url:'/dashboard'
         })
@@ -160,7 +160,7 @@ export default function ProfilePage(){
                     background:profile.status==='single'?'#f0fdf4':profile.status==='taken'?'#fef2f2':'#fff7ed',
                     color:profile.status==='single'?'#16a34a':profile.status==='taken'?'#dc2626':'#ea580c',
                     border:`1px solid ${profile.status==='single'?'#bbf7d0':profile.status==='taken'?'#fecaca':'#fed7aa'}`}}>
-                    {profile.status==='single'?'💚 Single':profile.status==='taken'?'❤️ Taken':'🤔 Complicated'}
+                    {profile.status==='single'?' Single':profile.status==='taken'?' Taken':' Complicated'}
                   </span>}
                 </div>
               </div>
@@ -172,8 +172,8 @@ export default function ProfilePage(){
               {profile.year_of_study&&<div style={{display:'flex',gap:'10px'}}><span style={{fontSize:'12px',color:'#94a3b8',width:'70px',flexShrink:0}}>Year</span><span style={{fontSize:'13px',color:'#374151',fontWeight:'500'}}>Year {profile.year_of_study}</span></div>}
               {profile.age&&<div style={{display:'flex',gap:'10px'}}><span style={{fontSize:'12px',color:'#94a3b8',width:'70px',flexShrink:0}}>Age</span><span style={{fontSize:'13px',color:'#374151',fontWeight:'500'}}>{profile.age} years</span></div>}
               {profile.gender&&<div style={{display:'flex',gap:'10px'}}><span style={{fontSize:'12px',color:'#94a3b8',width:'70px',flexShrink:0}}>Gender</span><span style={{fontSize:'13px',color:'#374151',fontWeight:'500',textTransform:'capitalize'}}>{profile.gender}</span></div>}
-              {profile.location_name&&<div style={{display:'flex',gap:'10px'}}><span style={{fontSize:'12px',color:'#94a3b8',width:'70px',flexShrink:0}}>Location</span><span style={{fontSize:'13px',color:'#f97316',fontWeight:'500'}}>📍 {profile.location_name}</span></div>}
-              {profile.looking_for&&<div style={{display:'flex',gap:'10px'}}><span style={{fontSize:'12px',color:'#94a3b8',width:'70px',flexShrink:0}}>Looking</span><span style={{fontSize:'13px',color:'#374151',fontWeight:'500'}}>{profile.looking_for==='friendship'?'👫 Friendship':profile.looking_for==='relationship'?'❤️ Relationship':profile.looking_for==='study'?'📚 Study Partner':'🤝 Networking'}</span></div>}
+              {profile.location_name&&<div style={{display:'flex',gap:'10px'}}><span style={{fontSize:'12px',color:'#94a3b8',width:'70px',flexShrink:0}}>Location</span><span style={{fontSize:'13px',color:'#f97316',fontWeight:'500'}}> {profile.location_name}</span></div>}
+              {profile.looking_for&&<div style={{display:'flex',gap:'10px'}}><span style={{fontSize:'12px',color:'#94a3b8',width:'70px',flexShrink:0}}>Looking</span><span style={{fontSize:'13px',color:'#374151',fontWeight:'500'}}>{profile.looking_for==='friendship'?' Friendship':profile.looking_for==='relationship'?' Relationship':profile.looking_for==='study'?' Study Partner':' Networking'}</span></div>}
             </div>
 
             {interests.length>0&&(
@@ -209,12 +209,12 @@ export default function ProfilePage(){
             {/* Share buttons */}
             <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
               <button onClick={shareProfile} style={{display:'flex',alignItems:'center',gap:'5px',background:'#f8fafc',border:'1px solid #e2e8f0',borderRadius:'8px',padding:'7px 12px',fontSize:'12px',fontWeight:'600',color:'#374151',cursor:'pointer'}}>
-                {copied?'✅ Copied':'🔗 Share'}
+                {copied?' Copied':' Share'}
               </button>
               <a href={`https://wa.me/?text=Connect%20with%20${encodeURIComponent(profile.full_name)}%20on%20CampusLink%20KE%20https://www.campuslink.co.ke/profile/${id}`}
                 target="_blank" rel="noopener noreferrer"
                 style={{display:'flex',alignItems:'center',gap:'5px',background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'8px',padding:'7px 12px',fontSize:'12px',fontWeight:'600',color:'#16a34a'}}>
-                💬 Share
+                 Share
               </a>
             </div>
           </div>
@@ -237,7 +237,7 @@ export default function ProfilePage(){
                     <p style={{fontSize:'12px',color:'#64748b',marginBottom:'14px',lineHeight:'1.5'}}>Send a friend request first. Once accepted, you can unlock their WhatsApp number.</p>
                     <button onClick={sendFriendRequest} disabled={friendLoading}
                       style={{width:'100%',background:friendLoading?'#94a3b8':'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'12px',borderRadius:'10px',fontWeight:'700',fontSize:'14px',border:'none',cursor:friendLoading?'not-allowed':'pointer',boxShadow:'0 4px 12px rgba(249,115,22,0.3)'}}>
-                      {friendLoading?'Sending...':'👋 Send Friend Request'}
+                      {friendLoading?'Sending...':' Send Friend Request'}
                     </button>
                   </>
                 )}
@@ -246,7 +246,7 @@ export default function ProfilePage(){
                   <>
                     <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px',marginBottom:'4px'}}>Request Sent</p>
                     <p style={{fontSize:'12px',color:'#64748b',marginBottom:'14px'}}>Waiting for {profile.full_name?.split(' ')[0]} to accept your request.</p>
-                    <div style={{background:'#fefce8',border:'1px solid #fde68a',borderRadius:'10px',padding:'10px 14px',marginBottom:'12px',fontSize:'13px',color:'#92400e',fontWeight:'600',textAlign:'center'}}>⏳ Request Pending</div>
+                    <div style={{background:'#fefce8',border:'1px solid #fde68a',borderRadius:'10px',padding:'10px 14px',marginBottom:'12px',fontSize:'13px',color:'#92400e',fontWeight:'600',textAlign:'center'}}> Request Pending</div>
                     <button onClick={cancelRequest} disabled={friendLoading}
                       style={{width:'100%',background:'#fff',border:'1px solid #e2e8f0',color:'#64748b',padding:'10px',borderRadius:'10px',fontWeight:'600',fontSize:'13px',cursor:'pointer'}}>
                       Cancel Request
@@ -261,11 +261,11 @@ export default function ProfilePage(){
                     <div style={{display:'flex',gap:'8px'}}>
                       <button onClick={acceptRequest} disabled={friendLoading}
                         style={{flex:1,background:'linear-gradient(135deg,#16a34a,#15803d)',color:'#fff',padding:'11px',borderRadius:'10px',fontWeight:'700',fontSize:'14px',border:'none',cursor:'pointer'}}>
-                        ✅ Accept
+                         Accept
                       </button>
                       <button onClick={declineRequest} disabled={friendLoading}
                         style={{flex:1,background:'#fef2f2',border:'1px solid #fecaca',color:'#dc2626',padding:'11px',borderRadius:'10px',fontWeight:'700',fontSize:'14px',cursor:'pointer'}}>
-                        ❌ Decline
+                         Decline
                       </button>
                     </div>
                   </>
@@ -274,13 +274,13 @@ export default function ProfilePage(){
                 {friendStatus==='friends'&&(
                   <>
                     <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'10px',padding:'10px 14px',marginBottom:'14px',fontSize:'13px',color:'#16a34a',fontWeight:'700',textAlign:'center'}}>
-                      ✅ You are connected with {profile.full_name?.split(' ')[0]}
+                       You are connected with {profile.full_name?.split(' ')[0]}
                     </div>
                     <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px',marginBottom:'4px'}}>Unlock WhatsApp Number</p>
                     <p style={{fontSize:'12px',color:'#64748b',marginBottom:'14px'}}>Pay KES 20 via M-Pesa to see their number.</p>
                     <button onClick={handleUnlock} disabled={paying}
                       style={{width:'100%',background:paying?'#94a3b8':'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'12px',borderRadius:'10px',fontWeight:'700',fontSize:'14px',border:'none',cursor:paying?'not-allowed':'pointer',boxShadow:'0 4px 12px rgba(249,115,22,0.3)'}}>
-                      {paying?'Redirecting...':'🔓 Unlock for KES 20'}
+                      {paying?'Redirecting...':' Unlock for KES 20'}
                     </button>
                   </>
                 )}
@@ -317,7 +317,7 @@ export default function ProfilePage(){
       {activePhoto&&(
         <div onClick={()=>setActivePhoto(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.9)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:300,padding:'20px',cursor:'pointer'}}>
           <img src={activePhoto} style={{maxWidth:'90vw',maxHeight:'90vh',borderRadius:'12px',objectFit:'contain'}}/>
-          <button onClick={()=>setActivePhoto(null)} style={{position:'absolute',top:'20px',right:'20px',background:'rgba(255,255,255,0.15)',border:'none',borderRadius:'50%',width:'40px',height:'40px',color:'#fff',fontSize:'18px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+          <button onClick={()=>setActivePhoto(null)} style={{position:'absolute',top:'20px',right:'20px',background:'rgba(255,255,255,0.15)',border:'none',borderRadius:'50%',width:'40px',height:'40px',color:'#fff',fontSize:'18px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}></button>
         </div>
       )}
     </div>

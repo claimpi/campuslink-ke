@@ -18,7 +18,7 @@ function AnnouncementsList(){
       <p style={{fontSize:'13px',fontWeight:'700',color:'#0f172a',marginBottom:'4px'}}>Posted Announcements</p>
       {anns.map(a=>(
         <div key={a.id} style={{background:'#fff',border:'1px solid #e2e8f0',borderRadius:'10px',padding:'12px 14px',display:'flex',alignItems:'flex-start',gap:'10px'}}>
-          <span style={{fontSize:'15px'}}>🔔</span>
+          <span style={{fontSize:'15px'}}></span>
           <div style={{flex:1}}>
             <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px'}}>{a.title}</p>
             <p style={{fontSize:'12px',color:'#64748b',marginTop:'2px'}}>{a.content}</p>
@@ -169,10 +169,10 @@ export default function AdminPage(){
                 {s.is_featured&&<span style={{background:'#eff6ff',color:'#2563eb',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',fontWeight:'700',border:'1px solid #bfdbfe'}}>Feat</span>}
                 <span style={{background:'#f1f5f9',color:'#64748b',fontSize:'11px',padding:'2px 7px',borderRadius:'50px'}}>Y{s.year_of_study}</span>
                 <div style={{display:'flex',gap:'4px'}}>
-                  <button onClick={()=>toggleBadge(s.id,'is_top_student',s.is_top_student)} title="Toggle Top" style={{background:'#fff7ed',border:'none',borderRadius:'6px',padding:'5px 8px',cursor:'pointer',fontSize:'12px'}}>⭐</button>
-                  <button onClick={()=>toggleBadge(s.id,'is_premium',s.is_premium)} title="Toggle Premium" style={{background:'#f5f3ff',border:'none',borderRadius:'6px',padding:'5px 8px',cursor:'pointer',fontSize:'12px'}}>👑</button>
-                  <button onClick={()=>toggleBadge(s.id,'is_featured',s.is_featured)} title="Toggle Featured" style={{background:'#eff6ff',border:'none',borderRadius:'6px',padding:'5px 8px',cursor:'pointer',fontSize:'12px'}}>✨</button>
-                  <button onClick={()=>deleteStudent(s.id)} title="Delete" style={{background:'#fef2f2',border:'none',borderRadius:'6px',padding:'5px 8px',cursor:'pointer',fontSize:'12px',color:'#dc2626'}}>✕</button>
+                  <button onClick={()=>toggleBadge(s.id,'is_top_student',s.is_top_student)} title="Toggle Top" style={{background:'#fff7ed',border:'none',borderRadius:'6px',padding:'5px 8px',cursor:'pointer',fontSize:'12px'}}></button>
+                  <button onClick={()=>toggleBadge(s.id,'is_premium',s.is_premium)} title="Toggle Premium" style={{background:'#f5f3ff',border:'none',borderRadius:'6px',padding:'5px 8px',cursor:'pointer',fontSize:'12px'}}></button>
+                  <button onClick={()=>toggleBadge(s.id,'is_featured',s.is_featured)} title="Toggle Featured" style={{background:'#eff6ff',border:'none',borderRadius:'6px',padding:'5px 8px',cursor:'pointer',fontSize:'12px'}}></button>
+                  <button onClick={()=>deleteStudent(s.id)} title="Delete" style={{background:'#fef2f2',border:'none',borderRadius:'6px',padding:'5px 8px',cursor:'pointer',fontSize:'12px',color:'#dc2626'}}></button>
                 </div>
               </div>
             </div>

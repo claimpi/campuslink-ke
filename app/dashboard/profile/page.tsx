@@ -175,7 +175,7 @@ export default function EditProfile(){
             {photos.map((url,i)=>(
               <div key={i} style={{position:'relative',aspectRatio:'1',borderRadius:'8px',overflow:'hidden'}}>
                 <img src={url} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-                <button onClick={()=>removePhoto(url)} style={{position:'absolute',top:'4px',right:'4px',background:'rgba(0,0,0,0.6)',color:'#fff',border:'none',borderRadius:'50%',width:'20px',height:'20px',fontSize:'12px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:'1'}}>✕</button>
+                <button onClick={()=>removePhoto(url)} style={{position:'absolute',top:'4px',right:'4px',background:'rgba(0,0,0,0.6)',color:'#fff',border:'none',borderRadius:'50%',width:'20px',height:'20px',fontSize:'12px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:'1'}}></button>
               </div>
             ))}
             {photos.length<5&&[...Array(5-photos.length)].map((_,i)=>(
@@ -227,9 +227,9 @@ export default function EditProfile(){
           <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Relationship Status</label>
           <select value={form.status} onChange={set('status')} style={inp}>
             <option value="">Prefer not to say</option>
-            <option value="single">💚 Single</option>
-            <option value="taken">❤️ Taken</option>
-            <option value="complicated">🤔 It's complicated</option>
+            <option value="single"> Single</option>
+            <option value="taken"> Taken</option>
+            <option value="complicated"> It's complicated</option>
           </select>
         </div>
         <div>
@@ -263,10 +263,10 @@ export default function EditProfile(){
           <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Looking For</label>
           <select value={form.looking_for} onChange={set('looking_for')} style={inp}>
             <option value="">Not specified</option>
-            <option value="friendship">👫 Friendship</option>
-            <option value="relationship">❤️ Relationship</option>
-            <option value="study">📚 Study Partner</option>
-            <option value="networking">🤝 Networking</option>
+            <option value="friendship"> Friendship</option>
+            <option value="relationship"> Relationship</option>
+            <option value="study"> Study Partner</option>
+            <option value="networking"> Networking</option>
           </select>
         </div>
         <div style={{gridColumn:'1/-1'}}>
@@ -275,10 +275,10 @@ export default function EditProfile(){
             <input value={form.location_name} onChange={set('location_name')} placeholder="e.g. Nairobi, Westlands" style={{...inp,flex:1}} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
             <button type="button" onClick={getLocation} disabled={locating}
               style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',border:'none',borderRadius:'10px',padding:'0 14px',fontSize:'13px',fontWeight:'600',cursor:'pointer',flexShrink:0,whiteSpace:'nowrap'}}>
-              {locating?'Detecting...':'📍 Detect'}
+              {locating?'Detecting...':' Detect'}
             </button>
           </div>
-          {form.latitude&&<p style={{fontSize:'11px',color:'#16a34a',marginTop:'4px'}}>✅ GPS location saved</p>}
+          {form.latitude&&<p style={{fontSize:'11px',color:'#16a34a',marginTop:'4px'}}> GPS location saved</p>}
         </div>
         <div>
           <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Bio</label>
