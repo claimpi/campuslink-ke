@@ -32,13 +32,12 @@ export default function RegisterPage() {
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
-        queryParams: { access_type: 'offline', prompt: 'consent' },
-        skipBrowserRedirect: false,
+        queryParams: { access_type: 'offline', prompt: 'select_account' },
+        skipBrowserRedirect: true,
       }
     })
     if (error) { setError(error.message); setGoogleLoading(false); return }
-    // Force open in real browser if inside WebView
-    if (data?.url) { window.open(data.url, '_blank') }
+    if (data?.url) { window.location.replace(data.url) }
   }
 
   function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {

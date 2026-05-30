@@ -39,16 +39,21 @@ export default function LoginPage() {
 
   async function handleGoogleLogin() {
     setGoogleLoading(true); setError('')
+    // Use skipBrowserRedirect to get URL, then navigate manually
+    // This avoids PKCE storage issues in WebViews
     const { data, error } = await createClient().auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
-        queryParams: { access_type: 'offline', prompt: 'consent' },
-        skipBrowserRedirect: false,
+        queryParams: { access_type: 'offline', prompt: 'select_account' },
+        skipBrowserRedirect: true,
       }
     })
     if (error) { setError(error.message); setGoogleLoading(false); return }
-    if (data?.url) { window.location.href = data.url }
+    if (data?.url) {
+      // Replace current page so callback returns here, not opens new tab
+      window.location.replace(data.url)
+    }
   }
 
   return (

@@ -11,6 +11,7 @@ export function createClient() {
         storageKey: 'campuslink-auth',
         storage: typeof window !== 'undefined' ? window.localStorage : undefined,
         flowType: 'implicit',
+        detectSessionInUrl: true,
       }
     }
   )
