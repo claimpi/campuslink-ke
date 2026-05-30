@@ -41,7 +41,7 @@ function ConfirmInner() {
             await sb.from('profiles').insert({
               id: user.id, email: user.email, full_name: fullName,
               avatar_url: avatarUrl, referral_code: refCode, referral_earnings: 0,
-            }).catch(() => {})
+            })
             router.push('/dashboard?welcome=true&new=true')
           } else {
             router.push(next + '?welcome=true')

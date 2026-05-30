@@ -1,6 +1,7 @@
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Admin protection
@@ -12,7 +13,27 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  // Protect dashboard - check for any auth-related cookie
+  // Handle Supabase auth cookies (fixes Google OAuth PKCE in WebViews)
+  let response = NextResponse.next({ request })
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return request.cookies.getAll() },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          response = NextResponse.next({ request })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
+  await supabase.auth.getUser()
+
+  // Protect dashboard
   if (pathname.startsWith('/dashboard')) {
     const cookies = request.cookies.getAll()
     const hasSession = cookies.some(c =>
@@ -26,9 +47,11 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  return NextResponse.next()
+  return response
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/admin/:path*', '/admin'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }
