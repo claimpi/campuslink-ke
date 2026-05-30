@@ -62,8 +62,10 @@ export default function DiscoverPage(){
     })
     if(navigator.geolocation) navigator.geolocation.getCurrentPosition(p=>setLoc({lat:p.coords.latitude,lng:p.coords.longitude}),()=>{})
     sb.from('profiles')
-      .select('id,full_name,avatar_url,photos,is_premium,is_featured,is_verified,age,gender,looking_for,university,course,location_name,latitude,longitude,last_seen,created_at,interests,status')
+      .select('id,full_name,avatar_url,photos,is_premium,is_featured,is_verified,age,gender,looking_for,university,location_name,latitude,longitude,last_seen,created_at')
       .order('is_featured',{ascending:false}).order('is_premium',{ascending:false})
+      .order('last_seen',{ascending:false})
+      .limit(60)
       .then(({data})=>{ if(data) setUsers(data); setLoading(false) })
   },[])
 
