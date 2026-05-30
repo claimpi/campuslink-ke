@@ -219,32 +219,28 @@ export default function DiscoverPage(){
                     </div>
 
                     {/* Tag pills */}
-                    <div style={{display:'flex',flexWrap:'wrap',gap:5,marginBottom:s.university?5:0}}>
+                    <div style={{display:'flex',flexWrap:'wrap',gap:5,marginBottom:4}}>
+                      {s.age&&(
+                        <span style={{background:'#fce7f3',color:'#be185d',fontSize:11,padding:'3px 8px',borderRadius:20,fontWeight:700}}>
+                          {s.age} yrs
+                        </span>
+                      )}
                       {distLabel&&(
-                        <span style={{background:'#dcfce7',color:'#16a34a',fontSize:11,padding:'3px 8px',borderRadius:20,fontWeight:700,display:'flex',alignItems:'center',gap:2}}>
+                        <span style={{background:'#dcfce7',color:'#16a34a',fontSize:11,padding:'3px 8px',borderRadius:20,fontWeight:700}}>
                           📍{distLabel}
                         </span>
                       )}
-                      {s.age&&(
-                        <span style={{background:'#fce7f3',color:'#be185d',fontSize:11,padding:'3px 8px',borderRadius:20,fontWeight:700}}>
-                          ♀ {s.age}
-                        </span>
-                      )}
-                      <span style={{background:'#f1f5f9',color:online?'#16a34a':'#64748b',fontSize:11,padding:'3px 8px',borderRadius:20,fontWeight:600}}>
-                        {lastSeen}
-                      </span>
                       {s.looking_for&&(
                         <span style={{background:'#ede9fe',color:'#7c3aed',fontSize:11,padding:'3px 8px',borderRadius:20,fontWeight:600}}>
-                          {s.looking_for}
+                          {s.looking_for==='relationship'?'💕 Dating':s.looking_for==='friendship'?'🤝 Friends':s.looking_for==='study'?'📚 Study':s.looking_for==='networking'?'🌐 Network':'💬 '+s.looking_for}
+                        </span>
+                      )}
+                      {!s.looking_for&&(
+                        <span style={{background:'#f1f5f9',color:'#64748b',fontSize:11,padding:'3px 8px',borderRadius:20,fontWeight:600}}>
+                          {online?'🟢 Online now':'💤 Away'}
                         </span>
                       )}
                     </div>
-
-                    {s.university&&(
-                      <p style={{fontSize:12,color:'#94a3b8',margin:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-                        🎓 {s.university}
-                      </p>
-                    )}
                   </div>
 
                   {/* Hi + Like buttons */}
