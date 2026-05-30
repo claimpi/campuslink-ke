@@ -189,7 +189,7 @@ export default function DiscoverPage(){
                     <div style={{width:72,height:72,borderRadius:'50%',overflow:'hidden',
                       border:s.is_featured?'3px solid #f97316':s.is_premium?'3px solid #f59e0b':'2px solid #e5e7eb'}}>
                       {s.avatar_url
-                        ?<img src={s.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt={name}/>
+                        ?<img src={s.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}} alt={name}/>
                         :<div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',
                           background:`linear-gradient(135deg,${s.is_premium?'#7c3aed,#6d28d9':'#f97316,#ea580c'})`,
                           color:'#fff',fontSize:24,fontWeight:900}}>{initials(s.full_name)}</div>
@@ -249,8 +249,8 @@ export default function DiscoverPage(){
                 {extras.length>0&&(
                   <div style={{marginTop:12,display:'grid',gridTemplateColumns:`repeat(${Math.min(extras.length,4)},1fr)`,gap:4}}>
                     {extras.map((p:string,i:number)=>(
-                      <div key={i} style={{aspectRatio:'1',borderRadius:8,overflow:'hidden',background:'#f1f5f9'}}>
-                        <img src={p} style={{width:'100%',height:'100%',objectFit:'cover'}} alt="" loading="lazy"/>
+                      <div key={i} style={{height:80,borderRadius:8,overflow:'hidden',background:'#f1f5f9',flexShrink:0}}>
+                        <img src={p} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}} alt="" loading="lazy"/>
                       </div>
                     ))}
                   </div>
