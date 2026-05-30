@@ -138,17 +138,8 @@ export default function DiscoverPage(){
               }}>{label}</button>
             ))}
           </div>
-          <div style={{display:'flex',gap:10,alignItems:'center'}}>
-            {/* Trophy */}
-            <div style={{position:'relative',cursor:'pointer'}}>
-              <span style={{fontSize:22}}>🏆</span>
-              <span style={{position:'absolute',top:-4,right:-4,background:'#f97316',color:'#fff',fontSize:9,fontWeight:800,width:14,height:14,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}}>●</span>
-            </div>
-            {/* Search */}
-            <div style={{position:'relative',cursor:'pointer'}} onClick={()=>setSearchOpen(s=>!s)}>
-              <span style={{fontSize:22}}>🔍</span>
-              <span style={{position:'absolute',top:-4,right:-4,background:'#ef4444',color:'#fff',fontSize:9,fontWeight:800,width:14,height:14,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}}>●</span>
-            </div>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            <button onClick={()=>setSearchOpen(s=>!s)} style={{width:36,height:36,borderRadius:'50%',border:'1.5px solid #e8ecf0',background:searchOpen?'#fff7ed':'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,color:'#374151'}}>🔍</button>
           </div>
         </div>
 
