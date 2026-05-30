@@ -8,24 +8,21 @@ function initials(n:string){return(n||'?').split(' ').map((x:string)=>x[0]).join
 function calcDist(lat1:number,lon1:number,lat2:number,lon2:number){
   const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180
   const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2
-  return(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)))
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))
 }
-function lastActive(ts:string|null){
+function timeAgo(ts:string|null){
   if(!ts) return null
   const m=Math.floor((Date.now()-new Date(ts).getTime())/60000)
-  if(m<1) return{label:'Active now',color:'#22c55e'}
+  if(m<2) return{label:'Active now',color:'#22c55e'}
   if(m<60) return{label:`${m}m ago`,color:'#94a3b8'}
   const h=Math.floor(m/60)
   if(h<24) return{label:`${h}h ago`,color:'#94a3b8'}
-  const d=Math.floor(h/24)
-  return{label:`${d}d ago`,color:'#cbd5e1'}
+  return{label:`${Math.floor(h/24)}d ago`,color:'#cbd5e1'}
 }
-function onlineStatus(ts:string|null){
-  if(!ts) return 'offline'
+function dot(ts:string|null){
+  if(!ts) return '#d1d5db'
   const m=Math.floor((Date.now()-new Date(ts).getTime())/60000)
-  if(m<5) return 'online'
-  if(m<30) return 'away'
-  return 'offline'
+  return m<5?'#22c55e':m<30?'#f59e0b':'#d1d5db'
 }
 
 export default function DiscoverPage(){
@@ -36,228 +33,237 @@ export default function DiscoverPage(){
   const [gender,setGender]=useState('Auto')
   const [lookingFor,setLookingFor]=useState('All')
   const [tab,setTab]=useState<'nearby'|'newcomers'|'recommended'>('nearby')
-  const [currentUserId,setCurrentUserId]=useState<string|null>(null)
-  const [friendStatuses,setFriendStatuses]=useState<Record<string,string>>({})
-  const [sendingTo,setSendingTo]=useState<string|null>(null)
-  const [userLocation,setUserLocation]=useState<{lat:number,lng:number}|null>(null)
-  const [likes,setLikes]=useState<Set<string>>(new Set())
-  const [matches,setMatches]=useState<Set<string>>(new Set())
+  const [me,setMe]=useState<string|null>(null)
+  const [friendMap,setFriendMap]=useState<Record<string,string>>({})
+  const [sending,setSending]=useState<string|null>(null)
+  const [loc,setLoc]=useState<{lat:number,lng:number}|null>(null)
+  const [liked,setLiked]=useState<Set<string>>(new Set())
+  const [matched,setMatched]=useState<Set<string>>(new Set())
   const [liking,setLiking]=useState<string|null>(null)
-  const [showMatch,setShowMatch]=useState<any>(null)
+  const [matchPop,setMatchPop]=useState<any>(null)
 
   useEffect(()=>{
     const sb=createClient()
     sb.auth.getUser().then(({data:{user}})=>{
-      if(user){
-        setCurrentUserId(user.id)
-        sb.from('profiles').select('gender').eq('id',user.id).maybeSingle()
-          .then(({data})=>{
-            if(data?.gender==='male') setGender('female')
-            else if(data?.gender==='female') setGender('male')
-            else setGender('All')
+      if(!user) return
+      setMe(user.id)
+      sb.from('profiles').select('gender').eq('id',user.id).maybeSingle().then(({data})=>{
+        setGender(data?.gender==='male'?'female':data?.gender==='female'?'male':'All')
+      })
+      sb.from('friend_requests').select('receiver_id,sender_id,status')
+        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`).not('status','eq','declined')
+        .then(({data})=>{
+          const m:Record<string,string>={}
+          data?.forEach((r:any)=>{
+            const o=r.sender_id===user.id?r.receiver_id:r.sender_id
+            m[o]=r.status==='accepted'?'friends':r.sender_id===user.id?'pending_sent':'pending_received'
           })
-        sb.from('friend_requests').select('receiver_id,sender_id,status')
-          .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`).not('status','eq','declined')
-          .then(({data})=>{
-            const s:Record<string,string>={}
-            data?.forEach((r:any)=>{
-              const o=r.sender_id===user.id?r.receiver_id:r.sender_id
-              s[o]=r.status==='accepted'?'friends':r.sender_id===user.id?'pending_sent':'pending_received'
-            })
-            setFriendStatuses(s)
-          })
-        sb.from('likes').select('receiver_id').eq('sender_id',user.id)
-          .then(({data})=>{ if(data) setLikes(new Set(data.map((l:any)=>l.receiver_id))) })
-        sb.from('likes').select('sender_id').eq('receiver_id',user.id)
-          .then(({data:recv})=>{
-            if(!recv) return
-            const rIds=new Set(recv.map((l:any)=>l.sender_id))
-            sb.from('likes').select('receiver_id').eq('sender_id',user.id)
-              .then(({data:sent})=>{
-                if(sent) setMatches(new Set(sent.filter((l:any)=>rIds.has(l.receiver_id)).map((l:any)=>l.receiver_id)))
-              })
-          })
-        // ping last_seen
-        sb.from('profiles').update({last_seen:new Date().toISOString()}).eq('id',user.id).then(()=>{})
-        const interval=setInterval(()=>{ sb.from('profiles').update({last_seen:new Date().toISOString()}).eq('id',user.id).then(()=>{}) },180000)
-        return()=>clearInterval(interval)
-      }
+          setFriendMap(m)
+        })
+      sb.from('likes').select('receiver_id').eq('sender_id',user.id)
+        .then(({data})=>{ if(data) setLiked(new Set(data.map((l:any)=>l.receiver_id))) })
+      sb.from('likes').select('sender_id').eq('receiver_id',user.id).then(({data:recv})=>{
+        if(!recv) return
+        const rSet=new Set(recv.map((l:any)=>l.sender_id))
+        sb.from('likes').select('receiver_id').eq('sender_id',user.id).then(({data:sent})=>{
+          if(sent) setMatched(new Set(sent.filter((l:any)=>rSet.has(l.receiver_id)).map((l:any)=>l.receiver_id)))
+        })
+      })
+      sb.from('profiles').update({last_seen:new Date().toISOString()}).eq('id',user.id)
+      const t=setInterval(()=>sb.from('profiles').update({last_seen:new Date().toISOString()}).eq('id',user.id),180000)
+      return()=>clearInterval(t)
     })
-
-    if(navigator.geolocation)
-      navigator.geolocation.getCurrentPosition(p=>setUserLocation({lat:p.coords.latitude,lng:p.coords.longitude}),()=>{})
-
+    if(navigator.geolocation) navigator.geolocation.getCurrentPosition(p=>setLoc({lat:p.coords.latitude,lng:p.coords.longitude}),()=>{})
     sb.from('profiles')
-      .select('id,full_name,avatar_url,photos,is_premium,is_featured,is_verified,age,gender,looking_for,location_name,latitude,longitude,status,last_seen,created_at')
+      .select('id,full_name,avatar_url,photos,is_premium,is_featured,is_verified,age,gender,looking_for,location_name,latitude,longitude,last_seen,created_at')
       .order('is_featured',{ascending:false}).order('is_premium',{ascending:false})
       .then(({data})=>{ if(data) setUsers(data); setLoading(false) })
   },[])
 
-  async function sendRequest(receiverId:string){
-    if(!currentUserId){router.push('/login');return}
-    setSendingTo(receiverId)
+  async function connect(rid:string){
+    if(!me){router.push('/login');return}
+    setSending(rid)
     const sb=createClient()
-    await sb.from('friend_requests').insert([{sender_id:currentUserId,receiver_id:receiverId,status:'pending'}])
-    setFriendStatuses(p=>({...p,[receiverId]:'pending_sent'}))
-    setSendingTo(null)
-    toast('Friend request sent!','success')
-    const {data:me}=await sb.from('profiles').select('full_name').eq('id',currentUserId).maybeSingle()
+    await sb.from('friend_requests').insert([{sender_id:me,receiver_id:rid,status:'pending'}])
+    setFriendMap(p=>({...p,[rid]:'pending_sent'}))
+    setSending(null)
+    toast('Request sent!','success')
+    const {data:myProfile}=await sb.from('profiles').select('full_name').eq('id',me).maybeSingle()
     fetch('/api/push-notify',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({userId:receiverId,title:'New Friend Request',body:`${me?.full_name||'Someone'} wants to connect with you`,url:'/dashboard'})
+      body:JSON.stringify({userId:rid,title:'New Friend Request',body:`${myProfile?.full_name||'Someone'} wants to connect`,url:'/dashboard'})
     }).catch(()=>{})
   }
 
-  async function handleLike(receiverId:string, userName:string){
-    if(!currentUserId){router.push('/login');return}
-    if(likes.has(receiverId)) return
-    setLiking(receiverId)
-    setLikes(p=>new Set([...p,receiverId]))
-    const res=await fetch('/api/like',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({senderId:currentUserId,receiverId})})
+  async function like(rid:string,name:string){
+    if(!me){router.push('/login');return}
+    if(liked.has(rid)) return
+    setLiking(rid)
+    setLiked(p=>new Set([...p,rid]))
+    const res=await fetch('/api/like',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({senderId:me,receiverId:rid})})
     const data=await res.json()
     if(data.isMatch){
-      setMatches(p=>new Set([...p,receiverId]))
-      setShowMatch({id:receiverId,name:userName})
-      setTimeout(()=>setShowMatch(null),5000)
+      setMatched(p=>new Set([...p,rid]))
+      setMatchPop({id:rid,name})
+      setTimeout(()=>setMatchPop(null),5000)
     }
     setLiking(null)
   }
 
-  // Sort by tab
   const now=Date.now()
-  const withDist=users.map(u=>({
-    ...u,
-    _dist:userLocation&&u.latitude&&u.longitude?calcDist(userLocation.lat,userLocation.lng,u.latitude,u.longitude):9999,
-    _age:now-new Date(u.created_at||0).getTime()
+  let list=users.map(u=>({...u,
+    _d:loc&&u.latitude?calcDist(loc.lat,loc.lng,u.latitude,u.longitude):9999,
+    _new:now-new Date(u.created_at||0).getTime()
   }))
+  if(tab==='nearby') list.sort((a,b)=>a._d-b._d)
+  else if(tab==='newcomers') list.sort((a,b)=>a._new-b._new)
+  else list.sort((a,b)=>((b.is_featured?2:0)+(b.is_premium?1:0))-((a.is_featured?2:0)+(a.is_premium?1:0)))
 
-  let sorted=[...withDist]
-  if(tab==='nearby') sorted.sort((a,b)=>a._dist-b._dist)
-  else if(tab==='newcomers') sorted.sort((a,b)=>a._age-b._age)
-  else sorted.sort((a,b)=>(b.is_featured?2:0)+(b.is_premium?1:0)-(a.is_featured?2:0)-(a.is_premium?1:0))
-
-  const filtered=sorted.filter(s=>{
+  const filtered=list.filter(s=>{
     const q=search.toLowerCase()
-    return(!q||s.full_name?.toLowerCase().includes(q)||s.location_name?.toLowerCase().includes(q))
+    return s.id!==me
+      &&(!q||s.full_name?.toLowerCase().includes(q)||s.location_name?.toLowerCase().includes(q))
       &&(gender==='All'||gender==='Auto'||s.gender===gender)
       &&(lookingFor==='All'||s.looking_for===lookingFor)
-      &&s.id!==currentUserId
   })
 
-  const dotColor=(status:string)=>status==='online'?'#22c55e':status==='away'?'#f59e0b':'#d1d5db'
-
   return(
-    <div style={{maxWidth:'520px',margin:'0 auto',padding:'0 0 80px'}}>
+    <div style={{maxWidth:'480px',margin:'0 auto',padding:'0 0 90px',background:'#f5f6fa',minHeight:'100vh'}}>
 
       {/* Match popup */}
-      {showMatch&&(
-        <div onClick={()=>setShowMatch(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.75)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}}>
-          <div style={{background:'#fff',borderRadius:'24px',padding:'40px 28px',textAlign:'center',maxWidth:'300px',width:'100%'}}>
-            <div style={{fontSize:'52px',marginBottom:'8px'}}>💞</div>
-            <h2 style={{fontSize:'22px',fontWeight:'900',color:'#be185d',marginBottom:'6px'}}>It&apos;s a Match!</h2>
-            <p style={{fontSize:'13px',color:'#64748b',marginBottom:'20px',lineHeight:'1.5'}}>You and <strong>{showMatch.name}</strong> liked each other!</p>
-            <button onClick={()=>{setShowMatch(null);router.push(`/profile/${showMatch.id}`)}}
-              style={{background:'linear-gradient(135deg,#ec4899,#be185d)',color:'#fff',border:'none',borderRadius:'12px',padding:'12px 24px',fontSize:'14px',fontWeight:'700',cursor:'pointer',width:'100%'}}>
-              View Profile
+      {matchPop&&(
+        <div onClick={()=>setMatchPop(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.8)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}}>
+          <div style={{background:'#fff',borderRadius:'24px',padding:'36px 24px',textAlign:'center',maxWidth:'280px',width:'100%'}}>
+            <div style={{fontSize:'48px',marginBottom:'8px'}}>💞</div>
+            <h2 style={{fontSize:'22px',fontWeight:'900',color:'#be185d',marginBottom:'6px'}}>It's a Match!</h2>
+            <p style={{fontSize:'13px',color:'#64748b',marginBottom:'20px'}}>You and <strong>{matchPop.name}</strong> liked each other!</p>
+            <button onClick={()=>{setMatchPop(null);router.push(`/profile/${matchPop.id}`)}}
+              style={{background:'linear-gradient(135deg,#ec4899,#be185d)',color:'#fff',border:'none',borderRadius:'12px',padding:'12px 0',fontSize:'14px',fontWeight:'700',cursor:'pointer',width:'100%'}}>
+              View Profile →
             </button>
           </div>
         </div>
       )}
 
       {/* Header */}
-      <div style={{padding:'20px 16px 12px'}}>
-        <h1 style={{fontSize:'26px',fontWeight:'900',color:'#0f172a',marginBottom:'2px'}}>People Nearby</h1>
-        <p style={{fontSize:'13px',color:'#94a3b8'}}>{filtered.length} people{userLocation?' · Sorted by distance':''}</p>
-      </div>
+      <div style={{background:'#fff',padding:'16px 16px 0',borderBottom:'1px solid #eee'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
+          <div>
+            <h1 style={{fontSize:'22px',fontWeight:'900',color:'#0f172a',margin:0}}>People Nearby</h1>
+            <p style={{fontSize:'12px',color:'#94a3b8',margin:'2px 0 0'}}>{filtered.length} people{loc?' · By distance':''}</p>
+          </div>
+        </div>
 
-      {/* Tabs */}
-      <div style={{display:'flex',gap:'6px',padding:'0 16px',marginBottom:'14px'}}>
-        {(['nearby','newcomers','recommended'] as const).map(t=>(
-          <button key={t} onClick={()=>setTab(t)} style={{
-            flex:1,padding:'9px 4px',borderRadius:'50px',border:'none',cursor:'pointer',fontSize:'13px',fontWeight:'600',
-            background:tab===t?'#fff':' transparent',
-            color:tab===t?'#f97316':'#94a3b8',
-            boxShadow:tab===t?'0 2px 8px rgba(0,0,0,0.10)':'none',
-            transition:'all 0.2s'
-          }}>
-            {t.charAt(0).toUpperCase()+t.slice(1)}
-          </button>
-        ))}
+        {/* Tabs */}
+        <div style={{display:'flex',borderBottom:'2px solid #f1f5f9',marginBottom:'-1px'}}>
+          {(['nearby','newcomers','recommended'] as const).map(t=>(
+            <button key={t} onClick={()=>setTab(t)} style={{
+              flex:1,padding:'10px 4px',border:'none',background:'none',cursor:'pointer',
+              fontSize:'13px',fontWeight:'600',
+              color:tab===t?'#f97316':'#94a3b8',
+              borderBottom:tab===t?'2px solid #f97316':'2px solid transparent',
+              transition:'all 0.2s'
+            }}>
+              {t==='nearby'?'Nearby':t==='newcomers'?'New':' Top'}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Filters */}
-      <div style={{display:'flex',gap:'8px',padding:'0 16px',marginBottom:'16px'}}>
-        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search..."
-          style={{flex:1,minWidth:0,border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'9px 12px',fontSize:'14px',outline:'none',background:'#fff'}}
+      <div style={{display:'flex',gap:'8px',padding:'12px 16px',background:'#fff',borderBottom:'1px solid #f1f5f9'}}>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍  Search name..."
+          style={{flex:1,border:'1.5px solid #e2e8f0',borderRadius:'20px',padding:'8px 14px',fontSize:'13px',outline:'none',background:'#f8fafc'}}
           onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
-        <select value={gender} onChange={e=>setGender(e.target.value)} style={{border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'9px 10px',fontSize:'13px',outline:'none',background:'#fff',color:'#374151'}}>
-          <option value="All">Everyone</option>
+        <select value={gender} onChange={e=>setGender(e.target.value)}
+          style={{border:'1.5px solid #e2e8f0',borderRadius:'20px',padding:'8px 10px',fontSize:'12px',outline:'none',background:'#f8fafc',color:'#374151'}}>
+          <option value="All">All</option>
           <option value="male">Men</option>
           <option value="female">Women</option>
         </select>
-        <select value={lookingFor} onChange={e=>setLookingFor(e.target.value)} style={{border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'9px 10px',fontSize:'13px',outline:'none',background:'#fff',color:'#374151'}}>
-          <option value="All">Looking For</option>
-          <option value="friendship">Friendship</option>
-          <option value="relationship">Relationship</option>
+        <select value={lookingFor} onChange={e=>setLookingFor(e.target.value)}
+          style={{border:'1.5px solid #e2e8f0',borderRadius:'20px',padding:'8px 10px',fontSize:'12px',outline:'none',background:'#f8fafc',color:'#374151'}}>
+          <option value="All">For</option>
+          <option value="friendship">Friends</option>
+          <option value="relationship">Date</option>
           <option value="study">Study</option>
-          <option value="networking">Networking</option>
         </select>
       </div>
 
-      {/* Grid */}
-      {loading?(
-        <div className="discover-grid" style={{display:'grid',gap:'10px',padding:'0 16px'}}>
-          {[...Array(6)].map((_,i)=><div key={i} style={{aspectRatio:'3/4.5',borderRadius:'16px',background:'linear-gradient(135deg,#f1f5f9,#e2e8f0)'}}/>)}
-        </div>
-      ):(
-        <div className="discover-grid" style={{display:'grid',gap:'10px',padding:'0 16px'}}>
-          {filtered.map(s=>{
-            const dist=userLocation&&s.latitude&&s.longitude?calcDist(userLocation.lat,userLocation.lng,s.latitude,s.longitude):null
-            const distLabel=dist!==null?(dist<1?`${Math.round(dist*1000)}m`:`${dist.toFixed(1)}km`):null
-            const isLiked=likes.has(s.id)
-            const isMatch=matches.has(s.id)
-            const online=onlineStatus(s.last_seen)
-            const active=lastActive(s.last_seen)
-            const extraPhotos:string[]=Array.isArray(s.photos)?s.photos.filter((p:string)=>p&&p!==s.avatar_url).slice(0,3):[]
-            const firstName=(s.full_name||'Unknown').split(' ')[0]
+      {/* Cards grid */}
+      <div style={{padding:'12px 12px 0',display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
+        {loading
+          ?[...Array(6)].map((_,i)=>(
+            <div key={i} style={{borderRadius:'16px',overflow:'hidden',background:'#fff',boxShadow:'0 1px 6px rgba(0,0,0,0.06)'}}>
+              <div style={{aspectRatio:'3/4',background:'linear-gradient(135deg,#f1f5f9,#e2e8f0)'}}/>
+              <div style={{padding:'10px'}}>
+                <div style={{height:'14px',background:'#f1f5f9',borderRadius:'6px',marginBottom:'8px'}}/>
+                <div style={{height:'28px',background:'#f97316',borderRadius:'20px',opacity:0.2}}/>
+              </div>
+            </div>
+          ))
+          :filtered.map(s=>{
+            const distKm=loc&&s.latitude?calcDist(loc.lat,loc.lng,s.latitude,s.longitude):null
+            const distLabel=distKm!==null?(distKm<1?`${Math.round(distKm*1000)}m`:`${distKm.toFixed(1)}km`):null
+            const isLiked=liked.has(s.id)
+            const isMatch=matched.has(s.id)
+            const active=timeAgo(s.last_seen)
+            const onlineDot=dot(s.last_seen)
+            const extras:string[]=Array.isArray(s.photos)?s.photos.filter((p:string)=>p&&p!==s.avatar_url).slice(0,3):[]
+            const name=(s.full_name||'User').split(' ')[0]
+            const fs=friendMap[s.id]
             return(
-              <div key={s.id} style={{borderRadius:'18px',overflow:'hidden',background:'#fff',
-                border:s.is_featured?'2px solid #f97316':'1.5px solid #e8ecf0',
-                boxShadow:'0 2px 12px rgba(0,0,0,0.08)',display:'flex',flexDirection:'column'}}>
+              <div key={s.id} style={{borderRadius:'16px',overflow:'hidden',background:'#fff',
+                boxShadow:s.is_featured?'0 0 0 2px #f97316,0 4px 16px rgba(249,115,22,0.15)':'0 2px 10px rgba(0,0,0,0.08)',
+                display:'flex',flexDirection:'column'}}>
 
-                {/* Photo */}
-                <div style={{position:'relative',aspectRatio:'3/4',cursor:'pointer',background:'#f1f5f9',overflow:'hidden'}} onClick={()=>router.push(`/profile/${s.id}`)}>
+                {/* Photo area */}
+                <div style={{position:'relative',aspectRatio:'3/4.2',cursor:'pointer',background:'#e2e8f0',overflow:'hidden'}}
+                  onClick={()=>router.push(`/profile/${s.id}`)}>
                   {s.avatar_url
-                    ?<img src={s.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt={firstName}/>
+                    ?<img src={s.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt={name} loading="lazy"/>
                     :<div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',
-                        background:`linear-gradient(135deg,${s.is_premium?'#7c3aed':'#f97316'},${s.is_premium?'#6d28d9':'#ea580c'})`,
-                        color:'#fff',fontSize:'32px',fontWeight:'900'}}>{initials(s.full_name)}</div>
+                      background:`linear-gradient(135deg,${s.is_premium?'#7c3aed,#6d28d9':'#f97316,#ea580c'})`,
+                      color:'#fff',fontSize:'36px',fontWeight:'900'}}>{initials(s.full_name)}</div>
                   }
-
-                  {/* Gradient overlay bottom */}
-                  <div style={{position:'absolute',bottom:0,left:0,right:0,height:'45%',background:'linear-gradient(to top,rgba(0,0,0,0.65),transparent)',pointerEvents:'none'}}/>
+                  {/* Dark gradient at bottom */}
+                  <div style={{position:'absolute',bottom:0,left:0,right:0,height:'50%',
+                    background:'linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 100%)',pointerEvents:'none'}}/>
 
                   {/* Online dot */}
-                  <div style={{position:'absolute',top:'8px',right:'8px',width:'12px',height:'12px',borderRadius:'50%',
-                    background:dotColor(online),border:'2px solid #fff',boxShadow:'0 1px 4px rgba(0,0,0,0.3)'}}/>
+                  <div style={{position:'absolute',top:8,right:8,width:11,height:11,borderRadius:'50%',
+                    background:onlineDot,border:'2px solid white',boxShadow:'0 1px 3px rgba(0,0,0,0.4)'}}/>
 
-                  {/* Badges top-left */}
-                  <div style={{position:'absolute',top:'8px',left:'8px',display:'flex',flexDirection:'column',gap:'3px'}}>
-                    {s.is_premium&&<span style={{background:'linear-gradient(135deg,#f59e0b,#d97706)',color:'#fff',fontSize:'8px',padding:'2px 5px',borderRadius:'4px',fontWeight:'800',letterSpacing:'0.3px'}}>VIP</span>}
-                    {s.is_verified&&<span style={{background:'#2563eb',color:'#fff',fontSize:'8px',padding:'2px 5px',borderRadius:'4px',fontWeight:'700'}}>✓ Real</span>}
+                  {/* Top-left badges */}
+                  <div style={{position:'absolute',top:8,left:8,display:'flex',flexDirection:'column',gap:3}}>
+                    {s.is_premium&&<span style={{background:'linear-gradient(135deg,#f59e0b,#d97706)',color:'#fff',
+                      fontSize:'9px',padding:'2px 6px',borderRadius:'4px',fontWeight:'800'}}>VIP</span>}
+                    {s.is_verified&&<span style={{background:'#2563eb',color:'#fff',
+                      fontSize:'9px',padding:'2px 6px',borderRadius:'4px',fontWeight:'700'}}>✓</span>}
                   </div>
 
-                  {/* Distance pill */}
-                  {distLabel&&<div style={{position:'absolute',bottom:extraPhotos.length?'38px':'8px',left:'8px',
-                    background:'rgba(0,0,0,0.55)',backdropFilter:'blur(4px)',color:'#fff',fontSize:'10px',
-                    padding:'2px 7px',borderRadius:'20px',fontWeight:'600'}}>
-                    📍 {distLabel}
+                  {/* Name + age over photo */}
+                  <div style={{position:'absolute',bottom:extras.length?44:8,left:8,right:8}}>
+                    <p style={{color:'#fff',fontWeight:'800',fontSize:'15px',margin:0,
+                      textShadow:'0 1px 3px rgba(0,0,0,0.6)',lineHeight:1.2}}>
+                      {name}{s.age?`, ${s.age}`:''}
+                    </p>
+                    {active&&<p style={{color:active.color==='#22c55e'?'#86efac':active.color,
+                      fontSize:'10px',margin:'2px 0 0',fontWeight:'600'}}>{active.label}</p>}
+                  </div>
+
+                  {/* Distance */}
+                  {distLabel&&<div style={{position:'absolute',bottom:extras.length?44:8,right:8,
+                    background:'rgba(0,0,0,0.5)',color:'#fff',fontSize:'9px',
+                    padding:'2px 6px',borderRadius:'10px',fontWeight:'600'}}>
+                    📍{distLabel}
                   </div>}
 
                   {/* Photo strip */}
-                  {extraPhotos.length>0&&(
-                    <div style={{position:'absolute',bottom:'6px',left:'6px',right:'6px',display:'flex',gap:'3px'}}>
-                      {extraPhotos.map((p:string,i:number)=>(
-                        <div key={i} style={{flex:1,height:'30px',borderRadius:'5px',overflow:'hidden',border:'1.5px solid rgba(255,255,255,0.7)'}}>
+                  {extras.length>0&&(
+                    <div style={{position:'absolute',bottom:6,left:6,right:6,display:'flex',gap:3}}>
+                      {extras.map((p:string,i:number)=>(
+                        <div key={i} style={{flex:1,height:32,borderRadius:5,overflow:'hidden',
+                          border:'1.5px solid rgba(255,255,255,0.8)'}}>
                           <img src={p} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/>
                         </div>
                       ))}
@@ -265,53 +271,42 @@ export default function DiscoverPage(){
                   )}
                 </div>
 
-                {/* Info row */}
-                <div style={{padding:'8px 10px 10px'}}>
-                  {/* Name + active */}
-                  <div style={{cursor:'pointer',marginBottom:'7px'}} onClick={()=>router.push(`/profile/${s.id}`)}>
-                    <p style={{fontSize:'14px',fontWeight:'800',color:'#0f172a',marginBottom:'1px',lineHeight:'1.3'}}>
-                      {firstName}{s.age?`, ${s.age}`:''}
-                    </p>
-                    {active&&(
-                      <p style={{fontSize:'11px',color:active.color,fontWeight:'600'}}>{active.label}</p>
-                    )}
-                  </div>
-                  {/* Buttons row */}
-                  {s.id!==currentUserId&&(
-                    <div style={{display:'flex',gap:'6px'}}>
-                      <button onClick={e=>{e.stopPropagation();handleLike(s.id, s.full_name?.split(' ')[0]||'them')}}
-                        style={{width:'34px',height:'34px',borderRadius:'50%',border:`1.5px solid ${isMatch||isLiked?'#ec4899':'#e2e8f0'}`,cursor:'pointer',
-                          background:isMatch?'#ec4899':isLiked?'#fdf2f8':'#fff',
-                          display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
-                          transition:'all 0.2s',transform:liking===s.id?'scale(1.25)':'scale(1)'}}>
-                        <svg width="13" height="12" viewBox="0 0 24 21" fill={isLiked||isMatch?'#ec4899':'none'} stroke={isLiked||isMatch?'#ec4899':'#94a3b8'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21C12 21 2 13.5 2 7a5 5 0 0 1 10 0 5 5 0 0 1 10 0c0 6.5-10 14-10 14z"/></svg>
-                      </button>
-                      <button onClick={e=>{e.stopPropagation();
-                        if(!friendStatuses[s.id]) sendRequest(s.id)
-                        else if(friendStatuses[s.id]==='friends') router.push(`/profile/${s.id}`)
-                        else if(friendStatuses[s.id]==='pending_received') router.push('/dashboard')
-                      }} style={{flex:1,height:'34px',borderRadius:'50px',border:'none',cursor:'pointer',fontSize:'11px',fontWeight:'700',
-                        background:friendStatuses[s.id]==='friends'?'#16a34a':friendStatuses[s.id]==='pending_sent'?'#ca8a04':friendStatuses[s.id]==='pending_received'?'#2563eb':'#f97316',
-                        color:'#fff',boxShadow:'0 2px 6px rgba(249,115,22,0.3)'}}>
-                        {sendingTo===s.id?'...':friendStatuses[s.id]==='friends'?'Friends':friendStatuses[s.id]==='pending_sent'?'Pending':friendStatuses[s.id]==='pending_received'?'Accept':'Connect'}
-                      </button>
-                    </div>
-                  )}
+                {/* Action row */}
+                <div style={{padding:'8px 10px 10px',display:'flex',gap:6,alignItems:'center'}}>
+                  <button onClick={e=>{e.stopPropagation();like(s.id,name)}}
+                    style={{width:34,height:34,borderRadius:'50%',flexShrink:0,border:`1.5px solid ${isMatch||isLiked?'#ec4899':'#e8ecf0'}`,
+                      background:isMatch?'#ec4899':isLiked?'#fdf2f8':'#fff',cursor:'pointer',
+                      display:'flex',alignItems:'center',justifyContent:'center',
+                      transform:liking===s.id?'scale(1.3)':'scale(1)',transition:'all 0.15s'}}>
+                    <svg width="13" height="12" viewBox="0 0 24 21" fill={isLiked||isMatch?'#ec4899':'none'} stroke={isLiked||isMatch?'#ec4899':'#bbb'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 21C12 21 2 13.5 2 7a5 5 0 0 1 10 0 5 5 0 0 1 10 0c0 6.5-10 14-10 14z"/>
+                    </svg>
+                  </button>
+                  <button onClick={e=>{e.stopPropagation();
+                    if(!fs) connect(s.id)
+                    else if(fs==='friends') router.push(`/profile/${s.id}`)
+                    else if(fs==='pending_received') router.push('/dashboard')
+                  }} style={{flex:1,height:34,borderRadius:20,border:'none',cursor:'pointer',
+                    fontSize:'12px',fontWeight:'700',
+                    background:fs==='friends'?'#16a34a':fs==='pending_sent'?'#94a3b8':fs==='pending_received'?'#2563eb':'#f97316',
+                    color:'#fff',boxShadow:!fs?'0 2px 8px rgba(249,115,22,0.35)':'none',
+                    transition:'all 0.2s'}}>
+                    {sending===s.id?'..':fs==='friends'?'✓ Friends':fs==='pending_sent'?'Pending':fs==='pending_received'?'Accept':'Connect'}
+                  </button>
                 </div>
               </div>
             )
-          })}
-        </div>
-      )}
+          })
+        }
+      </div>
 
       {!loading&&filtered.length===0&&(
-        <div style={{textAlign:'center',padding:'60px 20px',margin:'0 16px',background:'#fff',borderRadius:'16px',border:'1px solid #e2e8f0'}}>
+        <div style={{textAlign:'center',padding:'60px 20px',margin:'16px'}}>
           <div style={{fontSize:'40px',marginBottom:'12px'}}>🔍</div>
-          <p style={{fontSize:'16px',fontWeight:'600',color:'#374151',marginBottom:'6px'}}>No people found</p>
-          <p style={{fontSize:'14px',color:'#94a3b8'}}>Try different filters</p>
+          <p style={{fontSize:'16px',fontWeight:'700',color:'#374151'}}>No one found</p>
+          <p style={{fontSize:'13px',color:'#94a3b8',marginTop:'4px'}}>Try different filters</p>
         </div>
       )}
-      <style>{`.discover-grid{grid-template-columns:repeat(2,1fr)}`}</style>
     </div>
   )
 }
