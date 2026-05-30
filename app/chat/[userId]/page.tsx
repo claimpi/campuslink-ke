@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
+import { detectViolation, VIOLATION_MESSAGES } from '@/lib/content-filter'
 
 const FREE_MSGS = 10
 const COINS_PER_MSG = 5
@@ -18,6 +19,7 @@ export default function ChatPage() {
   const [coinAmount, setCoinAmount] = useState('')
   const [coins, setCoins] = useState(0)
   const [error, setError] = useState('')
+  const [policyViolation, setPolicyViolation] = useState<{reason:string,message:string}|null>(null)
   const [showBuy, setShowBuy] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -80,12 +82,24 @@ export default function ChatPage() {
 
   async function send() {
     if (!text.trim() || !me || sending) return
+
+    // Client-side content check first (fast, no network)
+    const violation = detectViolation(text)
+    if (violation.blocked) {
+      setPolicyViolation({ reason: violation.reason, message: VIOLATION_MESSAGES[violation.reason] || VIOLATION_MESSAGES.contact_sharing })
+      return
+    }
+
     setSending(true); setError('')
     const res = await fetch('/api/message', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ senderId: me.id, receiverId: otherId, content: text.trim() })
     })
     const data = await res.json()
+    if (data.error === 'content_violation') {
+      setPolicyViolation({ reason: data.reason, message: data.message })
+      setSending(false); return
+    }
     if (data.error === 'insufficient_coins') {
       setError(`You need ${COINS_PER_MSG} coins to send a message. You have ${data.coinsHave}.`)
       setShowBuy(true)
@@ -111,6 +125,33 @@ export default function ChatPage() {
 
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', height: '100dvh', display: 'flex', flexDirection: 'column', background: '#f5f6fa' }}>
+
+      {/* Policy violation popup */}
+      {policyViolation && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#fff', borderRadius: 20, padding: '28px 24px', maxWidth: 320, width: '100%', textAlign: 'center' }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#fef2f2', border: '2px solid #fecaca', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, margin: '0 auto 14px' }}>🚫</div>
+            <h3 style={{ fontSize: 17, fontWeight: 800, color: '#0f172a', marginBottom: 8 }}>Message Blocked</h3>
+            <p style={{ fontSize: 13, color: '#64748b', lineHeight: 1.6, marginBottom: 16 }}>{policyViolation.message}</p>
+            <div style={{ background: '#f8fafc', borderRadius: 10, padding: '10px 14px', marginBottom: 16, textAlign: 'left' }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', margin: '0 0 6px' }}>CampusLink Policy</p>
+              <p style={{ fontSize: 12, color: '#475569', margin: 0, lineHeight: 1.6 }}>
+                To keep our community safe, sharing phone numbers, social handles, bank accounts, or email addresses in chat is not allowed. Use our built-in features to connect safely.
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setPolicyViolation(null)}
+                style={{ flex: 1, padding: '11px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: '#fff', color: '#374151', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                Got it
+              </button>
+              <button onClick={() => { setPolicyViolation(null); router.push('/pricing') }}
+                style={{ flex: 1, padding: '11px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#f97316,#ea580c)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                🪙 Send Coins
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div style={{ background: '#fff', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid #e8ecf0', flexShrink: 0 }}>

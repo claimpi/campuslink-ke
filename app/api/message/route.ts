@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { detectViolation, VIOLATION_MESSAGES } from '@/lib/content-filter'
 
 const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
@@ -11,6 +12,16 @@ export async function POST(req: NextRequest) {
     const { senderId, receiverId, content } = await req.json()
     if (!senderId || !receiverId || !content?.trim())
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
+
+    // Content filter check
+    const violation = detectViolation(content)
+    if (violation.blocked) {
+      return NextResponse.json({
+        error: 'content_violation',
+        reason: violation.reason,
+        message: VIOLATION_MESSAGES[violation.reason] || VIOLATION_MESSAGES.contact_sharing
+      }, { status: 422 })
+    }
 
     const { data: sender } = await sb.from('profiles')
       .select('coins, free_messages_used, full_name').eq('id', senderId).maybeSingle()
