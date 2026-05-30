@@ -1,14 +1,14 @@
 import Link from 'next/link'
 
 type Props = {
-  id: string; full_name: string; university: string; course: string;
+  id: string; full_name: string; location_name: string;
   year_of_study: number; interests?: string[]; avatar_url?: string;
   is_premium?: boolean; is_featured?: boolean; is_top_student?: boolean;
 }
 
 function getInitials(name: string) { return name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) }
 
-export default function StudentCard({ id, full_name, university, course, year_of_study, interests=[], is_premium, is_featured, is_top_student }: Props) {
+export default function StudentCard({ id, full_name, location_name, interests=[], is_premium, is_featured, is_top_student }: Props) {
   const bannerBg = is_top_student ? 'linear-gradient(135deg,#f97316,#ea580c)' : is_featured ? 'linear-gradient(135deg,#8b5cf6,#7c3aed)' : null
   const bannerText = is_top_student ? '⭐ TOP STUDENT' : is_featured ? '✨ FEATURED' : null
   const borderColor = is_featured ? '#c4b5fd' : is_top_student ? '#fed7aa' : '#f3f4f6'
@@ -33,7 +33,7 @@ export default function StudentCard({ id, full_name, university, course, year_of
           </div>
         </div>
         <div style={{fontSize:'13px',color:'#6b7280',marginBottom:'4px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>📚 {course}</div>
-        <div style={{fontSize:'13px',color:'#9ca3af',marginBottom:'14px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>📍 {university}</div>
+        <div style={{fontSize:'13px',color:'#9ca3af',marginBottom:'14px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>📍 {location_name}</div>
         {interests.length > 0 && (
           <div style={{display:'flex',gap:'5px',flexWrap:'wrap',marginBottom:'14px'}}>
             {interests.slice(0,3).map(i=>(

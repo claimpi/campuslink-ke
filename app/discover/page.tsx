@@ -60,7 +60,7 @@ export default function DiscoverPage(){
 
         // Fetch users filtered by opposite gender at DB level
         let query = sb.from('profiles')
-          .select('id,full_name,avatar_url,photos,is_premium,is_featured,is_verified,age,gender,looking_for,university,location_name,latitude,longitude,last_seen,created_at')
+          .select('id,full_name,avatar_url,photos,is_premium,is_featured,is_verified,age,gender,looking_for,location_name,latitude,longitude,last_seen,created_at')
           .neq('id', user.id)
           .order('is_featured',{ascending:false})
           .order('is_premium',{ascending:false})
@@ -119,7 +119,7 @@ export default function DiscoverPage(){
 
   const filtered=list.filter(s=>
     s.id!==me
-    &&(!searchQ||s.full_name?.toLowerCase().includes(searchQ.toLowerCase())||s.university?.toLowerCase().includes(searchQ.toLowerCase()))
+    &&(!searchQ||s.full_name?.toLowerCase().includes(searchQ.toLowerCase())||s.location_name?.toLowerCase().includes(searchQ.toLowerCase()))
     &&(gender==='All'||s.gender===gender)
   )
 
@@ -165,7 +165,7 @@ export default function DiscoverPage(){
         {searchOpen&&(
           <div style={{padding:'8px 16px 12px'}}>
             <input autoFocus value={searchQ} onChange={e=>setSearchQ(e.target.value)}
-              placeholder="Search name or university..."
+              placeholder="Search name or location..."
               style={{width:'100%',border:'1.5px solid #e2e8f0',borderRadius:20,padding:'9px 16px',fontSize:14,outline:'none',background:'#fff',boxSizing:'border-box'}}
               onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
           </div>
