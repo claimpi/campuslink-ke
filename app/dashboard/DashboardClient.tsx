@@ -84,7 +84,7 @@ export default function DashboardClient(){
   )
 
   const name=profile?.full_name||user?.email?.split('@')[0]||'User'
-  const pct=[profile?.bio,profile?.whatsapp_number,profile?.location_name,profile?.course,(profile?.interests||[]).length>0].filter(Boolean).length*20
+  const pct=[profile?.bio,profile?.whatsapp_number,profile?.location_name,(profile?.interests||[]).length>0,profile?.avatar_url].filter(Boolean).length*20
 
   return(
     <div style={{maxWidth:'1000px',margin:'0 auto',padding:'32px 20px'}}>
@@ -137,7 +137,7 @@ export default function DashboardClient(){
           <div style={{height:'100%',background:'linear-gradient(135deg,#f97316,#ea580c)',borderRadius:'50px',width:`${pct}%`,transition:'width 0.5s'}}/>
         </div>
         <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
-          {[{l:'Location',d:!!profile?.location_name},{l:'Course',d:!!profile?.course},{l:'WhatsApp',d:!!profile?.whatsapp_number},{l:'Bio',d:!!profile?.bio},{l:'Interests',d:(profile?.interests||[]).length>0},{l:'Photo',d:!!profile?.avatar_url}].map(x=>(
+          {[{l:'Location',d:!!profile?.location_name},{l:'WhatsApp',d:!!profile?.whatsapp_number},{l:'Bio',d:!!profile?.bio},{l:'Interests',d:(profile?.interests||[]).length>0},{l:'Photo',d:!!profile?.avatar_url}].map(x=>(
             <span key={x.l} style={{fontSize:'12px',padding:'3px 9px',borderRadius:'50px',background:x.d?'#f0fdf4':'#f8fafc',color:x.d?'#16a34a':'#94a3b8',border:`1px solid ${x.d?'#bbf7d0':'#e2e8f0'}`,fontWeight:'600'}}>{x.d?'':' '} {x.l}</span>
           ))}
         </div>
