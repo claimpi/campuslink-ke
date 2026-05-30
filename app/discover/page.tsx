@@ -43,9 +43,9 @@ export default function DiscoverPage(){
     const sb=createClient()
     sb.auth.getUser().then(({data:{user}})=>{
       if(!user){
-        // Not logged in — show all users
+        // Not logged in — show all users as blurred preview to entice sign up
         sb.from('profiles')
-          .select('id,full_name,avatar_url,photos,is_premium,is_featured,is_verified,age,gender,looking_for,location_name,latitude,longitude,last_seen,created_at')
+          .select('id,full_name,avatar_url,photos,is_premium,age,gender,looking_for,location_name,latitude,longitude,last_seen,created_at')
           .order('is_featured',{ascending:false}).order('last_seen',{ascending:false,nullsFirst:false})
           .limit(80)
           .then(({data})=>{ if(data) setUsers(data); setLoading(false) })
@@ -172,8 +172,53 @@ export default function DiscoverPage(){
         )}
       </div>
 
+      {/* Logged out sign up prompt */}
+      {!me&&!loading&&filtered.length>0&&(
+        <div style={{position:'sticky',top:0,zIndex:50,background:'linear-gradient(135deg,#f97316,#ea580c)',
+          padding:'12px 16px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
+          <div>
+            <p style={{color:'#fff',fontWeight:800,fontSize:14,margin:0}}>👀 {filtered.length} people near you!</p>
+            <p style={{color:'rgba(255,255,255,0.85)',fontSize:12,margin:'2px 0 0'}}>Sign up free to chat & connect</p>
+          </div>
+          <div style={{display:'flex',gap:8,flexShrink:0}}>
+            <button onClick={()=>router.push('/login')} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'1px solid rgba(255,255,255,0.4)',borderRadius:20,padding:'7px 14px',fontSize:13,fontWeight:700,cursor:'pointer'}}>Sign In</button>
+            <button onClick={()=>router.push('/register')} style={{background:'#fff',color:'#f97316',border:'none',borderRadius:20,padding:'7px 14px',fontSize:13,fontWeight:800,cursor:'pointer'}}>Join Free</button>
+          </div>
+        </div>
+      )}
+
       {/* List */}
-      <div>
+      <div style={{position:'relative'}}>
+        {/* Blur overlay for logged out users after 3rd card */}
+        {!me&&!loading&&filtered.length>0&&(
+          <div style={{position:'absolute',bottom:0,left:0,right:0,height:'60%',zIndex:10,
+            background:'linear-gradient(to top, rgba(245,246,250,1) 40%, rgba(245,246,250,0.95) 60%, transparent 100%)',
+            pointerEvents:'none'}}/>
+        )}
+        {!me&&!loading&&filtered.length>0&&(
+          <div style={{position:'absolute',bottom:'10%',left:0,right:0,zIndex:20,
+            display:'flex',flexDirection:'column',alignItems:'center',gap:12,padding:'0 24px'}}>
+            <div style={{background:'#fff',borderRadius:20,padding:'20px 24px',textAlign:'center',
+              boxShadow:'0 8px 32px rgba(0,0,0,0.12)',border:'1px solid #e8ecf0',width:'100%',maxWidth:320}}>
+              <div style={{fontSize:36,marginBottom:8}}>🔒</div>
+              <p style={{fontWeight:900,fontSize:16,color:'#0f172a',margin:'0 0 6px'}}>See who likes you!</p>
+              <p style={{fontSize:13,color:'#64748b',margin:'0 0 16px',lineHeight:1.5}}>
+                Join free to chat, send Hi, and connect with people near you
+              </p>
+              <button onClick={()=>router.push('/register')}
+                style={{width:'100%',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',
+                  border:'none',borderRadius:12,padding:'13px',fontSize:15,fontWeight:800,cursor:'pointer',
+                  boxShadow:'0 4px 14px rgba(249,115,22,0.4)',marginBottom:10}}>
+                Create Free Account
+              </button>
+              <button onClick={()=>router.push('/login')}
+                style={{width:'100%',background:'none',color:'#f97316',border:'1px solid #f97316',
+                  borderRadius:12,padding:'11px',fontSize:14,fontWeight:700,cursor:'pointer'}}>
+                I already have an account
+              </button>
+            </div>
+          </div>
+        )}
         {loading
           ?[...Array(3)].map((_,i)=>(
             <div key={i} style={{background:'#fff',marginBottom:8,padding:16,display:'flex',gap:14}}>
@@ -184,7 +229,7 @@ export default function DiscoverPage(){
               </div>
             </div>
           ))
-          :filtered.map(s=>{
+          :filtered.map((s,index)=>{
             const distKm=loc&&s.latitude?calcDist(loc.lat,loc.lng,s.latitude,s.longitude):null
             const distLabel=distKm!==null?(distKm<0.1?'<0.1km':`${distKm.toFixed(1)}km`):null
             const isLiked=liked.has(s.id)
@@ -196,8 +241,10 @@ export default function DiscoverPage(){
             const said_hi=hiSent.has(s.id)
 
             return(
-              <div key={s.id} onClick={()=>router.push(`/profile/${s.id}`)}
-                style={{background:'#fff',marginBottom:8,padding:'16px 16px',cursor:'pointer',borderBottom:'1px solid #f5f5f0'}}>
+              <div key={s.id} onClick={()=>!me&&index>=3?router.push('/register'):router.push(`/profile/${s.id}`)}
+                style={{background:'#fff',marginBottom:8,padding:'16px 16px',cursor:'pointer',borderBottom:'1px solid #f5f5f0',
+                  filter:!me&&index>=3?'blur(5px)':'none',
+                  pointerEvents:!me&&index>=3?'none':'auto'}}>
 
                 <div style={{display:'flex',gap:14,alignItems:'flex-start'}}>
                   {/* Avatar */}
@@ -308,7 +355,21 @@ export default function DiscoverPage(){
         }
       </div>
 
-      {!loading&&filtered.length===0&&(
+      {!loading&&filtered.length===0&&!me&&(
+        <div style={{textAlign:'center',padding:'60px 20px'}}>
+          <div style={{fontSize:48,marginBottom:16}}>👥</div>
+          <p style={{fontSize:18,fontWeight:800,color:'#374151',marginBottom:8}}>Meet people near you!</p>
+          <p style={{fontSize:14,color:'#94a3b8',marginBottom:24}}>Join CampusLink KE to see profiles</p>
+          <button onClick={()=>router.push('/register')}
+            style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',border:'none',
+              borderRadius:12,padding:'13px 32px',fontSize:15,fontWeight:800,cursor:'pointer',
+              boxShadow:'0 4px 14px rgba(249,115,22,0.4)'}}>
+            Join Free Now
+          </button>
+        </div>
+      )}
+
+      {!loading&&filtered.length===0&&me&&(
         <div style={{textAlign:'center',padding:'60px 20px'}}>
           <div style={{fontSize:40,marginBottom:12}}>🔍</div>
           <p style={{fontSize:16,fontWeight:700,color:'#374151'}}>No one found</p>
