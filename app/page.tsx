@@ -16,7 +16,7 @@ export default function HomePage(){
   const [users,setUsers]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
   const [search,setSearch]=useState('')
-  const [gender,setGender]=useState('All')
+  const [gender,setGender]=useState('Auto')  // Auto = show opposite gender
   const [lookingFor,setLookingFor]=useState('All')
   const [status,setStatus]=useState('All')
   const [announcements,setAnnouncements]=useState<any[]>([])
@@ -50,6 +50,13 @@ export default function HomePage(){
       if(user){
         setCurrentUserId(user.id)
         loadFriendStatuses(user.id)
+        // Set filter to show opposite gender automatically
+        createClient().from('profiles').select('gender').eq('id',user.id).maybeSingle()
+          .then(({data})=>{
+            if(data?.gender==='male') setGender('female')
+            else if(data?.gender==='female') setGender('male')
+            else setGender('All')
+          })
         createClient().from('likes').select('receiver_id').eq('sender_id',user.id)
           .then(({data})=>{ if(data) setLikes(new Set(data.map((l:any)=>l.receiver_id))) })
         createClient().from('likes').select('sender_id').eq('receiver_id',user.id)
@@ -112,7 +119,7 @@ export default function HomePage(){
   const filtered=sorted.filter(s=>{
     const q=search.toLowerCase()
     return(!q||s.full_name?.toLowerCase().includes(q)||s.location_name?.toLowerCase().includes(q))
-      &&(gender==='All'||s.gender===gender)
+      &&(gender==='All'||gender==='Auto'||s.gender===gender)
       &&(lookingFor==='All'||s.looking_for===lookingFor)
       &&(status==='All'||s.status===status)
   })
@@ -151,7 +158,9 @@ export default function HomePage(){
           style={{flex:1,minWidth:'160px',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'9px 12px',fontSize:'14px',outline:'none',background:'#fff'}}
           onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
         <select value={gender} onChange={e=>setGender(e.target.value)} style={{border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'9px 10px',fontSize:'13px',outline:'none',background:'#fff'}}>
-          <option value="All">All</option><option value="male">Men</option><option value="female">Women</option>
+          <option value="All">Everyone</option>
+          <option value="male">Men only</option>
+          <option value="female">Women only</option>
         </select>
         <select value={lookingFor} onChange={e=>setLookingFor(e.target.value)} style={{border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'9px 10px',fontSize:'13px',outline:'none',background:'#fff'}}>
           <option value="All">Looking For</option><option value="friendship">Friendship</option><option value="relationship">Relationship</option><option value="study">Study</option><option value="networking">Networking</option>
