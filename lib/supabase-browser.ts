@@ -10,6 +10,7 @@ export function createClient() {
         autoRefreshToken: true,
         storageKey: 'campuslink-auth',
         storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+        flowType: 'implicit',
       }
     }
   )
