@@ -31,7 +31,28 @@ export default function DiscoverPage(){
 
   useEffect(()=>{
     const sb=createClient()
-    if(navigator.geolocation) navigator.geolocation.getCurrentPosition(p=>setLoc({lat:p.coords.latitude,lng:p.coords.longitude}),()=>{})
+    if(navigator.geolocation) navigator.geolocation.getCurrentPosition(async p=>{
+      setLoc({lat:p.coords.latitude,lng:p.coords.longitude})
+      // Auto-save location to profile silently
+      const sb2=createClient()
+      const {data:{user:u}}=await sb2.auth.getUser()
+      if(u){
+        // Only update if coords changed significantly
+        const {data:prof}=await sb2.from('profiles').select('latitude,longitude').eq('id',u.id).maybeSingle()
+        const same=prof?.latitude&&Math.abs(prof.latitude-p.coords.latitude)<0.01&&Math.abs(prof.longitude-p.coords.longitude)<0.01
+        if(!same){
+          // Reverse geocode
+          try{
+            const res=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${p.coords.latitude}&lon=${p.coords.longitude}&format=json`)
+            const geo=await res.json()
+            const town=geo.address?.suburb||geo.address?.city||geo.address?.town||geo.address?.county||'Kenya'
+            await sb2.from('profiles').update({latitude:p.coords.latitude,longitude:p.coords.longitude,location_name:town}).eq('id',u.id)
+          }catch{
+            await sb2.from('profiles').update({latitude:p.coords.latitude,longitude:p.coords.longitude}).eq('id',u.id)
+          }
+        }
+      }
+    },()=>{})
 
     sb.auth.getUser().then(({data:{user}})=>{
       if(!user){
@@ -144,6 +165,18 @@ export default function DiscoverPage(){
           </div>
         )}
       </div>
+
+      {/* Location prompt for logged in users without location */}
+      {me&&!loc&&!loading&&(
+        <div style={{background:'#f0fdf4',borderBottom:'1px solid #bbf7d0',padding:'8px 16px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
+          <p style={{fontSize:12,color:'#166534',fontWeight:600,margin:0}}>📍 Allow location to see people near you</p>
+          <button onClick={()=>{
+            if(navigator.geolocation) navigator.geolocation.getCurrentPosition(p=>setLoc({lat:p.coords.latitude,lng:p.coords.longitude}),()=>{})
+          }} style={{background:'#16a34a',color:'#fff',border:'none',borderRadius:20,padding:'4px 12px',fontSize:11,fontWeight:700,cursor:'pointer',flexShrink:0}}>
+            Enable
+          </button>
+        </div>
+      )}
 
       {/* Logged out banner */}
       {!me&&!loading&&(
