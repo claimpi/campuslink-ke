@@ -7,254 +7,259 @@ import { createClient } from '@/lib/supabase-browser'
 function initials(n:string){return(n||'?').split(' ').map((x:string)=>x[0]).join('').toUpperCase().slice(0,2)}
 
 export default function DashboardClient(){
-  const router=useRouter()
-  const sp=useSearchParams()
-  const isWelcome=sp.get('welcome')==='true'
-  const [user,setUser]=useState<any>(null)
-  const [profile,setProfile]=useState<any>(null)
-  const [loading,setLoading]=useState(true)
-  const [friendRequests,setFriendRequests]=useState<any[]>([])
-  const [gifts,setGifts]=useState<any[]>([])
-  const [matches,setMatches]=useState<any[]>([])
-  const [likesReceived,setLikesReceived]=useState(0)
+  const router = useRouter()
+  const sp = useSearchParams()
+  const isNew = sp.get('new')==='true'
+  const [user, setUser] = useState<any>(null)
+  const [profile, setProfile] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({ friends:0, following:0, followers:0, visitors:0, likes:0, matches:0, coins:0 })
+  const [friendRequests, setFriendRequests] = useState<any[]>([])
+  const [matches, setMatches] = useState<any[]>([])
+  const [gifts, setGifts] = useState<any[]>([])
 
   useEffect(()=>{
     async function load(){
-      const sb=createClient()
-      const {data:{user}}=await sb.auth.getUser()
+      const sb = createClient()
+      const {data:{user}} = await sb.auth.getUser()
       if(!user){router.push('/login');return}
       setUser(user)
-      const {data}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle()
-      if(!data){
-        const {data:np}=await sb.from('profiles').upsert({id:user.id,email:user.email,full_name:user.user_metadata?.full_name||user.email?.split('@')[0]||'User'},{onConflict:'id'}).select().maybeSingle()
+
+      const {data:p} = await sb.from('profiles').select('*').eq('id',user.id).maybeSingle()
+      if(!p){
+        const {data:np} = await sb.from('profiles').upsert({id:user.id,email:user.email,full_name:user.user_metadata?.full_name||user.email?.split('@')[0]||'User'},{onConflict:'id'}).select().maybeSingle()
         setProfile(np)
-      } else setProfile(data)
+      } else setProfile(p)
 
-      // Load pending friend requests sent TO this user
-      const {data:requests} = await sb.from('friend_requests')
-        .select('id,sender_id,status')
-        .eq('receiver_id', user.id)
-        .eq('status','pending')
-      
-      if(requests && requests.length > 0) {
-        // Get sender profiles
-        const senderIds = requests.map((r:any)=>r.sender_id)
-        const {data:senders} = await sb.from('profiles')
-          .select('id,full_name,avatar_url,whatsapp_number,bio,interests,is_premium,is_featured,is_verified,profile_views,referral_code,referral_earnings,gift_earnings')
-          .in('id', senderIds)
-        const mapped = requests.map((r:any)=>({
-          ...r,
-          sender: senders?.find((s:any)=>s.id===r.sender_id)
-        }))
-        setFriendRequests(mapped)
-      }
-      // Load gifts received
-      const {data:giftsData} = await sb.from('gifts')
-        .select('id,gift_type,amount,message,created_at,profiles!gifts_sender_id_fkey(full_name,avatar_url)')
-        .eq('receiver_id', user.id)
-        .order('created_at',{ascending:false})
-        .limit(10)
-      setGifts(giftsData||[])
+      // Stats in parallel
+      const [friendsRes, followingRes, followersRes, visitorsRes, likesRes, myLikesRes, coinsRes, reqRes, giftsRes] = await Promise.all([
+        sb.from('friend_requests').select('id',{count:'exact',head:true}).or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`).eq('status','accepted'),
+        sb.from('follows').select('id',{count:'exact',head:true}).eq('follower_id',user.id),
+        sb.from('follows').select('id',{count:'exact',head:true}).eq('following_id',user.id),
+        sb.from('profiles').select('profile_views').eq('id',user.id).maybeSingle(),
+        sb.from('likes').select('id',{count:'exact',head:true}).eq('receiver_id',user.id),
+        sb.from('likes').select('receiver_id').eq('sender_id',user.id),
+        sb.from('profiles').select('coins').eq('id',user.id).maybeSingle(),
+        sb.from('friend_requests').select('id,sender_id').eq('receiver_id',user.id).eq('status','pending'),
+        sb.from('gifts').select('id,gift_type,amount,created_at,profiles!gifts_sender_id_fkey(full_name,avatar_url)').eq('receiver_id',user.id).order('created_at',{ascending:false}).limit(5),
+      ])
 
-      // Load matches
-      const {data:myLikes}=await sb.from('likes').select('receiver_id').eq('sender_id',user.id)
-      const likedIds=(myLikes||[]).map((l:any)=>l.receiver_id)
+      // Compute matches
+      const likedIds = (myLikesRes.data||[]).map((l:any)=>l.receiver_id)
+      let matchCount = 0
+      let matchProfiles:any[] = []
       if(likedIds.length>0){
-        const {data:theyLikedMe}=await sb.from('likes').select('sender_id').eq('receiver_id',user.id).in('sender_id',likedIds)
-        const matchIds=(theyLikedMe||[]).map((l:any)=>l.sender_id)
+        const {data:theyLiked} = await sb.from('likes').select('sender_id').eq('receiver_id',user.id).in('sender_id',likedIds)
+        const matchIds = (theyLiked||[]).map((l:any)=>l.sender_id)
+        matchCount = matchIds.length
         if(matchIds.length>0){
-          const {data:matchProfiles}=await sb.from('profiles').select('id,full_name,avatar_url').in('id',matchIds)
-          setMatches(matchProfiles||[])
+          const {data:mp} = await sb.from('profiles').select('id,full_name,avatar_url').in('id',matchIds).limit(8)
+          matchProfiles = mp||[]
         }
       }
-      // Likes received count
-      const {count}=await sb.from('likes').select('*',{count:'exact',head:true}).eq('receiver_id',user.id)
-      setLikesReceived(count||0)
+      setMatches(matchProfiles)
 
+      // Friend requests with sender info
+      if(reqRes.data&&reqRes.data.length>0){
+        const sIds = reqRes.data.map((r:any)=>r.sender_id)
+        const {data:senders} = await sb.from('profiles').select('id,full_name,avatar_url,location_name').in('id',sIds)
+        setFriendRequests(reqRes.data.map((r:any)=>({...r,sender:senders?.find((s:any)=>s.id===r.sender_id)})))
+      }
+
+      setGifts(giftsRes.data||[])
+      setStats({
+        friends: friendsRes.count||0,
+        following: followingRes.count||0,
+        followers: followersRes.count||0,
+        visitors: visitorsRes.data?.profile_views||0,
+        likes: likesRes.count||0,
+        matches: matchCount,
+        coins: coinsRes.data?.coins||0,
+      })
       setLoading(false)
     }
     load()
   },[])
 
   if(loading) return(
-    <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'70vh'}}>
-      <div style={{width:'36px',height:'36px',border:'3px solid #e2e8f0',borderTop:'3px solid #f97316',borderRadius:'50%',animation:'spin 0.8s linear infinite'}}/>
+    <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'80vh',flexDirection:'column',gap:12}}>
+      <div style={{width:36,height:36,border:'3px solid #fed7aa',borderTop:'3px solid #f97316',borderRadius:'50%',animation:'spin 0.8s linear infinite'}}/>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 
-  const name=profile?.full_name||user?.email?.split('@')[0]||'User'
-  const pct=[profile?.bio,profile?.whatsapp_number,profile?.location_name,(profile?.interests||[]).length>0,profile?.avatar_url].filter(Boolean).length*20
+  const name = profile?.full_name||user?.email?.split('@')[0]||'User'
+  const pct = [profile?.bio,profile?.location_name,(profile?.interests||[]).length>0,profile?.avatar_url,profile?.age].filter(Boolean).length*20
 
   return(
-    <div style={{maxWidth:'1000px',margin:'0 auto',padding:'32px 20px'}}>
-      {isWelcome&&(
-        <div style={{background:'linear-gradient(135deg,#f97316,#ea580c)',borderRadius:'16px',padding:'20px 24px',marginBottom:'24px',color:'#fff',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'12px'}}>
+    <div style={{maxWidth:480,margin:'0 auto',background:'#f5f6fa',minHeight:'100vh',paddingBottom:80}}>
+
+      {/* New user welcome */}
+      {isNew&&(
+        <div style={{background:'linear-gradient(135deg,#f97316,#ea580c)',padding:'14px 16px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
           <div>
-            <p style={{fontWeight:'800',fontSize:'18px',marginBottom:'3px'}}>Welcome, {name.split(' ')[0]}!</p>
-            <p style={{fontSize:'13px',opacity:0.9}}>Complete your profile to appear in search results.</p>
+            <p style={{color:'#fff',fontWeight:800,fontSize:14,margin:0}}>Welcome, {name.split(' ')[0]}! 🎉</p>
+            <p style={{color:'rgba(255,255,255,0.85)',fontSize:12,margin:'2px 0 0'}}>Complete your profile to start connecting</p>
           </div>
-          <Link href="/dashboard/profile" style={{background:'#fff',color:'#f97316',padding:'9px 20px',borderRadius:'8px',fontWeight:'700',fontSize:'13px'}}>Complete Profile</Link>
+          <Link href="/dashboard/profile" style={{background:'#fff',color:'#f97316',borderRadius:20,padding:'6px 14px',fontSize:12,fontWeight:800,textDecoration:'none',flexShrink:0}}>Complete</Link>
         </div>
       )}
 
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'28px',flexWrap:'wrap',gap:'12px'}}>
-        <div style={{display:'flex',alignItems:'center',gap:'14px'}}>
-          {profile?.avatar_url
-            ?<img src={profile.avatar_url} style={{width:'52px',height:'52px',borderRadius:'50%',objectFit:'cover',border:'2px solid #e2e8f0'}}/>
-            :<div style={{width:'52px',height:'52px',borderRadius:'50%',background:'linear-gradient(135deg,#fff7ed,#fed7aa)',color:'#ea580c',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'18px',border:'2px solid #fed7aa'}}>{initials(name)}</div>
-          }
-          <div>
-            <h1 style={{fontSize:'20px',fontWeight:'800',color:'#0f172a',marginBottom:'2px'}}>Hi, {name.split(' ')[0]}</h1>
-            <p style={{color:'#94a3b8',fontSize:'13px'}}>{profile?.location_name||'Add your location'}</p>
+      {/* Profile header card */}
+      <div style={{background:'#fff',padding:'20px 16px 16px'}}>
+        <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:16}}>
+          {/* Avatar */}
+          <div style={{position:'relative',flexShrink:0}}>
+            <div style={{width:72,height:72,borderRadius:'50%',overflow:'hidden',border:profile?.is_premium?'3px solid #f59e0b':'2px solid #e2e8f0'}}>
+              {profile?.avatar_url
+                ?<img src={profile.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/>
+                :<div style={{width:'100%',height:'100%',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,fontWeight:900}}>{initials(name)}</div>
+              }
+            </div>
+            <div style={{position:'absolute',bottom:2,right:2,width:12,height:12,borderRadius:'50%',background:'#22c55e',border:'2px solid #fff'}}/>
           </div>
-        </div>
-        <Link href="/dashboard/profile" style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'10px 20px',borderRadius:'8px',fontWeight:'600',fontSize:'13px',boxShadow:'0 4px 12px rgba(249,115,22,0.3)'}}>Edit Profile</Link>
-      </div>
 
-      {/* Stats */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))',gap:'12px',marginBottom:'24px'}}>
-        {[
-          {label:'Views',value:profile?.profile_views||0,bg:'#fff7ed',color:'#ea580c'},
-          {label:'Status',value:profile?.is_premium?'Premium':'Free',bg:'#f5f3ff',color:'#7c3aed'},
-          {label:'Featured',value:profile?.is_featured?'Yes':'No',bg:'#fefce8',color:'#ca8a04'},
-          {label:'Verified',value:profile?.is_verified?'Yes':'No',bg:'#f0fdf4',color:'#16a34a'},
-        ].map(s=>(
-          <div key={s.label} style={{background:'#fff',borderRadius:'12px',border:'1px solid #e2e8f0',padding:'16px'}}>
-            <div style={{fontSize:'20px',fontWeight:'900',color:'#0f172a',marginBottom:'2px'}}>{String(s.value)}</div>
-            <div style={{fontSize:'12px',color:'#94a3b8'}}>{s.label}</div>
+          {/* Name & info */}
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}>
+              <span style={{fontSize:18,fontWeight:900,color:'#0f172a'}}>{name}</span>
+              {profile?.is_verified&&<span style={{background:'#2563eb',color:'#fff',fontSize:9,padding:'2px 5px',borderRadius:4,fontWeight:700}}>✓</span>}
+              {profile?.is_premium&&<span style={{background:'linear-gradient(135deg,#f59e0b,#d97706)',color:'#fff',fontSize:9,padding:'2px 5px',borderRadius:4,fontWeight:700}}>VIP</span>}
+            </div>
+            <p style={{fontSize:12,color:'#94a3b8',margin:'0 0 4px'}}>ID:{profile?.id?.replace(/-/g,'').slice(0,9)||'...'}</p>
+            {profile?.location_name&&<p style={{fontSize:12,color:'#64748b',margin:0}}>📍 {profile.location_name}</p>}
           </div>
-        ))}
-      </div>
 
-      {/* Completeness */}
-      <div style={{background:'#fff',borderRadius:'14px',border:'1px solid #e2e8f0',padding:'20px',marginBottom:'20px'}}>
-        <div style={{display:'flex',justifyContent:'space-between',marginBottom:'8px'}}>
-          <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px'}}>Profile Completeness</p>
-          <p style={{fontWeight:'700',color:'#f97316',fontSize:'14px'}}>{pct}%</p>
+          {/* Edit button */}
+          <Link href="/dashboard/profile" style={{width:32,height:32,borderRadius:'50%',border:'1.5px solid #e2e8f0',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',textDecoration:'none',flexShrink:0,fontSize:14}}>✏️</Link>
         </div>
-        <div style={{background:'#f1f5f9',borderRadius:'50px',height:'6px',overflow:'hidden',marginBottom:'12px'}}>
-          <div style={{height:'100%',background:'linear-gradient(135deg,#f97316,#ea580c)',borderRadius:'50px',width:`${pct}%`,transition:'width 0.5s'}}/>
-        </div>
-        <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
-          {[{l:'Location',d:!!profile?.location_name},{l:'Bio',d:!!profile?.bio},{l:'Interests',d:(profile?.interests||[]).length>0},{l:'Photo',d:!!profile?.avatar_url}].map(x=>(
-            <span key={x.l} style={{fontSize:'12px',padding:'3px 9px',borderRadius:'50px',background:x.d?'#f0fdf4':'#f8fafc',color:x.d?'#16a34a':'#94a3b8',border:`1px solid ${x.d?'#bbf7d0':'#e2e8f0'}`,fontWeight:'600'}}>{x.d?'':' '} {x.l}</span>
+
+        {/* Stats row */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',textAlign:'center',borderTop:'1px solid #f1f5f9',paddingTop:14,gap:4}}>
+          {[
+            {label:'Friends',value:stats.friends,href:null},
+            {label:'Following',value:stats.following,href:null},
+            {label:'Followers',value:stats.followers,href:null},
+            {label:'Visitors',value:stats.visitors,href:null,badge:stats.visitors>0},
+          ].map(s=>(
+            <div key={s.label} style={{position:'relative'}}>
+              {s.badge&&<div style={{position:'absolute',top:-2,right:'25%',width:7,height:7,borderRadius:'50%',background:'#ef4444'}}/>}
+              <p style={{fontSize:20,fontWeight:900,color:'#0f172a',margin:0}}>{s.value}</p>
+              <p style={{fontSize:11,color:'#94a3b8',margin:'2px 0 0',fontWeight:500}}>{s.label}</p>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Actions */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:'12px',marginBottom:'20px'}}>
-        {[{href:'/dashboard/profile',t:'Edit Profile',d:'Update info & photo'},{href:'/discover',t:'Browse People',d:'Find connections'},{href:'/pricing',t:'Upgrade',d:'Premium & badges'}].map(a=>(
-          <Link key={a.href} href={a.href} style={{background:'#fff',borderRadius:'12px',border:'1px solid #e2e8f0',padding:'18px',display:'block'}}>
-            <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px',marginBottom:'3px'}}>{a.t}</p>
-            <p style={{fontSize:'12px',color:'#94a3b8'}}>{a.d}</p>
-          </Link>
-        ))}
+      {/* Coin balance + VIP card */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,padding:'10px 12px'}}>
+        <div onClick={()=>router.push('/pricing')} style={{background:'linear-gradient(135deg,#f97316,#fb923c)',borderRadius:16,padding:'16px',cursor:'pointer',position:'relative',overflow:'hidden'}}>
+          <div style={{position:'absolute',top:-10,right:-10,width:60,height:60,borderRadius:'50%',background:'rgba(255,255,255,0.15)'}}/>
+          <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
+            <span style={{fontSize:22}}>🪙</span>
+            <span style={{fontSize:26,fontWeight:900,color:'#fff'}}>{stats.coins}</span>
+          </div>
+          <p style={{fontSize:11,color:'rgba(255,255,255,0.85)',margin:0,fontWeight:600}}>Your Coins · Tap to buy</p>
+        </div>
+        <div onClick={()=>router.push('/pricing')} style={{background:'linear-gradient(135deg,#1e1b4b,#312e81)',borderRadius:16,padding:'16px',cursor:'pointer',position:'relative',overflow:'hidden'}}>
+          <div style={{position:'absolute',top:-10,right:-10,width:60,height:60,borderRadius:'50%',background:'rgba(255,255,255,0.1)'}}/>
+          <p style={{fontSize:13,fontWeight:900,color:'#fbbf24',margin:'0 0 2px'}}>VIP / SVIP</p>
+          <p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:'0 0 8px'}}>{profile?.is_premium?'Active member':'Unlock premium'}</p>
+          <div style={{background:'linear-gradient(135deg,#f59e0b,#d97706)',borderRadius:8,padding:'4px 10px',display:'inline-block'}}>
+            <span style={{fontSize:10,fontWeight:800,color:'#fff'}}>{profile?.is_premium?'✓ ACTIVE':'UPGRADE →'}</span>
+          </div>
+        </div>
       </div>
 
-      {/* Profile photo nudge */}
-      {!profile?.avatar_url&&(
-        <div style={{background:'linear-gradient(135deg,#fff7ed,#fef3c7)',border:'1px solid #fde68a',borderRadius:'14px',padding:'16px 20px',marginBottom:'16px',display:'flex',alignItems:'center',gap:'14px',flexWrap:'wrap'}}>
-          <div style={{width:'44px',height:'44px',borderRadius:'50%',background:'#f1f5f9',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'22px',flexShrink:0}}></div>
-          <div style={{flex:1,minWidth:'180px'}}>
-            <p style={{fontWeight:'700',color:'#92400e',fontSize:'14px',marginBottom:'2px'}}>Add a profile photo!</p>
-            <p style={{fontSize:'12px',color:'#a16207'}}>People with photos get <strong>3x more</strong> connection requests</p>
+      {/* Profile completeness */}
+      {pct<100&&(
+        <div style={{background:'#fff',margin:'0 12px 10px',borderRadius:14,padding:'14px 16px',border:'1px solid #e8ecf0'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+            <p style={{fontSize:13,fontWeight:700,color:'#0f172a',margin:0}}>Profile Completeness</p>
+            <p style={{fontSize:13,fontWeight:800,color:'#f97316',margin:0}}>{pct}%</p>
           </div>
-          <a href="/dashboard/profile" style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'9px 18px',borderRadius:'9px',fontSize:'13px',fontWeight:'700',textDecoration:'none',flexShrink:0,boxShadow:'0 2px 8px rgba(249,115,22,0.3)'}}>
-            Add Photo →
-          </a>
-        </div>
-      )}
-
-      {/* WhatsApp nudge */}
-      {!profile?.whatsapp_number&&(
-        <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'14px',padding:'14px 20px',marginBottom:'16px',display:'flex',alignItems:'center',gap:'14px',flexWrap:'wrap'}}>
-          <span style={{fontSize:'22px',flexShrink:0}}></span>
-          <div style={{flex:1,minWidth:'180px'}}>
-            <p style={{fontWeight:'700',color:'#166534',fontSize:'14px',marginBottom:'2px'}}>Add your WhatsApp number</p>
-            <p style={{fontSize:'12px',color:'#16a34a'}}>So users who connect with you can reach you</p>
+          <div style={{background:'#f1f5f9',borderRadius:50,height:6,overflow:'hidden',marginBottom:10}}>
+            <div style={{height:'100%',background:'linear-gradient(135deg,#f97316,#ea580c)',borderRadius:50,width:`${pct}%`,transition:'width 0.5s'}}/>
           </div>
-          <a href="/dashboard/profile" style={{background:'#16a34a',color:'#fff',padding:'9px 18px',borderRadius:'9px',fontSize:'13px',fontWeight:'700',textDecoration:'none',flexShrink:0}}>
-            Add Now →
-          </a>
+          <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
+            {[{l:'Photo',d:!!profile?.avatar_url},{l:'Bio',d:!!profile?.bio},{l:'Age',d:!!profile?.age},{l:'Location',d:!!profile?.location_name},{l:'Interests',d:(profile?.interests||[]).length>0}].map(x=>(
+              <span key={x.l} style={{fontSize:11,padding:'3px 9px',borderRadius:50,background:x.d?'#f0fdf4':'#fef2f2',color:x.d?'#16a34a':'#ef4444',border:`1px solid ${x.d?'#bbf7d0':'#fecaca'}`,fontWeight:600}}>
+                {x.d?'✓':'+'} {x.l}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
       {/* Likes & Matches */}
-      <div style={{background:'#fff',borderRadius:'14px',border:'1px solid #fce7f3',padding:'20px',marginBottom:'16px'}}>
-        <div style={{display:'flex',gap:'12px',marginBottom:'14px'}}>
-          <div style={{flex:1,background:'#fdf2f8',borderRadius:'10px',padding:'14px',textAlign:'center'}}>
-            <p style={{fontSize:'24px',fontWeight:'900',color:'#ec4899'}}>{likesReceived}</p>
-            <p style={{fontSize:'11px',color:'#94a3b8',fontWeight:'600'}}>PEOPLE LIKED YOU</p>
+      <div style={{background:'#fff',margin:'0 12px 10px',borderRadius:14,padding:'14px 16px',border:'1px solid #e8ecf0'}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:matches.length>0?12:0}}>
+          <div style={{background:'#fdf2f8',borderRadius:10,padding:'12px',textAlign:'center'}}>
+            <p style={{fontSize:22,fontWeight:900,color:'#ec4899',margin:0}}>{stats.likes}</p>
+            <p style={{fontSize:10,color:'#94a3b8',fontWeight:600,margin:'3px 0 0'}}>PEOPLE LIKED YOU</p>
           </div>
-          <div style={{flex:1,background:'#fdf2f8',borderRadius:'10px',padding:'14px',textAlign:'center'}}>
-            <p style={{fontSize:'24px',fontWeight:'900',color:'#be185d'}}>{matches.length}</p>
-            <p style={{fontSize:'11px',color:'#94a3b8',fontWeight:'600'}}>MUTUAL MATCHES</p>
+          <div style={{background:'#fdf2f8',borderRadius:10,padding:'12px',textAlign:'center'}}>
+            <p style={{fontSize:22,fontWeight:900,color:'#be185d',margin:0}}>{stats.matches}</p>
+            <p style={{fontSize:10,color:'#94a3b8',fontWeight:600,margin:'3px 0 0'}}>MUTUAL MATCHES</p>
           </div>
         </div>
         {matches.length>0&&(
-          <div>
-            <p style={{fontSize:'13px',fontWeight:'700',color:'#be185d',marginBottom:'10px'}}>Your Matches</p>
-            <div style={{display:'flex',gap:'10px',overflowX:'auto',paddingBottom:'4px'}}>
-              {matches.map((m:any)=>(
-                <a key={m.id} href={`/profile/${m.id}`} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'6px',textDecoration:'none',flexShrink:0}}>
-                  <div style={{position:'relative'}}>
-                    {m.avatar_url
-                      ?<img src={m.avatar_url} style={{width:'56px',height:'56px',borderRadius:'50%',objectFit:'cover',border:'2px solid #ec4899'}}/>
-                      :<div style={{width:'56px',height:'56px',borderRadius:'50%',background:'linear-gradient(135deg,#ec4899,#be185d)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:'800',fontSize:'18px',border:'2px solid #ec4899'}}>
-                        {(m.full_name||'?')[0].toUpperCase()}
-                      </div>
-                    }
-                    <div style={{position:'absolute',bottom:0,right:0,background:'#ec4899',borderRadius:'50%',width:'16px',height:'16px',border:'2px solid #fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'8px'}}>💗</div>
-                  </div>
-                  <p style={{fontSize:'11px',color:'#374151',fontWeight:'600',maxWidth:'56px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{m.full_name?.split(' ')[0]}</p>
-                </a>
-              ))}
-            </div>
+          <div style={{display:'flex',gap:10,overflowX:'auto',paddingBottom:4}}>
+            {matches.map((m:any)=>(
+              <Link key={m.id} href={`/profile/${m.id}`} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4,textDecoration:'none',flexShrink:0}}>
+                <div style={{width:48,height:48,borderRadius:'50%',overflow:'hidden',border:'2px solid #ec4899'}}>
+                  {m.avatar_url?<img src={m.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/>
+                    :<div style={{width:'100%',height:'100%',background:'linear-gradient(135deg,#ec4899,#be185d)',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}}>{initials(m.full_name)}</div>}
+                </div>
+                <p style={{fontSize:10,color:'#374151',fontWeight:600,margin:0}}>{m.full_name?.split(' ')[0]}</p>
+              </Link>
+            ))}
           </div>
         )}
-        {matches.length===0&&(
-          <p style={{fontSize:'13px',color:'#94a3b8',textAlign:'center',padding:'8px 0'}}>Like someone and wait for them to like back — that's a match!</p>
-        )}
+      </div>
+
+      {/* Quick actions */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,padding:'0 12px',marginBottom:10}}>
+        {[
+          {href:'/discover',icon:'🔍',label:'Discover'},
+          {href:'/chat',icon:'💬',label:'Messages'},
+          {href:'/dashboard/profile',icon:'✏️',label:'Edit Profile'},
+        ].map(a=>(
+          <Link key={a.href} href={a.href} style={{background:'#fff',borderRadius:14,padding:'14px 8px',textAlign:'center',textDecoration:'none',border:'1px solid #e8ecf0'}}>
+            <div style={{fontSize:24,marginBottom:4}}>{a.icon}</div>
+            <p style={{fontSize:11,fontWeight:700,color:'#374151',margin:0}}>{a.label}</p>
+          </Link>
+        ))}
       </div>
 
       {/* Friend Requests */}
       {friendRequests.length>0&&(
-        <div style={{background:'#fff',borderRadius:'14px',border:'1px solid #e2e8f0',padding:'20px',marginBottom:'16px'}}>
-          <p style={{fontWeight:'700',color:'#0f172a',fontSize:'15px',marginBottom:'14px'}}>
-            Friend Requests <span style={{background:'#f97316',color:'#fff',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',marginLeft:'6px'}}>{friendRequests.length}</span>
+        <div style={{background:'#fff',margin:'0 12px 10px',borderRadius:14,padding:'14px 16px',border:'1px solid #e8ecf0'}}>
+          <p style={{fontSize:14,fontWeight:800,color:'#0f172a',margin:'0 0 12px',display:'flex',alignItems:'center',gap:8}}>
+            Friend Requests
+            <span style={{background:'#f97316',color:'#fff',fontSize:10,padding:'2px 7px',borderRadius:50,fontWeight:700}}>{friendRequests.length}</span>
           </p>
-          <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+          <div style={{display:'flex',flexDirection:'column',gap:10}}>
             {friendRequests.map((req:any)=>(
-              <div key={req.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px',flexWrap:'wrap'}}>
-                <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-                  <div style={{width:'38px',height:'38px',borderRadius:'50%',background:'#fff7ed',color:'#ea580c',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'700',fontSize:'14px',flexShrink:0}}>
-                    {(req.sender?.full_name||'?').split(' ').map((x:string)=>x[0]).join('').toUpperCase().slice(0,2)}
-                  </div>
-                  <div>
-                    <p style={{fontWeight:'600',color:'#0f172a',fontSize:'14px'}}>{req.sender?.full_name}</p>
-                    <p style={{fontSize:'12px',color:'#94a3b8'}}>{req.sender?.location_name}</p>
-                    <a href={`/profile/${req.sender_id}`} target="_blank" rel="noopener noreferrer"
-                      style={{fontSize:'12px',color:'#f97316',fontWeight:'600',textDecoration:'none'}}>
-                      View Profile →
-                    </a>
-                  </div>
+              <div key={req.id} style={{display:'flex',alignItems:'center',gap:10}}>
+                <div style={{width:40,height:40,borderRadius:'50%',overflow:'hidden',flexShrink:0,border:'2px solid #e2e8f0'}}>
+                  {req.sender?.avatar_url?<img src={req.sender.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/>
+                    :<div style={{width:'100%',height:'100%',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:14}}>{initials(req.sender?.full_name||'?')}</div>}
                 </div>
-                <div style={{display:'flex',gap:'6px'}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <p style={{fontWeight:700,fontSize:13,color:'#0f172a',margin:0}}>{req.sender?.full_name}</p>
+                  <p style={{fontSize:11,color:'#94a3b8',margin:'1px 0 0'}}>{req.sender?.location_name||'Kenya'}</p>
+                </div>
+                <div style={{display:'flex',gap:6,flexShrink:0}}>
                   <button onClick={async()=>{
                     await createClient().from('friend_requests').update({status:'accepted'}).eq('id',req.id)
                     setFriendRequests(fr=>fr.filter(r=>r.id!==req.id))
-                    // Notify sender their request was accepted
-                    const {data:me}=await createClient().from('profiles').select('full_name').eq('id',user?.id).maybeSingle()
-                    fetch('/api/push-notify',{method:'POST',headers:{'Content-Type':'application/json'},
-                      body:JSON.stringify({userId:req.sender_id,title:'Friend Request Accepted! ',body:`${me?.full_name||'Someone'} accepted your friend request. You can now unlock their number!`,url:`/profile/${user?.id}`})
-                    }).catch(()=>{})
-                  }} style={{background:'#16a34a',color:'#fff',border:'none',borderRadius:'8px',padding:'7px 14px',fontSize:'13px',fontWeight:'700',cursor:'pointer'}}>Accept</button>
+                    setStats(s=>({...s,friends:s.friends+1}))
+                  }} style={{background:'#16a34a',color:'#fff',border:'none',borderRadius:8,padding:'6px 12px',fontSize:12,fontWeight:700,cursor:'pointer'}}>✓ Accept</button>
                   <button onClick={async()=>{
                     await createClient().from('friend_requests').update({status:'declined'}).eq('id',req.id)
                     setFriendRequests(fr=>fr.filter(r=>r.id!==req.id))
-                  }} style={{background:'#fef2f2',border:'1px solid #fecaca',color:'#dc2626',borderRadius:'8px',padding:'7px 14px',fontSize:'13px',fontWeight:'700',cursor:'pointer'}}>Decline</button>
+                  }} style={{background:'#fef2f2',border:'1px solid #fecaca',color:'#dc2626',borderRadius:8,padding:'6px 12px',fontSize:12,fontWeight:700,cursor:'pointer'}}>✕</button>
                 </div>
               </div>
             ))}
@@ -262,165 +267,65 @@ export default function DashboardClient(){
         </div>
       )}
 
-      {/* Gifts Received */}
+      {/* Gifts */}
       {gifts.length>0&&(
-        <div style={{background:'#fff',borderRadius:'14px',border:'1px solid #fce7f3',padding:'20px',marginBottom:'16px'}}>
-          <p style={{fontWeight:'700',color:'#be185d',fontSize:'15px',marginBottom:'14px'}}>
-            Gifts Received
-            <span style={{background:'#ec4899',color:'#fff',fontSize:'11px',padding:'2px 7px',borderRadius:'50px',marginLeft:'6px'}}>{gifts.length}</span>
-          </p>
-          <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+        <div style={{background:'#fff',margin:'0 12px 10px',borderRadius:14,padding:'14px 16px',border:'1px solid #fce7f3'}}>
+          <p style={{fontSize:14,fontWeight:800,color:'#be185d',margin:'0 0 12px'}}>🎁 Gifts Received</p>
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
             {gifts.map((g:any)=>(
-              <div key={g.id} style={{display:'flex',alignItems:'center',gap:'12px',background:'#fdf2f8',borderRadius:'10px',padding:'10px 14px'}}>
-                <span style={{fontSize:'24px',flexShrink:0}}>
-                  {g.gift_type==='Rose'?'🌹':g.gift_type==='Heart'?'❤️':g.gift_type==='Star'?'⭐':g.gift_type==='Crown'?'👑':'💎'}
+              <div key={g.id} style={{display:'flex',alignItems:'center',gap:10,background:'#fdf2f8',borderRadius:10,padding:'10px 12px'}}>
+                <span style={{fontSize:22,flexShrink:0}}>
+                  {g.gift_type==='rose'?'🌹':g.gift_type==='heart'?'💝':g.gift_type==='star'?'⭐':g.gift_type==='crown'?'👑':'💎'}
                 </span>
                 <div style={{flex:1}}>
-                  <p style={{fontSize:'13px',fontWeight:'600',color:'#be185d'}}>{g.profiles?.full_name||'Someone'} sent you a {g.gift_type}</p>
-                  <p style={{fontSize:'11px',color:'#94a3b8'}}>{new Date(g.created_at).toLocaleDateString()}</p>
+                  <p style={{fontSize:12,fontWeight:700,color:'#be185d',margin:0}}>{(g.profiles as any)?.full_name||'Someone'} sent you a {g.gift_type}</p>
+                  <p style={{fontSize:10,color:'#94a3b8',margin:'2px 0 0'}}>{new Date(g.created_at).toLocaleDateString()}</p>
                 </div>
-                <span style={{fontSize:'12px',fontWeight:'700',color:'#ec4899'}}>KES {g.amount}</span>
+                <span style={{fontSize:12,fontWeight:700,color:'#ec4899',flexShrink:0}}>KES {g.amount}</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Referral & Earnings Section */}
+      {/* Referral & Earnings */}
       {profile?.referral_code&&(
-        <div style={{background:'#fff',borderRadius:'14px',border:'1px solid #e2e8f0',padding:'20px',marginBottom:'16px'}}>
-          {/* Earnings Summary - Always visible */}
-          <div style={{background:'linear-gradient(135deg,#f0fdf4,#dcfce7)',borderRadius:'12px',padding:'16px',marginBottom:'16px',border:'1px solid #bbf7d0'}}>
-            <p style={{fontWeight:'800',color:'#0f172a',fontSize:'15px',marginBottom:'12px'}}>Your Earnings</p>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'8px',marginBottom:'14px'}}>
-              <div style={{background:'#fff',borderRadius:'10px',padding:'12px',textAlign:'center',border:'1px solid #bbf7d0'}}>
-                <p style={{fontSize:'20px',fontWeight:'900',color:'#16a34a'}}>{(profile?.referral_earnings||0)+(profile?.gift_earnings||0)}</p>
-                <p style={{fontSize:'10px',color:'#64748b',fontWeight:'600'}}>TOTAL KES</p>
+        <div style={{background:'#fff',margin:'0 12px 10px',borderRadius:14,padding:'14px 16px',border:'1px solid #e8ecf0'}}>
+          <p style={{fontSize:14,fontWeight:800,color:'#0f172a',margin:'0 0 12px'}}>💰 Earnings & Referrals</p>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:12}}>
+            {[
+              {label:'Total KES',value:(profile?.referral_earnings||0)+(profile?.gift_earnings||0),color:'#16a34a'},
+              {label:'Referrals',value:profile?.referral_earnings||0,color:'#2563eb'},
+              {label:'Gifts',value:profile?.gift_earnings||0,color:'#ec4899'},
+            ].map(s=>(
+              <div key={s.label} style={{background:'#f8fafc',borderRadius:10,padding:'10px',textAlign:'center',border:'1px solid #e2e8f0'}}>
+                <p style={{fontSize:18,fontWeight:900,color:s.color,margin:0}}>{s.value}</p>
+                <p style={{fontSize:10,color:'#94a3b8',margin:'2px 0 0',fontWeight:600}}>{s.label}</p>
               </div>
-              <div style={{background:'#fff',borderRadius:'10px',padding:'12px',textAlign:'center',border:'1px solid #bbf7d0'}}>
-                <p style={{fontSize:'20px',fontWeight:'900',color:'#16a34a'}}>{profile?.referral_earnings||0}</p>
-                <p style={{fontSize:'10px',color:'#64748b',fontWeight:'600'}}>REFERRALS</p>
-              </div>
-              <div style={{background:'#fff',borderRadius:'10px',padding:'12px',textAlign:'center',border:'1px solid #ec4899'}}>
-                <p style={{fontSize:'20px',fontWeight:'900',color:'#ec4899'}}>{profile?.gift_earnings||0}</p>
-                <p style={{fontSize:'10px',color:'#64748b',fontWeight:'600'}}>GIFTS</p>
-              </div>
-            </div>
-            <WithdrawForm 
-              userId={user?.id} 
-              totalEarnings={(profile?.referral_earnings||0)+(profile?.gift_earnings||0)} 
-              referralEarnings={profile?.referral_earnings||0} 
-              giftEarnings={profile?.gift_earnings||0} 
-              phone={profile?.whatsapp_number||''}
-            />
+            ))}
           </div>
-
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'12px',marginBottom:'14px'}}>
-            <div>
-              <p style={{fontWeight:'700',color:'#0f172a',fontSize:'15px',marginBottom:'2px'}}>Your Referral Link</p>
-              <p style={{fontSize:'12px',color:'#94a3b8'}}>Earn KES 20 for every user who joins using your link</p>
-            </div>
-            <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
-              <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'10px',padding:'8px 16px',textAlign:'center'}}>
-                <p style={{fontSize:'20px',fontWeight:'900',color:'#16a34a',lineHeight:'1'}}>KES {profile?.referral_earnings||0}</p>
-                <p style={{fontSize:'11px',color:'#16a34a',fontWeight:'600'}}>Earnings</p>
-              </div>
-              <button onClick={()=>{
-                createClient().from('profiles').select('referral_earnings').eq('id',user?.id).maybeSingle()
-                  .then(({data})=>{ if(data) setProfile((p:any)=>({...p,referral_earnings:data.referral_earnings})) })
-              }} style={{background:'#f8fafc',border:'1px solid #e2e8f0',borderRadius:'8px',padding:'6px 10px',fontSize:'12px',cursor:'pointer',color:'#64748b',fontWeight:'600'}}>Refresh</button>
-            </div>
-          </div>
-          <div style={{display:'flex',gap:'8px'}}>
-            <div style={{flex:1,background:'#f8fafc',border:'1px solid #e2e8f0',borderRadius:'8px',padding:'10px 14px',fontSize:'13px',color:'#0f172a',fontFamily:'monospace',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            <div style={{flex:1,background:'#f8fafc',border:'1px solid #e2e8f0',borderRadius:8,padding:'9px 12px',fontSize:12,color:'#374151',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
               campuslink.co.ke/ref/{profile.referral_code}
             </div>
-            <button onClick={()=>{navigator.clipboard.writeText(`https://campuslink.co.ke/ref/${profile.referral_code}`);alert('Link copied!')}}
-              style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'10px 18px',borderRadius:'8px',fontWeight:'600',fontSize:'13px',border:'none',cursor:'pointer',flexShrink:0}}>
+            <button onClick={()=>{navigator.clipboard.writeText(`https://campuslink.co.ke/ref/${profile.referral_code}`);alert('Copied!')}}
+              style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',border:'none',borderRadius:8,padding:'9px 16px',fontSize:12,fontWeight:700,cursor:'pointer',flexShrink:0}}>
               Copy
             </button>
           </div>
-          <WithdrawForm 
-            userId={user?.id} 
-            totalEarnings={(profile?.referral_earnings||0)+(profile?.gift_earnings||0)} 
-            referralEarnings={profile?.referral_earnings||0} 
-            giftEarnings={profile?.gift_earnings||0} 
-            phone={profile?.whatsapp_number||''}
-          />
         </div>
       )}
 
+      {/* Upgrade nudge */}
       {!profile?.is_premium&&(
-        <div style={{background:'#0f172a',borderRadius:'14px',padding:'20px 24px',color:'#fff',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'12px'}}>
+        <div onClick={()=>router.push('/pricing')} style={{background:'linear-gradient(135deg,#1e1b4b,#312e81)',margin:'0 12px 10px',borderRadius:14,padding:'16px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
           <div>
-            <p style={{fontWeight:'700',fontSize:'16px',marginBottom:'3px'}}>Upgrade to Premium — KES 199/month</p>
-            <p style={{fontSize:'13px',color:'#94a3b8'}}>Unlimited unlocks, premium badge, analytics</p>
+            <p style={{color:'#fbbf24',fontWeight:800,fontSize:14,margin:'0 0 3px'}}>👑 Upgrade to VIP</p>
+            <p style={{color:'rgba(255,255,255,0.7)',fontSize:12,margin:0}}>Get verified, featured & more</p>
           </div>
-          <Link href="/pricing" style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'10px 20px',borderRadius:'8px',fontWeight:'600',fontSize:'13px',flexShrink:0}}>Upgrade</Link>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function WithdrawForm({userId,totalEarnings,referralEarnings,giftEarnings,phone}:{userId:any,totalEarnings:number,referralEarnings:number,giftEarnings:number,phone:string}){
-  const [show,setShow]=useState(false)
-  const [amount,setAmount]=useState('')
-  const [phoneNum,setPhoneNum]=useState(phone)
-  const [loading,setLoading]=useState(false)
-  const [done,setDone]=useState(false)
-  const [error,setError]=useState('')
-
-  async function submit(e:React.FormEvent){
-    e.preventDefault()
-    setLoading(true);setError('')
-    const res=await fetch('/api/withdrawal',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({userId,amount:parseInt(amount),phone:phoneNum})})
-    const data=await res.json()
-    if(data.error){setError(data.error);setLoading(false);return}
-    setDone(true);setLoading(false)
-  }
-
-  if(totalEarnings<200) return(
-    <div style={{marginTop:'12px',background:'#f8fafc',borderRadius:'8px',padding:'10px 14px',fontSize:'12px',color:'#94a3b8',textAlign:'center'}}>
-      Earn KES {200-totalEarnings} more to unlock withdrawal (minimum KES 200)
-    </div>
-  )
-
-  return(
-    <div style={{marginTop:'12px'}}>
-      {!show&&!done&&(
-        <div style={{background:'#f0fdf4',borderRadius:'8px',padding:'12px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'8px'}}>
-          <div>
-            <p style={{fontSize:'13px',color:'#16a34a',fontWeight:'700'}}>Total Earnings: KES {totalEarnings}</p>
-            <p style={{fontSize:'11px',color:'#94a3b8'}}>Referrals: KES {referralEarnings} · Gifts: KES {giftEarnings}</p>
+          <div style={{background:'linear-gradient(135deg,#f59e0b,#d97706)',borderRadius:20,padding:'7px 16px',flexShrink:0}}>
+            <span style={{color:'#fff',fontSize:12,fontWeight:800}}>KES 299 →</span>
           </div>
-          <button onClick={()=>setShow(true)} style={{background:'#16a34a',color:'#fff',padding:'8px 16px',borderRadius:'8px',fontSize:'12px',fontWeight:'700',border:'none',cursor:'pointer'}}>
-            Withdraw
-          </button>
-        </div>
-      )}
-      {show&&!done&&(
-        <form onSubmit={submit} style={{background:'#f0fdf4',borderRadius:'8px',padding:'14px',display:'flex',flexDirection:'column',gap:'10px'}}>
-          <p style={{fontSize:'13px',fontWeight:'700',color:'#16a34a'}}>Withdraw Earnings (Available: KES {totalEarnings})</p>
-          {error&&<p style={{fontSize:'12px',color:'#dc2626'}}>{error}</p>}
-          <input type="number" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="Amount (min KES 200)" min="200" max={totalEarnings} required
-            style={{border:'1px solid #bbf7d0',borderRadius:'8px',padding:'9px 12px',fontSize:'14px',outline:'none'}}/>
-          <input value={phoneNum} onChange={e=>setPhoneNum(e.target.value)} placeholder="M-Pesa number e.g. 0712345678" required
-            style={{border:'1px solid #bbf7d0',borderRadius:'8px',padding:'9px 12px',fontSize:'14px',outline:'none'}}/>
-          <p style={{fontSize:'11px',color:'#64748b'}}>Paid to your M-Pesa within 24 hours after admin approval</p>
-          <div style={{display:'flex',gap:'8px'}}>
-            <button type="button" onClick={()=>setShow(false)} style={{flex:1,background:'#fff',border:'1px solid #e2e8f0',borderRadius:'8px',padding:'9px',fontSize:'13px',cursor:'pointer',color:'#64748b'}}>Cancel</button>
-            <button type="submit" disabled={loading} style={{flex:2,background:'#16a34a',color:'#fff',border:'none',borderRadius:'8px',padding:'9px',fontSize:'13px',fontWeight:'700',cursor:'pointer'}}>
-              {loading?'Submitting...':'Request Withdrawal'}
-            </button>
-          </div>
-        </form>
-      )}
-      {done&&(
-        <div style={{background:'#f0fdf4',borderRadius:'8px',padding:'12px 14px',textAlign:'center'}}>
-          <p style={{fontSize:'13px',fontWeight:'700',color:'#16a34a'}}>Withdrawal request submitted!</p>
-          <p style={{fontSize:'11px',color:'#64748b',marginTop:'4px'}}>You will receive KES {amount} on {phoneNum} within 24 hours</p>
         </div>
       )}
     </div>
