@@ -42,10 +42,34 @@ export default function DiscoverPage(){
   useEffect(()=>{
     const sb=createClient()
     sb.auth.getUser().then(({data:{user}})=>{
-      if(!user) return
+      if(!user){
+        // Not logged in — show all users
+        sb.from('profiles')
+          .select('id,full_name,avatar_url,photos,is_premium,is_featured,is_verified,age,gender,looking_for,location_name,latitude,longitude,last_seen,created_at')
+          .order('is_featured',{ascending:false}).order('last_seen',{ascending:false,nullsFirst:false})
+          .limit(80)
+          .then(({data})=>{ if(data) setUsers(data); setLoading(false) })
+        return
+      }
       setMe(user.id)
       sb.from('profiles').select('gender').eq('id',user.id).maybeSingle().then(({data})=>{
-        setGender(data?.gender==='male'?'female':data?.gender==='female'?'male':'All')
+        const oppositeGender = data?.gender==='male'?'female':data?.gender==='female'?'male':null
+        if(data?.gender==='male') setGender('female')
+        else if(data?.gender==='female') setGender('male')
+        else setGender('All')
+
+        // Fetch users filtered by opposite gender at DB level
+        let query = sb.from('profiles')
+          .select('id,full_name,avatar_url,photos,is_premium,is_featured,is_verified,age,gender,looking_for,university,location_name,latitude,longitude,last_seen,created_at')
+          .neq('id', user.id)
+          .order('is_featured',{ascending:false})
+          .order('is_premium',{ascending:false})
+          .order('last_seen',{ascending:false,nullsFirst:false})
+          .limit(80)
+
+        if(oppositeGender) query = query.eq('gender', oppositeGender)
+
+        query.then(({data:users})=>{ if(users) setUsers(users); setLoading(false) })
       })
       sb.from('likes').select('receiver_id').eq('sender_id',user.id)
         .then(({data})=>{ if(data) setLiked(new Set(data.map((l:any)=>l.receiver_id))) })
@@ -61,12 +85,6 @@ export default function DiscoverPage(){
       return()=>clearInterval(t)
     })
     if(navigator.geolocation) navigator.geolocation.getCurrentPosition(p=>setLoc({lat:p.coords.latitude,lng:p.coords.longitude}),()=>{})
-    sb.from('profiles')
-      .select('id,full_name,avatar_url,photos,is_premium,is_featured,is_verified,age,gender,looking_for,university,location_name,latitude,longitude,last_seen,created_at')
-      .order('is_featured',{ascending:false}).order('is_premium',{ascending:false})
-      .order('last_seen',{ascending:false})
-      .limit(60)
-      .then(({data})=>{ if(data) setUsers(data); setLoading(false) })
   },[])
 
   async function sendHi(e:React.MouseEvent, rid:string, name:string){
@@ -102,7 +120,7 @@ export default function DiscoverPage(){
   const filtered=list.filter(s=>
     s.id!==me
     &&(!searchQ||s.full_name?.toLowerCase().includes(searchQ.toLowerCase())||s.university?.toLowerCase().includes(searchQ.toLowerCase()))
-    &&(gender==='All'||gender==='Auto'||s.gender===gender)
+    &&(gender==='All'||s.gender===gender)
   )
 
   return(
