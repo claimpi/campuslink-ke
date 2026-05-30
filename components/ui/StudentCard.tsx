@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 type Props = {
   id: string; full_name: string; location_name: string;
-  year_of_study: number; interests?: string[]; avatar_url?: string;
+  interests?: string[]; avatar_url?: string;
   is_premium?: boolean; is_featured?: boolean; is_top_student?: boolean;
 }
 
@@ -27,12 +27,11 @@ export default function StudentCard({ id, full_name, location_name, interests=[]
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontWeight:'700',color:'#111827',fontSize:'15px',lineHeight:'1.3',marginBottom:'6px'}}>{full_name}</div>
             <div style={{display:'flex',gap:'5px',flexWrap:'wrap'}}>
-              <span style={{background:'#fff7ed',color:'#ea580c',fontSize:'11px',padding:'2px 8px',borderRadius:'50px',fontWeight:'600',whiteSpace:'nowrap'}}>Year {year_of_study}</span>
+              
               {is_premium && <span style={{background:'#faf5ff',color:'#7c3aed',fontSize:'11px',padding:'2px 8px',borderRadius:'50px',fontWeight:'600'}}>👑 Premium</span>}
             </div>
           </div>
         </div>
-        <div style={{fontSize:'13px',color:'#6b7280',marginBottom:'4px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>📚 {course}</div>
         <div style={{fontSize:'13px',color:'#9ca3af',marginBottom:'14px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>📍 {location_name}</div>
         {interests.length > 0 && (
           <div style={{display:'flex',gap:'5px',flexWrap:'wrap',marginBottom:'14px'}}>

@@ -7,8 +7,7 @@ import { createClient } from '@/lib/supabase-browser'
 export default function RegisterPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
-  const [photoFile, setPhotoFile] = useState<File|null>(null)
-  const [photoPreview, setPhotoPreview] = useState<string|null>(null)
+  const [photos, setPhotos] = useState<{file:File, preview:string}[]>([])
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -36,15 +35,6 @@ export default function RegisterPage() {
       }
     })
     if (error) { setError(error.message); setGoogleLoading(false) }
-  }
-
-  function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (file.size > 5 * 1024 * 1024) { setError('Photo must be less than 5MB'); return }
-    setPhotoFile(file)
-    setPhotoPreview(URL.createObjectURL(file))
-    setError('')
   }
 
   function nextStep(e: React.FormEvent) {
@@ -214,41 +204,95 @@ export default function RegisterPage() {
         {step===3&&(
           <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
             <div style={{textAlign:'center'}}>
-              <p style={{fontSize:'14px',color:'#374151',fontWeight:'600',marginBottom:'4px'}}>Add your profile photo</p>
-              <p style={{fontSize:'12px',color:'#94a3b8',marginBottom:'16px'}}>Required — help others recognize you</p>
-              {photoPreview
-                ?<div style={{position:'relative',display:'inline-block'}}>
-                  <img src={photoPreview} style={{width:'120px',height:'120px',borderRadius:'50%',objectFit:'cover',border:'3px solid #f97316'}}/>
-                  <button onClick={()=>{setPhotoFile(null);setPhotoPreview(null)}} style={{position:'absolute',top:0,right:0,background:'#ef4444',color:'#fff',border:'none',borderRadius:'50%',width:'24px',height:'24px',cursor:'pointer',fontSize:'12px'}}>x</button>
-                </div>
-                :<label style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:'120px',height:'120px',borderRadius:'50%',border:'2px dashed #f97316',cursor:'pointer',background:'#fff7ed',margin:'0 auto'}}>
-                  <span style={{fontSize:'32px'}}>+</span>
-                  <span style={{fontSize:'11px',color:'#f97316',fontWeight:'600'}}>Add Photo</span>
-                  <input type="file" accept="image/*" onChange={handlePhotoSelect} style={{display:'none'}}/>
-                </label>
-              }
+              <p style={{fontSize:'15px',color:'#374151',fontWeight:'700',marginBottom:'4px'}}>Add your photos</p>
+              <p style={{fontSize:'13px',color:'#94a3b8',marginBottom:'4px'}}>Minimum <strong>2 photos</strong> required · First photo is your profile picture</p>
+              <p style={{fontSize:'12px',color:photos.length>=2?'#16a34a':'#f97316',fontWeight:'600'}}>{photos.length}/5 photos added {photos.length>=2?'✓':''}</p>
             </div>
+
+            {/* Photo grid */}
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'8px'}}>
+              {/* Existing photos */}
+              {photos.map((p,i)=>(
+                <div key={i} style={{position:'relative',aspectRatio:'1',borderRadius:'12px',overflow:'hidden',
+                  border:i===0?'2.5px solid #f97316':'1.5px solid #e2e8f0'}}>
+                  <img src={p.preview} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/>
+                  {i===0&&<div style={{position:'absolute',bottom:0,left:0,right:0,background:'rgba(249,115,22,0.85)',color:'#fff',fontSize:'9px',fontWeight:'700',textAlign:'center',padding:'3px'}}>MAIN</div>}
+                  <button onClick={()=>setPhotos(prev=>prev.filter((_,j)=>j!==i))}
+                    style={{position:'absolute',top:4,right:4,width:'20px',height:'20px',borderRadius:'50%',background:'rgba(0,0,0,0.6)',color:'#fff',border:'none',cursor:'pointer',fontSize:'11px',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+                </div>
+              ))}
+
+              {/* Add more slot */}
+              {photos.length<5&&(
+                <label style={{aspectRatio:'1',borderRadius:'12px',border:'2px dashed #f97316',cursor:'pointer',
+                  display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
+                  background:'#fff7ed',gap:'4px'}}>
+                  <span style={{fontSize:'24px',color:'#f97316'}}>+</span>
+                  <span style={{fontSize:'10px',color:'#f97316',fontWeight:'600'}}>Add Photo</span>
+                  <input type="file" accept="image/*" multiple style={{display:'none'}}
+                    onChange={e=>{
+                      const files=Array.from(e.target.files||[])
+                      const remaining=5-photos.length
+                      const toAdd=files.slice(0,remaining)
+                      const invalid=toAdd.find(f=>f.size>5*1024*1024)
+                      if(invalid){setError('Each photo must be under 5MB');return}
+                      setError('')
+                      setPhotos(prev=>[...prev,...toAdd.map(f=>({file:f,preview:URL.createObjectURL(f)}))])
+                      e.target.value=''
+                    }}/>
+                </label>
+              )}
+            </div>
+
+            {/* Min 2 photos warning */}
+            {photos.length===1&&(
+              <div style={{background:'#fff7ed',border:'1px solid #fed7aa',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#92400e',display:'flex',gap:'8px',alignItems:'center'}}>
+                <span>⚠️</span> Add at least <strong>1 more photo</strong> to continue
+              </div>
+            )}
+            {photos.length===0&&(
+              <div style={{background:'#fef2f2',border:'1px solid #fecaca',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#dc2626',display:'flex',gap:'8px',alignItems:'center'}}>
+                <span>📸</span> You need at least <strong>2 photos</strong> to create your profile
+              </div>
+            )}
+
             {error&&<div style={{background:'#fef2f2',border:'1px solid #fecaca',borderRadius:'10px',padding:'10px',color:'#dc2626',fontSize:'13px'}}>{error}</div>}
+
             <button onClick={async()=>{
-              if(!photoFile){setError('Please add a profile photo to continue');return}
+              if(photos.length<2){setError('Please add at least 2 photos to continue');return}
               setUploadingPhoto(true);setError('')
               try{
                 const sb=createClient()
-                const uid = registeredUserId
+                const uid=registeredUserId
                 if(!uid){setError('Session expired, please register again');setUploadingPhoto(false);return}
-                const ext=photoFile.name.split('.').pop()
-                const path=`${uid}/avatar.${ext}`
-                const {error:upErr}=await sb.storage.from('avatars').upload(path,photoFile,{upsert:true})
-                if(upErr){setError('Upload failed: '+upErr.message);setUploadingPhoto(false);return}
-                const {data:{publicUrl}}=sb.storage.from('avatars').getPublicUrl(path)
-                await sb.from('profiles').update({avatar_url:publicUrl}).eq('id',uid)
+
+                const uploadedUrls:string[]=[]
+                for(let i=0;i<photos.length;i++){
+                  const p=photos[i]
+                  const ext=p.file.name.split('.').pop()
+                  const path=`${uid}/photo_${i}.${ext}`
+                  const {error:upErr}=await sb.storage.from('avatars').upload(path,p.file,{upsert:true})
+                  if(upErr){setError('Upload failed: '+upErr.message);setUploadingPhoto(false);return}
+                  const {data:{publicUrl}}=sb.storage.from('avatars').getPublicUrl(path)
+                  uploadedUrls.push(publicUrl)
+                }
+
+                // First photo = avatar, all photos saved to photos array
+                await sb.from('profiles').update({
+                  avatar_url:uploadedUrls[0],
+                  photos:uploadedUrls
+                }).eq('id',uid)
+
                 window.location.href='/dashboard?welcome=true'
               }catch(e:any){setError(e.message);setUploadingPhoto(false)}
-            }} disabled={uploadingPhoto||!photoFile}
-              style={{background:(!photoFile||uploadingPhoto)?'#94a3b8':'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',padding:'13px',borderRadius:'10px',fontWeight:'700',fontSize:'15px',border:'none',cursor:(!photoFile||uploadingPhoto)?'not-allowed':'pointer'}}>
-              {uploadingPhoto?'Uploading...':'Complete Sign Up'}
+            }} disabled={uploadingPhoto||photos.length<2}
+              style={{background:photos.length<2||uploadingPhoto?'#94a3b8':'linear-gradient(135deg,#f97316,#ea580c)',
+                color:'#fff',padding:'13px',borderRadius:'10px',fontWeight:'700',fontSize:'15px',
+                border:'none',cursor:photos.length<2||uploadingPhoto?'not-allowed':'pointer',
+                boxShadow:photos.length>=2?'0 4px 14px rgba(249,115,22,0.4)':'none'}}>
+              {uploadingPhoto?`Uploading ${photos.length} photos...`:`Complete Sign Up (${photos.length}/2 min)`}
             </button>
-            <p style={{textAlign:'center',fontSize:'12px',color:'#94a3b8'}}>Your photo helps others connect with you</p>
+            <p style={{textAlign:'center',fontSize:'12px',color:'#94a3b8'}}>More photos = more connections 📸</p>
           </div>
         )}
 
