@@ -205,11 +205,11 @@ export default function DiscoverPage(){
 
       {/* Grid */}
       {loading?(
-        <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'10px',padding:'0 16px'}}>
+        <div className="discover-grid" style={{display:'grid',gap:'10px',padding:'0 16px'}}>
           {[...Array(6)].map((_,i)=><div key={i} style={{aspectRatio:'3/4.5',borderRadius:'16px',background:'linear-gradient(135deg,#f1f5f9,#e2e8f0)'}}/>)}
         </div>
       ):(
-        <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'10px',padding:'0 16px'}}>
+        <div className="discover-grid" style={{display:'grid',gap:'10px',padding:'0 16px'}}>
           {filtered.map(s=>{
             const dist=userLocation&&s.latitude&&s.longitude?calcDist(userLocation.lat,userLocation.lng,s.latitude,s.longitude):null
             const distLabel=dist!==null?(dist<1?`${Math.round(dist*1000)}m`:`${dist.toFixed(1)}km`):null
@@ -218,7 +218,7 @@ export default function DiscoverPage(){
             const online=onlineStatus(s.last_seen)
             const active=lastActive(s.last_seen)
             const extraPhotos:string[]=Array.isArray(s.photos)?s.photos.filter((p:string)=>p&&p!==s.avatar_url).slice(0,3):[]
-            const firstName=s.full_name?.split(' ')[0]||'Unknown'
+            const firstName=(s.full_name||'Unknown').split(' ')[0]
             return(
               <div key={s.id} style={{borderRadius:'18px',overflow:'hidden',background:'#fff',
                 border:s.is_featured?'2px solid #f97316':'1.5px solid #e8ecf0',
@@ -311,6 +311,7 @@ export default function DiscoverPage(){
           <p style={{fontSize:'14px',color:'#94a3b8'}}>Try different filters</p>
         </div>
       )}
+      <style>{`.discover-grid{grid-template-columns:repeat(2,1fr)}`}</style>
     </div>
   )
 }
