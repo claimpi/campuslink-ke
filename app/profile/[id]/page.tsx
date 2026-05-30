@@ -197,7 +197,35 @@ export default function ProfilePage(){
 
         <div style={{borderBottom:'1px solid #f1f5f9',marginBottom:16}}/>
 
-        {/* Status / Bio */}
+        {/* Action buttons inline */}
+        {!isMe&&(
+          <div style={{display:'flex',gap:10,marginBottom:16}}>
+            <button onClick={()=>me?router.push(`/chat/${id}`):router.push('/login')}
+              style={{flex:1,height:44,borderRadius:22,border:'none',cursor:'pointer',
+                background:'linear-gradient(135deg,#f59e0b,#d97706)',color:'#fff',
+                fontSize:14,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',gap:6,
+                boxShadow:'0 3px 12px rgba(245,158,11,0.4)'}}>
+              <span style={{fontSize:17}}>💬</span> Chat
+            </button>
+            <button onClick={handleFollow}
+              style={{flex:1,height:44,borderRadius:22,border:'none',cursor:'pointer',
+                background:following?'#0f172a':'linear-gradient(135deg,#f97316,#ea580c)',
+                color:'#fff',fontSize:14,fontWeight:800,
+                display:'flex',alignItems:'center',justifyContent:'center',gap:6,
+                boxShadow:`0 3px 12px ${following?'rgba(0,0,0,0.2)':'rgba(249,115,22,0.4)'}`}}>
+              <span style={{fontSize:17}}>{following?'✓':'❤️'}</span> {following?'Following':'Follow'}
+            </button>
+            <button onClick={handleLike}
+              style={{width:44,height:44,borderRadius:'50%',flexShrink:0,
+                border:`1.5px solid ${liked?'#ec4899':'#e2e8f0'}`,
+                background:liked?'linear-gradient(135deg,#ec4899,#be185d)':'#fff',
+                cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <svg width="17" height="16" viewBox="0 0 24 21" fill={liked?'#fff':'none'} stroke={liked?'#fff':'#ccc'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 21C12 21 2 13.5 2 7a5 5 0 0 1 10 0 5 5 0 0 1 10 0c0 6.5-10 14-10 14z"/>
+              </svg>
+            </button>
+          </div>
+        )}
         {profile.status&&(
           <div style={{marginBottom:16}}>
             <p style={{fontSize:12,fontWeight:700,color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6}}>Status</p>
@@ -253,43 +281,6 @@ export default function ProfilePage(){
           )}
         </div>
       </div>
-
-      {/* Bottom action bar */}
-      {!isMe&&(
-        <div style={{position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:480,
-          background:'#fff',borderTop:'1px solid #e8ecf0',padding:'12px 16px',
-          display:'flex',gap:10,zIndex:100,boxShadow:'0 -4px 20px rgba(0,0,0,0.08)'}}>
-
-          {/* Like */}
-          <button onClick={handleLike} style={{width:46,height:46,borderRadius:'50%',flexShrink:0,
-            border:`1.5px solid ${liked?'#ec4899':'#e2e8f0'}`,
-            background:liked?'linear-gradient(135deg,#ec4899,#be185d)':'#fff',
-            cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
-            <svg width="18" height="17" viewBox="0 0 24 21" fill={liked?'#fff':'none'} stroke={liked?'#fff':'#ccc'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 21C12 21 2 13.5 2 7a5 5 0 0 1 10 0 5 5 0 0 1 10 0c0 6.5-10 14-10 14z"/>
-            </svg>
-          </button>
-
-          {/* Chat */}
-          <button onClick={()=>me?router.push(`/chat/${id}`):router.push('/login')}
-            style={{flex:1,height:46,borderRadius:23,border:'none',cursor:'pointer',
-              background:'linear-gradient(135deg,#f59e0b,#d97706)',color:'#fff',
-              fontSize:15,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',gap:8,
-              boxShadow:'0 4px 14px rgba(245,158,11,0.4)'}}>
-            <span style={{fontSize:18}}>💬</span> Chat
-          </button>
-
-          {/* Follow / Connect */}
-          <button onClick={()=>me?router.push(`/chat/${id}`):router.push('/register')}
-            style={{flex:1,height:46,borderRadius:23,border:'none',cursor:'pointer',
-              background:following?'#0f172a':'linear-gradient(135deg,#0f172a,#1e293b)',
-              color:'#fff',fontSize:15,fontWeight:800,
-              display:'flex',alignItems:'center',justifyContent:'center',gap:8,
-              boxShadow:'0 4px 14px rgba(0,0,0,0.2)'}}>
-            <span style={{fontSize:18}}>❤️</span> {following?'Following':'Follow'}
-          </button>
-        </div>
-      )}
 
       {/* Edit profile button if own profile */}
       {isMe&&(
