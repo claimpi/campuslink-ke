@@ -253,9 +253,9 @@ export default function DiscoverPage(){
                           {s.looking_for==='relationship'?'💕 Dating':s.looking_for==='friendship'?'🤝 Friends':s.looking_for==='study'?'📚 Study':s.looking_for==='networking'?'🌐 Network':'💬 '+s.looking_for}
                         </span>
                       )}
-                      {!s.looking_for&&(
-                        <span style={{background:'#f1f5f9',color:'#64748b',fontSize:11,padding:'3px 8px',borderRadius:20,fontWeight:600}}>
-                          {online?'🟢 Online now':'💤 Away'}
+                      {online&&(
+                        <span style={{background:'#f0fdf4',color:'#16a34a',fontSize:11,padding:'3px 8px',borderRadius:20,fontWeight:700}}>
+                          🟢 Online
                         </span>
                       )}
                     </div>
