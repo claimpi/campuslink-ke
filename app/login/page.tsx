@@ -16,6 +16,10 @@ export default function LoginPage() {
     createClient().auth.getSession().then(({data:{session}})=>{
       if(session) window.location.href='/'
     })
+    // Show error from OAuth callback
+    const params = new URLSearchParams(window.location.search)
+    const err = params.get('error')
+    if(err) setError(decodeURIComponent(err))
   },[])
 
   const inp = {width:'100%',border:'1.5px solid #e5e7eb',borderRadius:'12px',padding:'12px 16px',fontSize:'14px',outline:'none',boxSizing:'border-box' as const,transition:'border-color 0.2s'}
