@@ -24,11 +24,11 @@ export default function ProfilePage(){
   const autoSlideRef=useRef<any>(null)
 
   const GIFTS=[
-    {type:'rose',emoji:'🌹',label:'Rose',price:30},
-    {type:'heart',emoji:'💝',label:'Heart',price:60},
-    {type:'star',emoji:'⭐',label:'Star',price:120},
-    {type:'crown',emoji:'👑',label:'Crown',price:250},
-    {type:'diamond',emoji:'💎',label:'Diamond',price:500},
+    {type:'rose',   emoji:'🌹', label:'Rose',    coins:10},
+    {type:'heart',  emoji:'💝', label:'Heart',   coins:20},
+    {type:'star',   emoji:'⭐', label:'Star',    coins:50},
+    {type:'crown',  emoji:'👑', label:'Crown',   coins:100},
+    {type:'diamond',emoji:'💎', label:'Diamond', coins:200},
   ]
 
   useEffect(()=>{
@@ -82,16 +82,40 @@ export default function ProfilePage(){
     setFollowLoading(false)
   }
 
-  async function sendGift(type:string,price:number){
+  const [myCoins, setMyCoins] = useState(0)
+  const [giftLoading, setGiftLoading] = useState<string|null>(null)
+  const [giftDone, setGiftDone] = useState<string|null>(null)
+  const [giftError, setGiftError] = useState('')
+
+  useEffect(()=>{
+    if(!me) return
+    createClient().from('profiles').select('coins').eq('id',me.id).maybeSingle()
+      .then(({data})=>setMyCoins(data?.coins||0))
+  },[me])
+
+  async function sendGift(type:string, coins:number){
     if(!me){router.push('/login');return}
-    const sb=createClient()
-    const {data:myProfile}=await sb.from('profiles').select('full_name,whatsapp_number').eq('id',me.id).maybeSingle()
-    const res=await fetch('/api/pesapal',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({userId:me.id,userEmail:me.email,userName:myProfile?.full_name||me.email,
-        phone:myProfile?.whatsapp_number||'',paymentType:`gift_${type}`,targetId:id,amount:price})})
-    const data=await res.json()
-    if(data.redirectUrl) window.location.href=data.redirectUrl
-    else alert(data.error||'Payment failed')
+    if(myCoins < coins){
+      setGiftError(`Not enough coins. You have ${myCoins} 🪙, need ${coins} 🪙`)
+      setTimeout(()=>setGiftError(''),3000)
+      return
+    }
+    setGiftLoading(type); setGiftError('')
+    const res = await fetch('/api/send-gift',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({senderId:me.id,receiverId:id,giftType:type})})
+    const data = await res.json()
+    if(data.success){
+      setMyCoins(data.coinsLeft)
+      setGiftDone(type)
+      setTimeout(()=>setGiftDone(null),3000)
+    } else if(data.error==='insufficient_coins'){
+      setGiftError(`Need ${data.coinsNeeded} coins, you have ${data.coinsHave}`)
+      setTimeout(()=>setGiftError(''),3000)
+    } else {
+      setGiftError(data.error||'Failed to send gift')
+      setTimeout(()=>setGiftError(''),3000)
+    }
+    setGiftLoading(null)
   }
 
   const photos=getAllPhotos()
@@ -211,17 +235,39 @@ export default function ProfilePage(){
         {/* Gifts - always visible */}
         {!isMe&&(
           <div style={{marginBottom:16}}>
-            <p style={{fontSize:12,fontWeight:700,color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:10}}>🎁 Send a Gift</p>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+              <p style={{fontSize:12,fontWeight:700,color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.5px',margin:0}}>🎁 Send a Gift</p>
+              <div style={{display:'flex',alignItems:'center',gap:4,background:'#fff7ed',border:'1px solid #fed7aa',borderRadius:20,padding:'3px 10px',cursor:'pointer'}} onClick={()=>router.push('/pricing')}>
+                <span style={{fontSize:12}}>🪙</span>
+                <span style={{fontSize:12,fontWeight:700,color:'#f97316'}}>{myCoins}</span>
+              </div>
+            </div>
+            {giftError&&<div style={{background:'#fef2f2',border:'1px solid #fecaca',borderRadius:8,padding:'8px 12px',marginBottom:8,fontSize:12,color:'#dc2626',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              {giftError}
+              <button onClick={()=>router.push('/pricing')} style={{background:'#f97316',color:'#fff',border:'none',borderRadius:8,padding:'4px 10px',fontSize:11,fontWeight:700,cursor:'pointer',flexShrink:0,marginLeft:8}}>Buy Coins</button>
+            </div>}
             <div style={{display:'flex',gap:8,overflowX:'auto',paddingBottom:4}}>
               {GIFTS.map(g=>(
-                <div key={g.type} onClick={()=>sendGift(g.type,g.price)}
-                  style={{flexShrink:0,background:'#fff7ed',border:'1.5px solid #fed7aa',borderRadius:14,padding:'10px 14px',textAlign:'center',cursor:'pointer',minWidth:68}}>
-                  <div style={{fontSize:26,marginBottom:4}}>{g.emoji}</div>
+                <div key={g.type} onClick={()=>giftLoading||giftDone===g.type?null:sendGift(g.type,g.coins)}
+                  style={{flexShrink:0,background:giftDone===g.type?'#f0fdf4':myCoins>=g.coins?'#fff7ed':'#f8fafc',
+                    border:`1.5px solid ${giftDone===g.type?'#bbf7d0':myCoins>=g.coins?'#fed7aa':'#e2e8f0'}`,
+                    borderRadius:14,padding:'10px 14px',textAlign:'center',
+                    cursor:giftLoading?'not-allowed':myCoins>=g.coins?'pointer':'not-allowed',
+                    minWidth:68,transition:'all 0.2s',
+                    opacity:myCoins>=g.coins||giftDone===g.type?1:0.5}}>
+                  <div style={{fontSize:26,marginBottom:4}}>
+                    {giftLoading===g.type?'⏳':giftDone===g.type?'✅':g.emoji}
+                  </div>
                   <p style={{fontSize:11,fontWeight:700,color:'#374151',margin:'0 0 2px'}}>{g.label}</p>
-                  <p style={{fontSize:10,color:'#f97316',fontWeight:700,margin:0}}>KES {g.price}</p>
+                  <p style={{fontSize:10,fontWeight:700,margin:0,color:myCoins>=g.coins?'#f97316':'#94a3b8'}}>🪙 {g.coins}</p>
                 </div>
               ))}
             </div>
+            {myCoins<10&&(
+              <button onClick={()=>router.push('/pricing')} style={{width:'100%',marginTop:8,background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',border:'none',borderRadius:10,padding:'9px',fontSize:12,fontWeight:700,cursor:'pointer'}}>
+                🪙 Buy Coins to Send Gifts
+              </button>
+            )}
           </div>
         )}
 

@@ -281,7 +281,7 @@ export default function DashboardClient(){
                   <p style={{fontSize:12,fontWeight:700,color:'#be185d',margin:0}}>{(g.profiles as any)?.full_name||'Someone'} sent you a {g.gift_type}</p>
                   <p style={{fontSize:10,color:'#94a3b8',margin:'2px 0 0'}}>{new Date(g.created_at).toLocaleDateString()}</p>
                 </div>
-                <span style={{fontSize:12,fontWeight:700,color:'#ec4899',flexShrink:0}}>KES {g.amount}</span>
+                <span style={{fontSize:12,fontWeight:700,color:'#ec4899',flexShrink:0}}>🪙 {g.amount}</span>
               </div>
             ))}
           </div>
