@@ -137,7 +137,7 @@ export default function DashboardClient(){
           <div style={{height:'100%',background:'linear-gradient(135deg,#f97316,#ea580c)',borderRadius:'50px',width:`${pct}%`,transition:'width 0.5s'}}/>
         </div>
         <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
-          {[{l:'Location',d:!!profile?.location_name},{l:'WhatsApp',d:!!profile?.whatsapp_number},{l:'Bio',d:!!profile?.bio},{l:'Interests',d:(profile?.interests||[]).length>0},{l:'Photo',d:!!profile?.avatar_url}].map(x=>(
+          {[{l:'Location',d:!!profile?.location_name},{l:'Bio',d:!!profile?.bio},{l:'Interests',d:(profile?.interests||[]).length>0},{l:'Photo',d:!!profile?.avatar_url}].map(x=>(
             <span key={x.l} style={{fontSize:'12px',padding:'3px 9px',borderRadius:'50px',background:x.d?'#f0fdf4':'#f8fafc',color:x.d?'#16a34a':'#94a3b8',border:`1px solid ${x.d?'#bbf7d0':'#e2e8f0'}`,fontWeight:'600'}}>{x.d?'':' '} {x.l}</span>
           ))}
         </div>
@@ -145,7 +145,7 @@ export default function DashboardClient(){
 
       {/* Actions */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:'12px',marginBottom:'20px'}}>
-        {[{href:'/dashboard/profile',t:'Edit Profile',d:'Update info & photo'},{href:'/discover',t:'Browse People',d:'Find connections'},{href:'/groups',t:'WhatsApp Groups',d:'Join group chats'},{href:'/pricing',t:'Upgrade',d:'Premium & badges'}].map(a=>(
+        {[{href:'/dashboard/profile',t:'Edit Profile',d:'Update info & photo'},{href:'/discover',t:'Browse People',d:'Find connections'},{href:'/pricing',t:'Upgrade',d:'Premium & badges'}].map(a=>(
           <Link key={a.href} href={a.href} style={{background:'#fff',borderRadius:'12px',border:'1px solid #e2e8f0',padding:'18px',display:'block'}}>
             <p style={{fontWeight:'700',color:'#0f172a',fontSize:'14px',marginBottom:'3px'}}>{a.t}</p>
             <p style={{fontSize:'12px',color:'#94a3b8'}}>{a.d}</p>

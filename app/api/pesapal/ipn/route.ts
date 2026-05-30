@@ -75,8 +75,6 @@ async function processPayment(orderTrackingId:string){
     await sb.from('profiles').update({gift_earnings:(recv?.gift_earnings||0)+(payment.amount||0)}).eq('id',payment.target_id)
     const {data:sender}=await sb.from('profiles').select('full_name').eq('id',uid).maybeSingle()
     notify(payment.target_id,`You received a gift! 🎁`,`${sender?.full_name||'Someone'} sent you a ${giftType}`,'/dashboard')
-  } else if(type==='add_group'&&payment.group_id){
-    await sb.from('whatsapp_groups').update({payment_status:'approved',is_verified:true}).eq('id',payment.group_id)
   }
 }
 

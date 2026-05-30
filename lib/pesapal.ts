@@ -1,7 +1,7 @@
 export const AMOUNTS:Record<string,number>={
   // Existing
   premium:299,featured:200,top_student:150,unlock:20,
-  add_group:100,boost:50,
+  boost:50,
   gift_rose:30,gift_heart:60,gift_star:120,gift_crown:250,gift_diamond:500,
   // Coin packages
   coins_50:50,coins_100:99,coins_200:179,coins_500:399,coins_1000:699,
@@ -9,7 +9,7 @@ export const AMOUNTS:Record<string,number>={
 export const LABELS:Record<string,string>={
   premium:'Premium Membership',featured:'Featured Profile',
   top_student:'Verified Badge',unlock:'WhatsApp Unlock',
-  add_group:'WhatsApp Group',boost:'Profile Boost 24hrs',
+  boost:'Profile Boost 24hrs',
   gift_rose:'Virtual Rose',gift_heart:'Virtual Heart',
   gift_star:'Virtual Star',gift_crown:'Virtual Crown',gift_diamond:'Virtual Diamond',
   coins_50:'50 Coins Pack',coins_100:'100 Coins Pack',

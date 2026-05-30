@@ -35,7 +35,7 @@ export default function Navbar() {
     router.push('/');router.refresh()
   }
 
-  const links = [{href:'/discover',label:'People'},{href:'/groups',label:'Groups'},{href:'/pricing',label:'Pricing'},{href:'/admin/login',label:'Admin'}]
+  const links = [{href:'/discover',label:'People'},{href:'/pricing',label:'Pricing'},{href:'/admin/login',label:'Admin'}]
 
   return(
     <>

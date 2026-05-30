@@ -14,7 +14,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [refCode, setRefCode] = useState('')
   const [registeredUserId, setRegisteredUserId] = useState('')
-  const [form, setForm] = useState({name:'',email:'',password:'',confirmPassword:'',whatsapp:'',interests:'',bio:'',age:'',gender:'',looking_for:''})
+  const [form, setForm] = useState({name:'',email:'',password:'',confirmPassword:'',interests:'',bio:'',age:'',gender:'',looking_for:''})
   const set = (k:string) => (e:any) => setForm(f=>({...f,[k]:e.target.value}))
   const inp:React.CSSProperties = {width:'100%',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'11px 14px',fontSize:'14px',outline:'none',background:'#fff',boxSizing:'border-box',color:'#0f172a'}
 
@@ -65,7 +65,7 @@ export default function RegisterPage() {
         id: authData.user.id,
         email: form.email.trim(),
         full_name: form.name,
-        whatsapp_number: form.whatsapp,
+        
         bio: form.bio,
         interests,
         referral_code: newRefCode,
@@ -157,10 +157,6 @@ export default function RegisterPage() {
 
         {step===2&&(
           <form onSubmit={handleRegister} style={{display:'flex',flexDirection:'column',gap:'13px'}}>
-            <div>
-              <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>WhatsApp</label>
-              <input value={form.whatsapp} onChange={set('whatsapp')} placeholder="+254712345678" style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
-            </div>
             <div>
               <label style={{fontSize:'13px',fontWeight:'600',color:'#374151',display:'block',marginBottom:'5px'}}>Age</label>
               <input type="number" value={form.age||''} onChange={set('age')} placeholder="e.g. 21" min="16" max="60" style={inp} onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
