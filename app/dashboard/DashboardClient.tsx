@@ -288,31 +288,48 @@ export default function DashboardClient(){
         </div>
       )}
 
-      {/* Referral & Earnings */}
+      {/* Referral - earn coins */}
       {profile?.referral_code&&(
         <div style={{background:'#fff',margin:'0 12px 10px',borderRadius:14,padding:'14px 16px',border:'1px solid #e8ecf0'}}>
-          <p style={{fontSize:14,fontWeight:800,color:'#0f172a',margin:'0 0 12px'}}>💰 Earnings & Referrals</p>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:12}}>
-            {[
-              {label:'Total KES',value:(profile?.referral_earnings||0)+(profile?.gift_earnings||0),color:'#16a34a'},
-              {label:'Referrals',value:profile?.referral_earnings||0,color:'#2563eb'},
-              {label:'Gifts',value:profile?.gift_earnings||0,color:'#ec4899'},
-            ].map(s=>(
-              <div key={s.label} style={{background:'#f8fafc',borderRadius:10,padding:'10px',textAlign:'center',border:'1px solid #e2e8f0'}}>
-                <p style={{fontSize:18,fontWeight:900,color:s.color,margin:0}}>{s.value}</p>
-                <p style={{fontSize:10,color:'#94a3b8',margin:'2px 0 0',fontWeight:600}}>{s.label}</p>
-              </div>
-            ))}
+          <p style={{fontSize:14,fontWeight:800,color:'#0f172a',margin:'0 0 4px'}}>🪙 Earn Coins</p>
+          <p style={{fontSize:12,color:'#94a3b8',margin:'0 0 12px'}}>Invite friends · earn <strong style={{color:'#f97316'}}>50 coins</strong> per referral · use coins to chat</p>
+          <div style={{background:'#fff7ed',border:'1px solid #fed7aa',borderRadius:10,padding:'12px',marginBottom:12}}>
+            <div style={{display:'flex',gap:16,justifyContent:'center',marginBottom:8}}>
+              {[
+                {icon:'👥',label:'Invite friend',coins:'+50 🪙'},
+                {icon:'💬',label:'They join',coins:'you earn'},
+                {icon:'🎁',label:'Use coins',coins:'to chat'},
+              ].map(s=>(
+                <div key={s.label} style={{textAlign:'center',flex:1}}>
+                  <div style={{fontSize:22,marginBottom:3}}>{s.icon}</div>
+                  <p style={{fontSize:10,color:'#374151',fontWeight:700,margin:0}}>{s.label}</p>
+                  <p style={{fontSize:10,color:'#f97316',fontWeight:700,margin:'2px 0 0'}}>{s.coins}</p>
+                </div>
+              ))}
+            </div>
           </div>
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
             <div style={{flex:1,background:'#f8fafc',border:'1px solid #e2e8f0',borderRadius:8,padding:'9px 12px',fontSize:12,color:'#374151',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
               campuslink.co.ke/ref/{profile.referral_code}
             </div>
-            <button onClick={()=>{navigator.clipboard.writeText(`https://campuslink.co.ke/ref/${profile.referral_code}`);alert('Copied!')}}
-              style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',border:'none',borderRadius:8,padding:'9px 16px',fontSize:12,fontWeight:700,cursor:'pointer',flexShrink:0}}>
-              Copy
+            <button onClick={()=>{
+              navigator.clipboard.writeText(`https://campuslink.co.ke/ref/${profile.referral_code}`)
+              alert('Referral link copied! Share it to earn 50 coins per signup 🪙')
+            }} style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',border:'none',borderRadius:8,padding:'9px 16px',fontSize:12,fontWeight:700,cursor:'pointer',flexShrink:0}}>
+              Copy Link
             </button>
           </div>
+          {/* Share button */}
+          <button onClick={()=>{
+            if(navigator.share){
+              navigator.share({title:'Join CampusLink KE',text:'Meet people near you! Use my referral link to join free 🎉',url:`https://campuslink.co.ke/ref/${profile.referral_code}`})
+            } else {
+              navigator.clipboard.writeText(`https://campuslink.co.ke/ref/${profile.referral_code}`)
+              alert('Link copied!')
+            }
+          }} style={{width:'100%',marginTop:8,background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:8,padding:'9px',fontSize:13,fontWeight:700,color:'#16a34a',cursor:'pointer'}}>
+            📤 Share Link
+          </button>
         </div>
       )}
 
