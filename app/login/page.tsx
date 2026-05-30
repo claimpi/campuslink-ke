@@ -35,14 +35,16 @@ export default function LoginPage() {
 
   async function handleGoogleLogin() {
     setGoogleLoading(true); setError('')
-    const { error } = await createClient().auth.signInWithOAuth({
+    const { data, error } = await createClient().auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
-        queryParams: { access_type: 'offline', prompt: 'consent' }
+        queryParams: { access_type: 'offline', prompt: 'consent' },
+        skipBrowserRedirect: false,
       }
     })
-    if (error) { setError(error.message); setGoogleLoading(false) }
+    if (error) { setError(error.message); setGoogleLoading(false); return }
+    if (data?.url) { window.location.href = data.url }
   }
 
   return (

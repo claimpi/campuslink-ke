@@ -28,14 +28,17 @@ export default function RegisterPage() {
     setGoogleLoading(true)
     setError('')
     const sb = createClient()
-    const { error } = await sb.auth.signInWithOAuth({
+    const { data, error } = await sb.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
-        queryParams: { access_type: 'offline', prompt: 'consent' }
+        queryParams: { access_type: 'offline', prompt: 'consent' },
+        skipBrowserRedirect: false,
       }
     })
-    if (error) { setError(error.message); setGoogleLoading(false) }
+    if (error) { setError(error.message); setGoogleLoading(false); return }
+    // Force open in real browser if inside WebView
+    if (data?.url) { window.open(data.url, '_blank') }
   }
 
   function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
