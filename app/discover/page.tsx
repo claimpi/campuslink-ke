@@ -10,18 +10,9 @@ function calcDist(lat1:number,lon1:number,lat2:number,lon2:number){
   const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2
   return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))
 }
-function timeAgo(ts:string|null){
-  if(!ts) return 'Never'
-  const m=Math.floor((Date.now()-new Date(ts).getTime())/60000)
-  if(m<2) return 'Active now'
-  if(m<60) return `${m}m ago`
-  const h=Math.floor(m/60)
-  if(h<24) return `${h}h ago`
-  return `${Math.floor(h/24)}d ago`
-}
 function isOnline(ts:string|null){
   if(!ts) return false
-  return Math.floor((Date.now()-new Date(ts).getTime())/60000)<5
+  return (Date.now()-new Date(ts).getTime())/60000<5
 }
 
 export default function DiscoverPage(){
@@ -30,46 +21,42 @@ export default function DiscoverPage(){
   const [loading,setLoading]=useState(true)
   const [searchOpen,setSearchOpen]=useState(false)
   const [searchQ,setSearchQ]=useState('')
-  const [gender,setGender]=useState('Auto')
+  const [gender,setGender]=useState('All')
   const [tab,setTab]=useState<'recommended'|'newcomers'|'nearby'>('recommended')
   const [me,setMe]=useState<string|null>(null)
   const [loc,setLoc]=useState<{lat:number,lng:number}|null>(null)
   const [liked,setLiked]=useState<Set<string>>(new Set())
   const [matched,setMatched]=useState<Set<string>>(new Set())
-  const [hiSent,setHiSent]=useState<Set<string>>(new Set())
   const [matchPop,setMatchPop]=useState<any>(null)
 
   useEffect(()=>{
     const sb=createClient()
+    if(navigator.geolocation) navigator.geolocation.getCurrentPosition(p=>setLoc({lat:p.coords.latitude,lng:p.coords.longitude}),()=>{})
+
     sb.auth.getUser().then(({data:{user}})=>{
       if(!user){
-        // Not logged in — show all users as blurred preview to entice sign up
+        // Not logged in — show all profiles, actions locked
         sb.from('profiles')
-          .select('id,full_name,avatar_url,photos,is_premium,age,gender,looking_for,location_name,latitude,longitude,last_seen,created_at')
+          .select('id,full_name,avatar_url,photos,is_premium,is_featured,age,gender,looking_for,location_name,latitude,longitude,last_seen,created_at')
           .order('is_featured',{ascending:false}).order('last_seen',{ascending:false,nullsFirst:false})
-          .limit(80)
-          .then(({data})=>{ if(data) setUsers(data); setLoading(false) })
+          .limit(80).then(({data})=>{ if(data) setUsers(data); setLoading(false) })
         return
       }
       setMe(user.id)
+      // Get my gender → show opposite
       sb.from('profiles').select('gender').eq('id',user.id).maybeSingle().then(({data})=>{
-        const oppositeGender = data?.gender==='male'?'female':data?.gender==='female'?'male':null
+        const opp=data?.gender==='male'?'female':data?.gender==='female'?'male':null
         if(data?.gender==='male') setGender('female')
         else if(data?.gender==='female') setGender('male')
         else setGender('All')
 
-        // Fetch users filtered by opposite gender at DB level
-        let query = sb.from('profiles')
+        let q=sb.from('profiles')
           .select('id,full_name,avatar_url,photos,is_premium,is_featured,is_verified,age,gender,looking_for,location_name,latitude,longitude,last_seen,created_at')
-          .neq('id', user.id)
-          .order('is_featured',{ascending:false})
-          .order('is_premium',{ascending:false})
-          .order('last_seen',{ascending:false,nullsFirst:false})
-          .limit(80)
-
-        if(oppositeGender) query = query.eq('gender', oppositeGender)
-
-        query.then(({data:users})=>{ if(users) setUsers(users); setLoading(false) })
+          .neq('id',user.id)
+          .order('is_featured',{ascending:false}).order('is_premium',{ascending:false})
+          .order('last_seen',{ascending:false,nullsFirst:false}).limit(80)
+        if(opp) q=(q as any).eq('gender',opp)
+        q.then(({data:users})=>{ if(users) setUsers(users); setLoading(false) })
       })
       sb.from('likes').select('receiver_id').eq('sender_id',user.id)
         .then(({data})=>{ if(data) setLiked(new Set(data.map((l:any)=>l.receiver_id))) })
@@ -84,19 +71,11 @@ export default function DiscoverPage(){
       const t=setInterval(()=>sb.from('profiles').update({last_seen:new Date().toISOString()}).eq('id',user.id),180000)
       return()=>clearInterval(t)
     })
-    if(navigator.geolocation) navigator.geolocation.getCurrentPosition(p=>setLoc({lat:p.coords.latitude,lng:p.coords.longitude}),()=>{})
   },[])
-
-  async function sendHi(e:React.MouseEvent, rid:string, name:string){
-    e.stopPropagation()
-    if(!me){router.push('/login');return}
-    // Open chat directly
-    router.push(`/chat/${rid}`)
-  }
 
   async function like(e:React.MouseEvent, rid:string, name:string){
     e.stopPropagation()
-    if(!me){router.push('/login');return}
+    if(!me){router.push('/register');return}
     if(liked.has(rid)) return
     setLiked(p=>new Set([...p,rid]))
     const res=await fetch('/api/like',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({senderId:me,receiverId:rid})})
@@ -124,27 +103,25 @@ export default function DiscoverPage(){
   )
 
   return(
-    <div style={{maxWidth:480,margin:'0 auto',background:'#fafaf7',minHeight:'100vh',paddingBottom:80}}>
+    <div style={{maxWidth:480,margin:'0 auto',background:'#f5f6fa',minHeight:'100vh',paddingBottom:80}}>
 
       {/* Match popup */}
       {matchPop&&(
         <div onClick={()=>setMatchPop(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.8)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
           <div style={{background:'#fff',borderRadius:24,padding:'36px 24px',textAlign:'center',maxWidth:280,width:'100%'}}>
-            <div style={{fontSize:52,marginBottom:8}}>💞</div>
+            <div style={{fontSize:48,marginBottom:8}}>💞</div>
             <h2 style={{fontSize:22,fontWeight:900,color:'#be185d',marginBottom:6}}>It's a Match!</h2>
             <p style={{fontSize:13,color:'#64748b',marginBottom:20}}>You and <strong>{matchPop.name}</strong> liked each other!</p>
-            <button onClick={()=>{setMatchPop(null);router.push(`/profile/${matchPop.id}`)}}
+            <button onClick={()=>{setMatchPop(null);router.push(`/chat/${matchPop.id}`)}}
               style={{background:'linear-gradient(135deg,#ec4899,#be185d)',color:'#fff',border:'none',borderRadius:12,padding:'12px 0',fontSize:14,fontWeight:700,cursor:'pointer',width:'100%'}}>
-              View Profile →
+              Send a Message →
             </button>
           </div>
         </div>
       )}
 
-      {/* Sticky top bar */}
+      {/* Top bar */}
       <div style={{position:'sticky',top:0,zIndex:100,background:'#fafaf7',borderBottom:'1px solid #ece9df'}}>
-
-        {/* Tabs row */}
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px 0'}}>
           <div style={{display:'flex',gap:0}}>
             {([['recommended','Recommend'],['newcomers','Newcomer'],['nearby','Nearby']] as const).map(([t,label])=>(
@@ -156,12 +133,8 @@ export default function DiscoverPage(){
               }}>{label}</button>
             ))}
           </div>
-          <div style={{display:'flex',gap:8,alignItems:'center'}}>
-            <button onClick={()=>setSearchOpen(s=>!s)} style={{width:36,height:36,borderRadius:'50%',border:'1.5px solid #e8ecf0',background:searchOpen?'#fff7ed':'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,color:'#374151'}}>🔍</button>
-          </div>
+          <button onClick={()=>setSearchOpen(s=>!s)} style={{width:36,height:36,borderRadius:'50%',border:'1.5px solid #e8ecf0',background:searchOpen?'#fff7ed':'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🔍</button>
         </div>
-
-        {/* Search bar */}
         {searchOpen&&(
           <div style={{padding:'8px 16px 12px'}}>
             <input autoFocus value={searchQ} onChange={e=>setSearchQ(e.target.value)}
@@ -172,56 +145,23 @@ export default function DiscoverPage(){
         )}
       </div>
 
-      {/* Logged out sign up prompt */}
-      {!me&&!loading&&filtered.length>0&&(
-        <div style={{position:'sticky',top:0,zIndex:50,background:'linear-gradient(135deg,#f97316,#ea580c)',
-          padding:'12px 16px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
-          <div>
-            <p style={{color:'#fff',fontWeight:800,fontSize:14,margin:0}}>👀 {filtered.length} people near you!</p>
-            <p style={{color:'rgba(255,255,255,0.85)',fontSize:12,margin:'2px 0 0'}}>Sign up free to chat & connect</p>
-          </div>
-          <div style={{display:'flex',gap:8,flexShrink:0}}>
-            <button onClick={()=>router.push('/login')} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'1px solid rgba(255,255,255,0.4)',borderRadius:20,padding:'7px 14px',fontSize:13,fontWeight:700,cursor:'pointer'}}>Sign In</button>
-            <button onClick={()=>router.push('/register')} style={{background:'#fff',color:'#f97316',border:'none',borderRadius:20,padding:'7px 14px',fontSize:13,fontWeight:800,cursor:'pointer'}}>Join Free</button>
+      {/* Logged out banner */}
+      {!me&&!loading&&(
+        <div style={{background:'linear-gradient(135deg,#f97316,#ea580c)',padding:'10px 16px',
+          display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
+          <p style={{color:'#fff',fontWeight:700,fontSize:13,margin:0}}>👀 Sign up free to chat & connect</p>
+          <div style={{display:'flex',gap:6,flexShrink:0}}>
+            <button onClick={()=>router.push('/login')} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'1px solid rgba(255,255,255,0.5)',borderRadius:20,padding:'5px 12px',fontSize:12,fontWeight:700,cursor:'pointer'}}>Login</button>
+            <button onClick={()=>router.push('/register')} style={{background:'#fff',color:'#f97316',border:'none',borderRadius:20,padding:'5px 12px',fontSize:12,fontWeight:800,cursor:'pointer'}}>Join Free</button>
           </div>
         </div>
       )}
 
       {/* List */}
-      <div style={{position:'relative'}}>
-        {/* Blur overlay for logged out users after 3rd card */}
-        {!me&&!loading&&filtered.length>0&&(
-          <div style={{position:'absolute',bottom:0,left:0,right:0,height:'60%',zIndex:10,
-            background:'linear-gradient(to top, rgba(245,246,250,1) 40%, rgba(245,246,250,0.95) 60%, transparent 100%)',
-            pointerEvents:'none'}}/>
-        )}
-        {!me&&!loading&&filtered.length>0&&(
-          <div style={{position:'absolute',bottom:'10%',left:0,right:0,zIndex:20,
-            display:'flex',flexDirection:'column',alignItems:'center',gap:12,padding:'0 24px'}}>
-            <div style={{background:'#fff',borderRadius:20,padding:'20px 24px',textAlign:'center',
-              boxShadow:'0 8px 32px rgba(0,0,0,0.12)',border:'1px solid #e8ecf0',width:'100%',maxWidth:320}}>
-              <div style={{fontSize:36,marginBottom:8}}>🔒</div>
-              <p style={{fontWeight:900,fontSize:16,color:'#0f172a',margin:'0 0 6px'}}>See who likes you!</p>
-              <p style={{fontSize:13,color:'#64748b',margin:'0 0 16px',lineHeight:1.5}}>
-                Join free to chat, send Hi, and connect with people near you
-              </p>
-              <button onClick={()=>router.push('/register')}
-                style={{width:'100%',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',
-                  border:'none',borderRadius:12,padding:'13px',fontSize:15,fontWeight:800,cursor:'pointer',
-                  boxShadow:'0 4px 14px rgba(249,115,22,0.4)',marginBottom:10}}>
-                Create Free Account
-              </button>
-              <button onClick={()=>router.push('/login')}
-                style={{width:'100%',background:'none',color:'#f97316',border:'1px solid #f97316',
-                  borderRadius:12,padding:'11px',fontSize:14,fontWeight:700,cursor:'pointer'}}>
-                I already have an account
-              </button>
-            </div>
-          </div>
-        )}
+      <div>
         {loading
           ?[...Array(3)].map((_,i)=>(
-            <div key={i} style={{background:'#fff',marginBottom:8,padding:16,display:'flex',gap:14}}>
+            <div key={i} style={{background:'#fff',marginBottom:8,padding:16,display:'flex',gap:14,alignItems:'center'}}>
               <div style={{width:76,height:76,borderRadius:'50%',background:'#f1f5f9',flexShrink:0}}/>
               <div style={{flex:1}}>
                 <div style={{height:16,background:'#f1f5f9',borderRadius:6,marginBottom:10,width:'55%'}}/>
@@ -229,108 +169,74 @@ export default function DiscoverPage(){
               </div>
             </div>
           ))
-          :filtered.map((s,index)=>{
+          :filtered.map(s=>{
             const distKm=loc&&s.latitude?calcDist(loc.lat,loc.lng,s.latitude,s.longitude):null
             const distLabel=distKm!==null?(distKm<0.1?'<0.1km':`${distKm.toFixed(1)}km`):null
             const isLiked=liked.has(s.id)
             const isMatch=matched.has(s.id)
             const online=isOnline(s.last_seen)
-            const lastSeen=timeAgo(s.last_seen)
             const extras:string[]=Array.isArray(s.photos)?s.photos.filter((p:string)=>p&&p!==s.avatar_url).slice(0,4):[]
             const name=(s.full_name||'User').split(' ')[0]
-            const said_hi=hiSent.has(s.id)
+            const locked=!me // not logged in
 
             return(
-              <div key={s.id} onClick={()=>!me&&index>=3?router.push('/register'):router.push(`/profile/${s.id}`)}
-                style={{background:'#fff',marginBottom:8,padding:'16px 16px',cursor:'pointer',borderBottom:'1px solid #f5f5f0',
-                  filter:!me&&index>=3?'blur(5px)':'none',
-                  pointerEvents:!me&&index>=3?'none':'auto'}}>
+              <div key={s.id} onClick={()=>locked?router.push('/register'):router.push(`/profile/${s.id}`)}
+                style={{background:'#fff',marginBottom:8,padding:'14px 16px',cursor:'pointer',borderBottom:'1px solid #f5f5f0'}}>
 
-                <div style={{display:'flex',gap:14,alignItems:'flex-start'}}>
+                <div style={{display:'flex',gap:12,alignItems:'flex-start'}}>
                   {/* Avatar */}
                   <div style={{position:'relative',flexShrink:0}}>
-                    <div style={{
-                      width:76,height:76,borderRadius:'50%',overflow:'hidden',
-                      border:s.is_featured?'3px solid #f97316':s.is_premium?'3px solid #f59e0b':'3px solid #e5e7eb',
-                      boxShadow:s.is_premium?'0 0 0 2px #fef3c7':'none'
-                    }}>
+                    <div style={{width:72,height:72,borderRadius:'50%',overflow:'hidden',
+                      border:s.is_featured?'3px solid #f97316':s.is_premium?'3px solid #f59e0b':'2px solid #e5e7eb'}}>
                       {s.avatar_url
                         ?<img src={s.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt={name}/>
                         :<div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',
                           background:`linear-gradient(135deg,${s.is_premium?'#7c3aed,#6d28d9':'#f97316,#ea580c'})`,
-                          color:'#fff',fontSize:26,fontWeight:900}}>{initials(s.full_name)}</div>
+                          color:'#fff',fontSize:24,fontWeight:900}}>{initials(s.full_name)}</div>
                       }
                     </div>
-                    {/* Online dot */}
-                    <div style={{position:'absolute',bottom:3,right:3,width:13,height:13,borderRadius:'50%',
+                    <div style={{position:'absolute',bottom:2,right:2,width:12,height:12,borderRadius:'50%',
                       background:online?'#22c55e':'#d1d5db',border:'2.5px solid #fff'}}/>
-                    {/* VIP badge below avatar */}
                     {s.is_premium&&(
-                      <div style={{position:'absolute',bottom:-10,left:'50%',transform:'translateX(-50%)',
+                      <div style={{position:'absolute',bottom:-8,left:'50%',transform:'translateX(-50%)',
                         background:'linear-gradient(135deg,#22c55e,#16a34a)',color:'#fff',
-                        fontSize:8,padding:'2px 7px',borderRadius:4,fontWeight:900,whiteSpace:'nowrap',
-                        border:'1.5px solid #fff',boxShadow:'0 1px 4px rgba(0,0,0,0.2)'}}>VIP</div>
+                        fontSize:8,padding:'1px 5px',borderRadius:4,fontWeight:900,whiteSpace:'nowrap',border:'1.5px solid #fff'}}>VIP</div>
                     )}
                   </div>
 
                   {/* Info */}
                   <div style={{flex:1,minWidth:0,paddingTop:2}}>
-                    {/* Name row */}
                     <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:5}}>
-                      <span style={{fontSize:17,fontWeight:800,color:'#0f172a'}}>{s.full_name||'User'}</span>
-                      {s.is_verified&&<span style={{color:'#2563eb',fontSize:15}}>✓</span>}
-                      {isMatch&&<span style={{fontSize:14}}>💞</span>}
-                      {s.is_premium&&<span style={{fontSize:13}}>⭐</span>}
+                      <span style={{fontSize:16,fontWeight:800,color:'#0f172a'}}>{s.full_name||'User'}</span>
+                      {s.is_verified&&<span style={{color:'#2563eb',fontSize:14}}>✓</span>}
+                      {isMatch&&<span style={{fontSize:13}}>💞</span>}
                     </div>
-
-                    {/* Tag pills */}
-                    <div style={{display:'flex',flexWrap:'wrap',gap:5,marginBottom:4}}>
-                      {s.age&&(
-                        <span style={{background:'#fce7f3',color:'#be185d',fontSize:11,padding:'3px 8px',borderRadius:20,fontWeight:700}}>
-                          {s.age} yrs
-                        </span>
-                      )}
-                      {distLabel&&(
-                        <span style={{background:'#dcfce7',color:'#16a34a',fontSize:11,padding:'3px 8px',borderRadius:20,fontWeight:700}}>
-                          📍{distLabel}
-                        </span>
-                      )}
-                      {s.looking_for&&(
-                        <span style={{background:'#ede9fe',color:'#7c3aed',fontSize:11,padding:'3px 8px',borderRadius:20,fontWeight:600}}>
-                          {s.looking_for==='relationship'?'💕 Dating':s.looking_for==='friendship'?'🤝 Friends':s.looking_for==='study'?'📚 Study':s.looking_for==='networking'?'🌐 Network':'💬 '+s.looking_for}
-                        </span>
-                      )}
-                      {online&&(
-                        <span style={{background:'#f0fdf4',color:'#16a34a',fontSize:11,padding:'3px 8px',borderRadius:20,fontWeight:700}}>
-                          🟢 Online
-                        </span>
-                      )}
+                    <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
+                      {s.age&&<span style={{background:'#fce7f3',color:'#be185d',fontSize:11,padding:'3px 8px',borderRadius:20,fontWeight:700}}>{s.age} yrs</span>}
+                      {distLabel&&<span style={{background:'#dcfce7',color:'#16a34a',fontSize:11,padding:'3px 8px',borderRadius:20,fontWeight:700}}>📍{distLabel}</span>}
+                      {s.looking_for&&<span style={{background:'#ede9fe',color:'#7c3aed',fontSize:11,padding:'3px 8px',borderRadius:20,fontWeight:600}}>
+                        {s.looking_for==='relationship'?'💕 Dating':s.looking_for==='friendship'?'🤝 Friends':s.looking_for==='study'?'📚 Study':'🌐 Network'}
+                      </span>}
+                      {online&&<span style={{background:'#f0fdf4',color:'#16a34a',fontSize:11,padding:'3px 8px',borderRadius:20,fontWeight:700}}>🟢 Online</span>}
                     </div>
                   </div>
 
-                  {/* Hi + Like buttons */}
-                  <div onClick={e=>e.stopPropagation()} style={{flexShrink:0,display:'flex',flexDirection:'column',gap:8,alignItems:'center',paddingTop:2}}>
+                  {/* Action buttons */}
+                  <div onClick={e=>e.stopPropagation()} style={{flexShrink:0,display:'flex',flexDirection:'column',gap:8,alignItems:'center'}}>
                     {/* Hi button */}
-                    <button onClick={e=>sendHi(e,s.id,name)}
-                      style={{
-                        background:said_hi?'#f1f5f9':'linear-gradient(135deg,#f97316,#fb923c)',
-                        color:said_hi?'#94a3b8':'#fff',
-                        border:'none',borderRadius:20,padding:'7px 16px',
-                        fontSize:14,fontWeight:800,cursor:said_hi?'default':'pointer',
-                        display:'flex',alignItems:'center',gap:5,
-                        boxShadow:said_hi?'none':'0 3px 12px rgba(249,115,22,0.45)',
-                        minWidth:64,justifyContent:'center'
-                      }}>
-                      <span style={{fontSize:16}}>💬</span>
-                      {said_hi?'Sent':'Hi'}
+                    <button onClick={()=>locked?router.push('/register'):router.push(`/chat/${s.id}`)}
+                      style={{background:locked?'#e2e8f0':'linear-gradient(135deg,#f97316,#fb923c)',
+                        color:locked?'#94a3b8':'#fff',border:'none',borderRadius:20,padding:'7px 16px',
+                        fontSize:14,fontWeight:800,cursor:'pointer',display:'flex',alignItems:'center',gap:5,
+                        boxShadow:locked?'none':'0 3px 12px rgba(249,115,22,0.45)',minWidth:64,justifyContent:'center'}}>
+                      <span style={{fontSize:16}}>💬</span> Hi
                     </button>
                     {/* Like */}
-                    <button onClick={e=>like(e,s.id,name)}
+                    <button onClick={e=>locked?router.push('/register'):like(e,s.id,name)}
                       style={{width:34,height:34,borderRadius:'50%',
                         border:`1.5px solid ${isMatch||isLiked?'#ec4899':'#e2e8f0'}`,
                         background:isMatch?'linear-gradient(135deg,#ec4899,#be185d)':isLiked?'#fdf2f8':'#fff',
-                        cursor:isLiked?'default':'pointer',
-                        display:'flex',alignItems:'center',justifyContent:'center',
+                        cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',
                         boxShadow:isMatch?'0 2px 8px rgba(236,72,153,0.4)':'none'}}>
                       <svg width="14" height="13" viewBox="0 0 24 21" fill={isLiked||isMatch?'#ec4899':'none'} stroke={isLiked||isMatch?'#ec4899':'#ccc'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M12 21C12 21 2 13.5 2 7a5 5 0 0 1 10 0 5 5 0 0 1 10 0c0 6.5-10 14-10 14z"/>
@@ -355,21 +261,7 @@ export default function DiscoverPage(){
         }
       </div>
 
-      {!loading&&filtered.length===0&&!me&&(
-        <div style={{textAlign:'center',padding:'60px 20px'}}>
-          <div style={{fontSize:48,marginBottom:16}}>👥</div>
-          <p style={{fontSize:18,fontWeight:800,color:'#374151',marginBottom:8}}>Meet people near you!</p>
-          <p style={{fontSize:14,color:'#94a3b8',marginBottom:24}}>Join CampusLink KE to see profiles</p>
-          <button onClick={()=>router.push('/register')}
-            style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',border:'none',
-              borderRadius:12,padding:'13px 32px',fontSize:15,fontWeight:800,cursor:'pointer',
-              boxShadow:'0 4px 14px rgba(249,115,22,0.4)'}}>
-            Join Free Now
-          </button>
-        </div>
-      )}
-
-      {!loading&&filtered.length===0&&me&&(
+      {!loading&&filtered.length===0&&(
         <div style={{textAlign:'center',padding:'60px 20px'}}>
           <div style={{fontSize:40,marginBottom:12}}>🔍</div>
           <p style={{fontSize:16,fontWeight:700,color:'#374151'}}>No one found</p>
