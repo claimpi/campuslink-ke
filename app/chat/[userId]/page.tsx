@@ -14,6 +14,9 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<any[]>([])
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
+  const [showCoinTransfer, setShowCoinTransfer] = useState(false)
+  const [coinAmount, setCoinAmount] = useState('')
+  const [coins, setCoins] = useState(0)
   const [error, setError] = useState('')
   const [showBuy, setShowBuy] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -23,7 +26,7 @@ export default function ChatPage() {
     sb.auth.getUser().then(({ data: { user } }) => {
       if (!user) { router.push('/login'); return }
       sb.from('profiles').select('id,full_name,avatar_url,coins,free_messages_used').eq('id', user.id).maybeSingle()
-        .then(({ data }) => setMe(data))
+        .then(({ data }) => { setMe(data); setCoins(data?.coins || 0) })
       sb.from('profiles').select('id,full_name,avatar_url,is_premium,is_verified,last_seen').eq('id', otherId).maybeSingle()
         .then(({ data }) => setOther(data))
 
@@ -96,7 +99,6 @@ export default function ChatPage() {
   }
 
   const freeLeft = Math.max(0, FREE_MSGS - (me?.free_messages_used || 0))
-  const coins = me?.coins || 0
 
   function formatTime(ts: string) {
     const d = new Date(ts)
@@ -195,6 +197,70 @@ export default function ChatPage() {
         <div style={{ background: '#fef2f2', border: '1px solid #fecaca', margin: '0 12px', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#dc2626', flexShrink: 0 }}>
           {error}
           {showBuy && <button onClick={() => router.push('/pricing')} style={{ marginLeft: 8, background: '#f97316', color: '#fff', border: 'none', borderRadius: 8, padding: '4px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Buy Coins</button>}
+        </div>
+      )}
+
+      {/* Quick actions bar */}
+      <div style={{ background: '#fff', padding: '6px 12px', display: 'flex', gap: 8, borderTop: '1px solid #f1f5f9', flexShrink: 0, overflowX: 'auto' }}>
+        {/* Request gift */}
+        <button onClick={async () => {
+          if (!me) return
+          const msg = `🎁 Can you send me a gift? Visit my profile!`
+          await fetch('/api/message', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ senderId: me.id, receiverId: otherId, content: msg }) })
+        }} style={{ flexShrink: 0, background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 20, padding: '5px 12px', fontSize: 12, fontWeight: 700, color: '#f97316', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          🎁 Request Gift
+        </button>
+        {/* Send coins */}
+        <button onClick={() => setShowCoinTransfer(s => !s)} style={{ flexShrink: 0, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 20, padding: '5px 12px', fontSize: 12, fontWeight: 700, color: '#16a34a', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          🪙 Send Coins
+        </button>
+        {/* View profile */}
+        <button onClick={() => router.push(`/profile/${otherId}`)} style={{ flexShrink: 0, background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 20, padding: '5px 12px', fontSize: 12, fontWeight: 700, color: '#374151', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          👤 Profile
+        </button>
+      </div>
+
+      {/* Coin transfer panel */}
+      {showCoinTransfer && (
+        <div style={{ background: '#fff', padding: '12px 16px', borderTop: '1px solid #f1f5f9', flexShrink: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>🪙 Send Coins to {other?.full_name?.split(' ')[0]}</span>
+            <span style={{ fontSize: 12, color: '#94a3b8' }}>Balance: {coins} coins</span>
+          </div>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+            {[10, 20, 50, 100].map(a => (
+              <button key={a} onClick={() => setCoinAmount(String(a))} style={{ flex: 1, padding: '7px 0', borderRadius: 8, border: `1.5px solid ${coinAmount === String(a) ? '#f97316' : '#e2e8f0'}`, background: coinAmount === String(a) ? '#fff7ed' : '#fff', color: coinAmount === String(a) ? '#f97316' : '#374151', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                {a}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input value={coinAmount} onChange={e => setCoinAmount(e.target.value.replace(/\D/g, ''))}
+              placeholder="Amount..." style={{ flex: 1, border: '1.5px solid #e2e8f0', borderRadius: 8, padding: '8px 12px', fontSize: 14, outline: 'none' }}
+              onFocus={e => e.target.style.borderColor = '#f97316'} onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+            <button onClick={async () => {
+              if (!me || !coinAmount) return
+              const amt = parseInt(coinAmount)
+              if (amt > coins) { setError(`Not enough coins (have ${coins})`); return }
+              setSending(true)
+              const res = await fetch('/api/transfer-coins', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ senderId: me.id, receiverId: otherId, amount: amt, message: `Sent from chat` }) })
+              const data = await res.json()
+              if (data.success) {
+                setMe((p: any) => ({ ...p, coins: data.senderCoins }))
+                setCoins(data.senderCoins)
+                setCoinAmount('')
+                setShowCoinTransfer(false)
+                // Send a message about the transfer
+                await fetch('/api/message', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ senderId: me.id, receiverId: otherId, content: `🪙 I just sent you ${amt} coins!` }) })
+              } else { setError(data.error || 'Transfer failed') }
+              setSending(false)
+            }} disabled={!coinAmount || sending} style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
+              Send 🪙
+            </button>
+          </div>
         </div>
       )}
 

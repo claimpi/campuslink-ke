@@ -43,3 +43,18 @@ CREATE POLICY "Users mark read" ON messages
   FOR UPDATE USING (auth.uid()=receiver_id);
 CREATE POLICY "Users see own transactions" ON coin_transactions
   FOR SELECT USING (auth.uid()=user_id);
+
+-- Coin transfers between users
+CREATE TABLE IF NOT EXISTS coin_transfers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  sender_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  receiver_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  amount INTEGER NOT NULL,
+  message TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE coin_transfers ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users see own transfers" ON coin_transfers
+  FOR SELECT USING (auth.uid()=sender_id OR auth.uid()=receiver_id);
+CREATE POLICY "Users send transfers" ON coin_transfers
+  FOR INSERT WITH CHECK (auth.uid()=sender_id);
