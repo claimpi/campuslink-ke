@@ -20,6 +20,7 @@ export default function ProfilePage(){
   const [loc,setLoc]=useState<{lat:number,lng:number}|null>(null)
   const [liked,setLiked]=useState(false)
   const [following,setFollowing]=useState(false)
+  const [followLoading,setFollowLoading]=useState(false)
   const [friendStatus,setFriendStatus]=useState<'none'|'pending_sent'|'pending_received'|'friends'>('none')
   const [showGifts,setShowGifts]=useState(false)
   const autoSlideRef=useRef<any>(null)
@@ -47,6 +48,9 @@ export default function ProfilePage(){
       // Like status
       sb.from('likes').select('id').eq('sender_id',user.id).eq('receiver_id',id).maybeSingle()
         .then(({data})=>setLiked(!!data))
+      // Follow status
+      sb.from('follows').select('id').eq('follower_id',user.id).eq('following_id',id).maybeSingle()
+        .then(({data})=>setFollowing(!!data))
       // Friend status
       sb.from('friend_requests').select('id,status,sender_id').or(`and(sender_id.eq.${user.id},receiver_id.eq.${id}),and(sender_id.eq.${id},receiver_id.eq.${user.id})`).maybeSingle()
         .then(({data})=>{
@@ -85,7 +89,21 @@ export default function ProfilePage(){
 
   async function handleFollow(){
     if(!me){router.push('/login');return}
-    setFollowing(f=>!f)
+    if(followLoading) return
+    setFollowLoading(true)
+    const sb=createClient()
+    if(following){
+      await sb.from('follows').delete().eq('follower_id',me.id).eq('following_id',id)
+      setFollowing(false)
+    } else {
+      await sb.from('follows').insert([{follower_id:me.id,following_id:id}])
+      setFollowing(true)
+      // Notify the person
+      fetch('/api/push-notify',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({userId:id,title:'New Follower! 🎉',body:'Someone started following you',url:`/profile/${me.id}`})
+      }).catch(()=>{})
+    }
+    setFollowLoading(false)
   }
 
   async function sendGift(type:string, price:number){
@@ -207,13 +225,14 @@ export default function ProfilePage(){
                 boxShadow:'0 3px 12px rgba(245,158,11,0.4)'}}>
               <span style={{fontSize:17}}>💬</span> Chat
             </button>
-            <button onClick={handleFollow}
-              style={{flex:1,height:44,borderRadius:22,border:'none',cursor:'pointer',
+            <button onClick={handleFollow} disabled={followLoading}
+              style={{flex:1,height:44,borderRadius:22,border:'none',cursor:followLoading?'not-allowed':'pointer',
                 background:following?'#0f172a':'linear-gradient(135deg,#f97316,#ea580c)',
                 color:'#fff',fontSize:14,fontWeight:800,
                 display:'flex',alignItems:'center',justifyContent:'center',gap:6,
                 boxShadow:`0 3px 12px ${following?'rgba(0,0,0,0.2)':'rgba(249,115,22,0.4)'}`}}>
-              <span style={{fontSize:17}}>{following?'✓':'❤️'}</span> {following?'Following':'Follow'}
+              <span style={{fontSize:17}}>{followLoading?'⏳':following?'✓':'❤️'}</span>
+              {followLoading?'...':following?'Following':'Follow'}
             </button>
             <button onClick={handleLike}
               style={{width:44,height:44,borderRadius:'50%',flexShrink:0,
