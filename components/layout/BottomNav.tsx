@@ -27,8 +27,8 @@ export default function BottomNav() {
 
   const navItems = [
     { href: '/discover', label: 'Home', icon: HomeIcon },
-    { href: '/groups', label: 'Groups', icon: GroupIcon },
-    { href: '/pricing', label: 'VIP', icon: VipIcon },
+    { href: '/chat', label: 'Chat', icon: ChatIcon },
+    { href: '/pricing', label: 'Coins', icon: CoinIcon },
     { href: user ? '/dashboard' : '/login', label: user ? 'Me' : 'Login', icon: null, isProfile: true },
   ]
 
@@ -85,22 +85,20 @@ function HomeIcon({ active }: { active: boolean }) {
     </svg>
   )
 }
-function GroupIcon({ active }: { active: boolean }) {
+function ChatIcon({ active }: { active: boolean }) {
   const c = active ? '#f97316' : '#94a3b8'
   return (
-    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-      <circle cx="9" cy="7" r="4"/>
-      <path d="M23 21v-2a4 4 0 00-3-3.87"/>
-      <path d="M16 3.13a4 4 0 010 7.75"/>
+    <svg width={22} height={22} viewBox="0 0 24 24" fill={active?'#f97316':'none'} stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
     </svg>
   )
 }
-function VipIcon({ active }: { active: boolean }) {
+function CoinIcon({ active }: { active: boolean }) {
   const c = active ? '#f97316' : '#94a3b8'
   return (
     <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M12 6v2m0 8v2M9 9h4.5a1.5 1.5 0 010 3H10a1.5 1.5 0 000 3H15"/>
     </svg>
   )
 }

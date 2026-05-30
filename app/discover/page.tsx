@@ -72,12 +72,8 @@ export default function DiscoverPage(){
   async function sendHi(e:React.MouseEvent, rid:string, name:string){
     e.stopPropagation()
     if(!me){router.push('/login');return}
-    if(hiSent.has(rid)) return
-    setHiSent(p=>new Set([...p,rid]))
-    toast(`👋 Hi sent to ${name}!`,'success')
-    fetch('/api/push-notify',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({userId:rid,title:`👋 Someone said Hi!`,body:`Someone nearby wants to meet you`,url:'/dashboard'})
-    }).catch(()=>{})
+    // Open chat directly
+    router.push(`/chat/${rid}`)
   }
 
   async function like(e:React.MouseEvent, rid:string, name:string){
