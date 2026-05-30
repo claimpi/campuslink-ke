@@ -266,33 +266,33 @@ export default function DiscoverPage(){
                 </div>
 
                 {/* Info row */}
-                <div style={{padding:'8px 10px 10px',display:'flex',alignItems:'center',gap:'6px'}}>
-                  <div style={{flex:1,minWidth:0,cursor:'pointer'}} onClick={()=>router.push(`/profile/${s.id}`)}>
-                    <p style={{fontSize:'13px',fontWeight:'800',color:'#0f172a',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',marginBottom:'1px'}}>
+                <div style={{padding:'8px 10px 10px'}}>
+                  {/* Name + active */}
+                  <div style={{cursor:'pointer',marginBottom:'7px'}} onClick={()=>router.push(`/profile/${s.id}`)}>
+                    <p style={{fontSize:'14px',fontWeight:'800',color:'#0f172a',marginBottom:'1px',lineHeight:'1.3'}}>
                       {firstName}{s.age?`, ${s.age}`:''}
                     </p>
                     {active&&(
-                      <p style={{fontSize:'10px',color:active.color,fontWeight:'600'}}>{active.label}</p>
+                      <p style={{fontSize:'11px',color:active.color,fontWeight:'600'}}>{active.label}</p>
                     )}
                   </div>
+                  {/* Buttons row */}
                   {s.id!==currentUserId&&(
-                    <div style={{display:'flex',gap:'4px',flexShrink:0}}>
-                      {/* Like */}
+                    <div style={{display:'flex',gap:'6px'}}>
                       <button onClick={e=>{e.stopPropagation();handleLike(s.id, s.full_name?.split(' ')[0]||'them')}}
-                        style={{width:'32px',height:'32px',borderRadius:'50%',border:`1.5px solid ${isMatch||isLiked?'#ec4899':'#e2e8f0'}`,cursor:'pointer',
+                        style={{width:'34px',height:'34px',borderRadius:'50%',border:`1.5px solid ${isMatch||isLiked?'#ec4899':'#e2e8f0'}`,cursor:'pointer',
                           background:isMatch?'#ec4899':isLiked?'#fdf2f8':'#fff',
-                          display:'flex',alignItems:'center',justifyContent:'center',
-                          transition:'all 0.2s',transform:liking===s.id?'scale(1.25)':'scale(1)',flexShrink:0}}>
+                          display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
+                          transition:'all 0.2s',transform:liking===s.id?'scale(1.25)':'scale(1)'}}>
                         <svg width="13" height="12" viewBox="0 0 24 21" fill={isLiked||isMatch?'#ec4899':'none'} stroke={isLiked||isMatch?'#ec4899':'#94a3b8'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21C12 21 2 13.5 2 7a5 5 0 0 1 10 0 5 5 0 0 1 10 0c0 6.5-10 14-10 14z"/></svg>
                       </button>
-                      {/* Connect */}
                       <button onClick={e=>{e.stopPropagation();
                         if(!friendStatuses[s.id]) sendRequest(s.id)
                         else if(friendStatuses[s.id]==='friends') router.push(`/profile/${s.id}`)
                         else if(friendStatuses[s.id]==='pending_received') router.push('/dashboard')
-                      }} style={{height:'32px',borderRadius:'50px',border:'none',cursor:'pointer',padding:'0 10px',fontSize:'10px',fontWeight:'700',whiteSpace:'nowrap',flexShrink:0,
+                      }} style={{flex:1,height:'34px',borderRadius:'50px',border:'none',cursor:'pointer',fontSize:'11px',fontWeight:'700',
                         background:friendStatuses[s.id]==='friends'?'#16a34a':friendStatuses[s.id]==='pending_sent'?'#ca8a04':friendStatuses[s.id]==='pending_received'?'#2563eb':'#f97316',
-                        color:'#fff',boxShadow:'0 2px 6px rgba(249,115,22,0.35)'}}>
+                        color:'#fff',boxShadow:'0 2px 6px rgba(249,115,22,0.3)'}}>
                         {sendingTo===s.id?'...':friendStatuses[s.id]==='friends'?'Friends':friendStatuses[s.id]==='pending_sent'?'Pending':friendStatuses[s.id]==='pending_received'?'Accept':'Connect'}
                       </button>
                     </div>
