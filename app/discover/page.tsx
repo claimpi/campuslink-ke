@@ -66,17 +66,15 @@ export default function DiscoverPage(){
       setMe(user.id)
       // Get my gender → show opposite
       sb.from('profiles').select('gender').eq('id',user.id).maybeSingle().then(({data})=>{
-        const opp=data?.gender==='male'?'female':data?.gender==='female'?'male':null
-        if(data?.gender==='male') setGender('female')
-        else if(data?.gender==='female') setGender('male')
-        else setGender('All')
+        // Show everyone for now until we gain traffic
+        setGender('All')
 
         let q=sb.from('profiles')
           .select('id,full_name,avatar_url,photos,is_premium,is_featured,is_verified,age,gender,looking_for,location_name,latitude,longitude,last_seen,created_at')
           .neq('id',user.id)
           .order('is_featured',{ascending:false}).order('is_premium',{ascending:false})
           .order('last_seen',{ascending:false,nullsFirst:false}).limit(80)
-        if(opp) q=(q as any).eq('gender',opp)
+
         q.then(({data:users})=>{ if(users) setUsers(users); setLoading(false) })
       })
       sb.from('likes').select('receiver_id').eq('sender_id',user.id)
