@@ -14,6 +14,13 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/dashboard'
 
+  // Use the forwarded host (real domain) if available, else fall back to origin
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https'
+  const baseUrl = forwardedHost
+    ? `${forwardedProto}://${forwardedHost}`
+    : origin
+
   if (code) {
     const cookieStore = await cookies()
     const supabase = createServerClient(
@@ -42,11 +49,11 @@ export async function GET(request: NextRequest) {
         // Check if profile exists
         const { data: existingProfile } = await sbAdmin
           .from('profiles')
-          .select('id, full_name')
+          .select('id')
           .eq('id', userId)
           .maybeSingle()
 
-        // Auto-create profile for Google/OAuth users who don't have one yet
+        // Auto-create profile for Google/OAuth users
         if (!existingProfile) {
           const fullName = user.user_metadata?.full_name
             || user.user_metadata?.name
@@ -66,8 +73,7 @@ export async function GET(request: NextRequest) {
             referral_earnings: 0,
           })
 
-          // New Google user — send to dashboard with welcome flag
-          return NextResponse.redirect(`${origin}/dashboard?welcome=true&new=true`)
+          return NextResponse.redirect(`${baseUrl}/dashboard?welcome=true&new=true`)
         }
 
         // Existing user — credit referral if applicable
@@ -92,9 +98,7 @@ export async function GET(request: NextRequest) {
             }])
           } catch {}
 
-          await sbAdmin.from('profiles').update({
-            referral_credited: true
-          }).eq('id', userId)
+          await sbAdmin.from('profiles').update({ referral_credited: true }).eq('id', userId)
 
           await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/push-notify`, {
             method: 'POST',
@@ -111,9 +115,9 @@ export async function GET(request: NextRequest) {
         console.error('Callback error:', e)
       }
 
-      return NextResponse.redirect(`${origin}${next}?welcome=true&verified=true`)
+      return NextResponse.redirect(`${baseUrl}${next}?welcome=true`)
     }
   }
 
-  return NextResponse.redirect(`${origin}/login?error=verification_failed`)
+  return NextResponse.redirect(`${baseUrl}/login?error=auth_failed`)
 }
