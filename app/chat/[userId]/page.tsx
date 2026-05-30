@@ -27,11 +27,21 @@ export default function ChatPage() {
       sb.from('profiles').select('id,full_name,avatar_url,is_premium,is_verified,last_seen').eq('id', otherId).maybeSingle()
         .then(({ data }) => setOther(data))
 
-      // Load existing messages
-      sb.from('messages')
-        .select('*').or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherId}),and(sender_id.eq.${otherId},receiver_id.eq.${user.id})`)
-        .order('created_at', { ascending: true }).limit(100)
-        .then(({ data }) => { if (data) setMessages(data) })
+      // Load existing messages - use two separate queries and merge
+      const loadMessages = async () => {
+        const [{ data: sent }, { data: received }] = await Promise.all([
+          sb.from('messages').select('*')
+            .eq('sender_id', user.id).eq('receiver_id', otherId)
+            .order('created_at', { ascending: true }).limit(100),
+          sb.from('messages').select('*')
+            .eq('sender_id', otherId).eq('receiver_id', user.id)
+            .order('created_at', { ascending: true }).limit(100),
+        ])
+        const all = [...(sent || []), ...(received || [])]
+        all.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        setMessages(all)
+      }
+      loadMessages()
 
       // Mark messages as read
       sb.from('messages').update({ read_at: new Date().toISOString() })
@@ -42,9 +52,19 @@ export default function ChatPage() {
       const channel = sb.channel(`chat-${[user.id, otherId].sort().join('-')}`)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
           const msg = payload.new as any
-          if ((msg.sender_id === user.id && msg.receiver_id === otherId) ||
-              (msg.sender_id === otherId && msg.receiver_id === user.id)) {
-            setMessages(p => [...p, msg])
+          if (
+            (msg.sender_id === user.id && msg.receiver_id === otherId) ||
+            (msg.sender_id === otherId && msg.receiver_id === user.id)
+          ) {
+            setMessages(p => {
+              // avoid duplicates
+              if (p.find(m => m.id === msg.id)) return p
+              return [...p, msg]
+            })
+            // mark as read if received
+            if (msg.receiver_id === user.id) {
+              sb.from('messages').update({ read_at: new Date().toISOString() }).eq('id', msg.id).then(() => {})
+            }
           }
         }).subscribe()
       return () => { sb.removeChannel(channel) }
