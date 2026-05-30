@@ -8,26 +8,55 @@ export default function BottomNav() {
   const path = usePathname()
   const [user, setUser] = useState<any>(null)
   const [avatar, setAvatar] = useState<string|null>(null)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     const sb = createClient()
     sb.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
-      if (user) sb.from('profiles').select('avatar_url').eq('id', user.id).maybeSingle()
-        .then(({ data }) => setAvatar(data?.avatar_url || null))
+      if (user) {
+        sb.from('profiles').select('avatar_url').eq('id', user.id).maybeSingle()
+          .then(({ data }) => setAvatar(data?.avatar_url || null))
+
+        // Count unread messages
+        const fetchUnread = () => {
+          sb.from('messages')
+            .select('id', { count: 'exact' })
+            .eq('receiver_id', user.id)
+            .is('read_at', null)
+            .then(({ count }) => setUnreadCount(count || 0))
+        }
+        fetchUnread()
+
+        // Realtime unread updates
+        const channel = sb.channel('unread-nav')
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${user.id}` }, () => {
+            fetchUnread()
+          })
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `receiver_id=eq.${user.id}` }, () => {
+            fetchUnread()
+          })
+          .subscribe()
+        return () => { sb.removeChannel(channel) }
+      }
     })
     const { data: { subscription } } = sb.auth.onAuthStateChange((_, session) => {
       setUser(session?.user || null)
-      if (!session?.user) setAvatar(null)
+      if (!session?.user) { setAvatar(null); setUnreadCount(0) }
     })
     return () => subscription.unsubscribe()
   }, [])
+
+  // Reset unread when on chat page
+  useEffect(() => {
+    if (path.startsWith('/chat')) setUnreadCount(0)
+  }, [path])
 
   const isActive = (href: string) => path === href || path.startsWith(href + '/')
 
   const navItems = [
     { href: '/discover', label: 'Home', icon: HomeIcon },
-    { href: '/chat', label: 'Chat', icon: ChatIcon },
+    { href: '/chat', label: 'Chat', icon: ChatIcon, badge: unreadCount },
     { href: '/pricing', label: 'Coins', icon: CoinIcon },
     { href: user ? '/dashboard' : '/login', label: user ? 'Me' : 'Login', icon: null, isProfile: true },
   ]
@@ -42,7 +71,7 @@ export default function BottomNav() {
         display:'flex',alignItems:'center',height:64,
         boxShadow:'0 -2px 20px rgba(0,0,0,0.08)'
       }}>
-        {navItems.map(({ href, icon: Icon, label, isProfile }) => {
+        {navItems.map(({ href, icon: Icon, label, isProfile, badge }) => {
           const active = isActive(href)
           return (
             <Link key={href} href={href} style={{
@@ -50,18 +79,35 @@ export default function BottomNav() {
               justifyContent:'center',gap:3,padding:'6px 4px',
               textDecoration:'none',position:'relative'
             }}>
-              {/* Active indicator dot */}
               {active && <div style={{position:'absolute',top:4,width:4,height:4,borderRadius:'50%',background:'#f97316'}}/>}
 
-              {isProfile && user ? (
-                avatar
-                  ? <img src={avatar} style={{width:26,height:26,borderRadius:'50%',objectFit:'cover',border:active?'2px solid #f97316':'2px solid #e2e8f0'}} alt=""/>
-                  : <div style={{width:26,height:26,borderRadius:'50%',background:active?'linear-gradient(135deg,#f97316,#ea580c)':'#f1f5f9',color:active?'#fff':'#94a3b8',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700}}>
-                      {user.email?.[0]?.toUpperCase()||'U'}
-                    </div>
-              ) : Icon ? (
-                <Icon active={active}/>
-              ) : null}
+              <div style={{position:'relative'}}>
+                {isProfile && user ? (
+                  avatar
+                    ? <img src={avatar} style={{width:26,height:26,borderRadius:'50%',objectFit:'cover',border:active?'2px solid #f97316':'2px solid #e2e8f0'}} alt=""/>
+                    : <div style={{width:26,height:26,borderRadius:'50%',background:active?'linear-gradient(135deg,#f97316,#ea580c)':'#f1f5f9',color:active?'#fff':'#94a3b8',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700}}>
+                        {user.email?.[0]?.toUpperCase()||'U'}
+                      </div>
+                ) : Icon ? (
+                  <Icon active={active}/>
+                ) : null}
+
+                {/* Unread badge */}
+                {badge!=null && badge > 0 && (
+                  <div style={{
+                    position:'absolute',top:-6,right:-8,
+                    background:'#ef4444',color:'#fff',
+                    fontSize:9,fontWeight:800,
+                    minWidth:16,height:16,borderRadius:8,
+                    display:'flex',alignItems:'center',justifyContent:'center',
+                    padding:'0 3px',border:'1.5px solid #fff',
+                    lineHeight:1
+                  }}>
+                    {badge > 99 ? '99+' : badge}
+                  </div>
+                )}
+              </div>
+
               <span style={{fontSize:10,fontWeight:active?700:500,color:active?'#f97316':'#94a3b8',lineHeight:1}}>
                 {label}
               </span>
