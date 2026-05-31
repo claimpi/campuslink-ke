@@ -19,8 +19,11 @@ export default function RegisterPage() {
   const inp:React.CSSProperties = {width:'100%',border:'1.5px solid #e2e8f0',borderRadius:'10px',padding:'11px 14px',fontSize:'14px',outline:'none',background:'#fff',boxSizing:'border-box',color:'#0f172a'}
 
   useEffect(() => {
-    const stored = localStorage.getItem('ref_code')
-    if (stored) setRefCode(stored)
+    // Read from localStorage first, fallback to cookie (survives Google OAuth redirects)
+    const fromStorage = localStorage.getItem('ref_code')
+    if (fromStorage) { setRefCode(fromStorage); return }
+    const cookieMatch = document.cookie.match(/(?:^|;\s*)ref_code=([^;]+)/)
+    if (cookieMatch) setRefCode(decodeURIComponent(cookieMatch[1]))
   }, [])
 
   async function handleGoogleSignUp() {
@@ -69,8 +72,7 @@ export default function RegisterPage() {
         bio: form.bio,
         interests,
         referral_code: newRefCode,
-        referral_earnings: 0,
-      }, { onConflict: 'id' })
+        }, { onConflict: 'id' })
 
       if (refCode) {
         const { data: referrer } = await sb.from('profiles')
@@ -120,6 +122,7 @@ export default function RegisterPage() {
       }
 
       localStorage.removeItem('ref_code')
+      document.cookie = 'ref_code=;path=/;max-age=0'
       setRegisteredUserId(authData.user.id)
       setLoading(false)
       setStep(3)
