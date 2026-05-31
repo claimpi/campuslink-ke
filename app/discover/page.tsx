@@ -222,18 +222,6 @@ export default function DiscoverPage(){
       {/* Stories strip */}
       <Stories myId={me}/>
 
-      {/* Location prompt */}
-      {me&&!loc&&!loading&&(
-        <div style={{background:'#f0fdf4',borderBottom:'1px solid #bbf7d0',padding:'8px 16px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
-          <p style={{fontSize:12,color:'#166534',fontWeight:600,margin:0}}>📍 Allow location to see people near you</p>
-          <button onClick={()=>{
-            if(navigator.geolocation) navigator.geolocation.getCurrentPosition(p=>setLoc({lat:p.coords.latitude,lng:p.coords.longitude}),()=>{})
-          }} style={{background:'#16a34a',color:'#fff',border:'none',borderRadius:20,padding:'4px 12px',fontSize:11,fontWeight:700,cursor:'pointer',flexShrink:0}}>
-            Enable
-          </button>
-        </div>
-      )}
-
       {/* Logged out banner */}
       {!me&&!loading&&(
         <div style={{background:'linear-gradient(135deg,#f97316,#ea580c)',padding:'10px 16px',
