@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (data?.user) {
-      await ensureProfile(data.user)
+      await ensureProfile(data.user, request)
       return NextResponse.redirect(`${baseUrl}${next}?welcome=true`)
     }
   }
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.redirect(`${baseUrl}/auth/confirm?next=${encodeURIComponent(next)}`)
 }
 
-async function ensureProfile(user: any) {
+async function ensureProfile(user: any, request?: NextRequest) {
   try {
     const { data: existing } = await sbAdmin
       .from('profiles').select('id').eq('id', user.id).maybeSingle()
@@ -85,7 +85,36 @@ async function ensureProfile(user: any) {
         avatar_url: avatarUrl,
         referral_code: newRefCode,
         referral_earnings: 0,
+        coins: 0,
       })
+
+      // Credit referrer if ref_code cookie exists
+      const refCode = request?.cookies?.get?.('ref_code')?.value
+      if (refCode) {
+        const { data: referrer } = await sbAdmin.from('profiles')
+          .select('id, coins, full_name').eq('referral_code', refCode.toUpperCase()).maybeSingle()
+        if (referrer && referrer.id !== user.id) {
+          await sbAdmin.from('profiles').update({
+            coins: (referrer.coins || 0) + 50
+          }).eq('id', referrer.id)
+          await sbAdmin.from('profiles').update({
+            referred_by: referrer.id, referral_credited: true
+          }).eq('id', user.id)
+          await sbAdmin.from('coin_transactions').insert([{
+            user_id: referrer.id, amount: 50, type: 'referral',
+            description: `${fullName} joined via your referral link (Google)`
+          }])
+          try {
+            await sbAdmin.from('referrals').insert([{
+              referrer_id: referrer.id, referred_id: user.id, amount: 50, status: 'credited'
+            }])
+          } catch {}
+          fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/push-notify`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: referrer.id, title: '🪙 You earned 50 coins!', body: `${fullName} joined using your referral link`, url: '/dashboard' })
+          }).catch(() => {})
+        }
+      }
     }
   } catch (e) {
     console.error('ensureProfile error:', e)

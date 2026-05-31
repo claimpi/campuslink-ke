@@ -74,9 +74,48 @@ export default function RegisterPage() {
 
       if (refCode) {
         const { data: referrer } = await sb.from('profiles')
-          .select('id').eq('referral_code', refCode.toUpperCase()).maybeSingle()
+          .select('id, coins, full_name').eq('referral_code', refCode.toUpperCase()).maybeSingle()
         if (referrer) {
-          await sb.from('profiles').update({ referred_by: referrer.id }).eq('id', authData.user.id)
+          // Save referred_by on new user
+          await sb.from('profiles').update({ 
+            referred_by: referrer.id,
+            referral_credited: true 
+          }).eq('id', authData.user.id)
+
+          // Credit 50 coins to referrer
+          await sb.from('profiles').update({ 
+            coins: (referrer.coins || 0) + 50 
+          }).eq('id', referrer.id)
+
+          // Log coin transaction
+          await sb.from('coin_transactions').insert([{
+            user_id: referrer.id,
+            amount: 50,
+            type: 'referral',
+            description: `${form.name} joined using your referral link`
+          }])
+
+          // Log referral record
+          try {
+            await sb.from('referrals').insert([{
+              referrer_id: referrer.id,
+              referred_id: authData.user.id,
+              amount: 50,
+              status: 'credited'
+            }])
+          } catch {}
+
+          // Notify referrer
+          fetch('/api/push-notify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: referrer.id,
+              title: '🪙 You earned 50 coins!',
+              body: `${form.name} joined CampusLink KE using your referral link`,
+              url: '/dashboard'
+            })
+          }).catch(() => {})
         }
       }
 
