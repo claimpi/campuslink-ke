@@ -29,7 +29,6 @@ export default function DiscoverPage(){
   const [liked,setLiked]=useState<Set<string>>(new Set())
   const [matched,setMatched]=useState<Set<string>>(new Set())
   const [matchPop,setMatchPop]=useState<any>(null)
-  const [superLiked,setSuperLiked]=useState<Set<string>>(new Set())
   const [dailyReward,setDailyReward]=useState<{coins:number,streak:number}|null>(null)
 
   useEffect(()=>{
@@ -89,9 +88,6 @@ export default function DiscoverPage(){
           if(sent) setMatched(new Set(sent.filter((l:any)=>rSet.has(l.receiver_id)).map((l:any)=>l.receiver_id)))
         })
       })
-      // Load super likes sent
-      sb.from('super_likes').select('receiver_id').eq('sender_id',user.id)
-        .then(({data})=>{ if(data) setSuperLiked(new Set(data.map((l:any)=>l.receiver_id))) })
       // Claim daily reward
       fetch('/api/daily-reward',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:user.id})})
         .then(r=>r.json()).then(data=>{
@@ -117,21 +113,6 @@ export default function DiscoverPage(){
     }
   }
 
-  async function superLike(e:React.MouseEvent, rid:string, name:string){
-    e.stopPropagation()
-    if(!me){router.push('/register');return}
-    if(superLiked.has(rid)) return
-    setSuperLiked(p=>new Set([...p,rid]))
-    const res=await fetch('/api/super-like',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({senderId:me,receiverId:rid})})
-    const data=await res.json()
-    if(data.error==='insufficient_coins'){
-      setSuperLiked(p=>{ const n=new Set(p); n.delete(rid); return n })
-      toast(`Need 10 coins to Super Like. You have ${data.coinsHave}.`,'error')
-      setTimeout(()=>router.push('/pricing'),1500)
-    } else if(data.success){
-      toast(`⭐ Super Like sent to ${name}!`,'success')
-    }
-  }
 
   const now=Date.now()
   let list=users.map(u=>({...u,
