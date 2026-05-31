@@ -35,6 +35,13 @@ export default function Stories({ myId }: { myId: string | null }) {
 
   useEffect(() => { loadStories() }, [myId])
 
+  // Track view when story changes
+  useEffect(() => {
+    if (!viewing || !myId) return
+    const story = viewing.stories[viewing.idx]
+    if (story && story.user_id !== myId) trackView(story.id)
+  }, [viewing?.userId, viewing?.idx])
+
   // Auto-advance (images only — videos self-advance via onEnded)
   useEffect(() => {
     if (!viewing) return
@@ -52,6 +59,26 @@ export default function Stories({ myId }: { myId: string | null }) {
     }, 100)
     return () => clearInterval(progressRef.current)
   }, [viewing?.userId, viewing?.idx])
+
+  async function trackView(storyId: string) {
+    if (!myId) return
+    const sb = createClient()
+    try {
+      const { error } = await sb.from('story_views').insert([{ story_id: storyId, viewer_id: myId }])
+      if (!error) {
+        // Increment view count on stories table
+        await sb.rpc('increment_story_views', { story_id: storyId }).catch(async () => {
+          // Fallback: manual update
+          const { data } = await sb.from('stories').select('views').eq('id', storyId).maybeSingle()
+          await sb.from('stories').update({ views: (data?.views || 0) + 1 }).eq('id', storyId)
+        })
+        setViewing(v => v ? {
+          ...v,
+          stories: v.stories.map((s: any) => s.id === storyId ? { ...s, views: (s.views || 0) + 1 } : s)
+        } : v)
+      }
+    } catch {}
+  }
 
   function advanceStory() {
     if (!viewing) return
@@ -243,6 +270,11 @@ export default function Stories({ myId }: { myId: string | null }) {
             <p style={{ fontSize: 10, color: myId ? '#374151' : '#94a3b8', margin: 0, textAlign: 'center', fontWeight: 600 }}>
               {myStoryUser ? 'My Story' : myId ? 'Add Story' : '🔒 Story'}
             </p>
+            {myStoryUser && (
+              <p style={{ fontSize: 9, color: '#94a3b8', margin: '-2px 0 0', textAlign: 'center' }}>
+                👁 {myStoryUser.stories.reduce((t: number, s: any) => t + (s.views || 0), 0)}
+              </p>
+            )}
           </div>
 
           {/* Other users */}
