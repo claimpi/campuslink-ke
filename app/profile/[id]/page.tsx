@@ -78,6 +78,11 @@ export default function ProfilePage(){
       fetch('/api/push-notify',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({userId:id,title:'New Follower! 🎉',body:'Someone started following you',url:`/profile/${me.id}`})
       }).catch(()=>{})
+      // Save in-app notification
+      const {data:myProf} = await createClient().from('profiles').select('full_name').eq('id',me.id).maybeSingle()
+      fetch('/api/notify',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({userId:id,type:'follow',title:`👤 ${myProf?.full_name||'Someone'} followed you`,body:'Tap to view their profile',fromUserId:me.id,url:`/profile/${me.id}`})
+      }).catch(()=>{})
     }
     setFollowLoading(false)
   }

@@ -14,12 +14,23 @@ export default function Navbar() {
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
 
+  const [unreadNotifs, setUnreadNotifs] = useState(0)
+
   useEffect(()=>{
     const sb = createClient()
     sb.auth.getUser().then(({data:{user}})=>{
       setUser(user)
       if(user){
         sb.from('profiles').select('full_name,is_premium,avatar_url').eq('id',user.id).maybeSingle().then(({data})=>setProfile(data))
+        // Load unread notifications count
+        sb.from('notifications').select('id',{count:'exact',head:true}).eq('user_id',user.id).eq('read',false)
+          .then(({count})=>setUnreadNotifs(count||0))
+        // Realtime unread count
+        const channel = sb.channel('notif-count')
+          .on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:`user_id=eq.${user.id}`},()=>{
+            setUnreadNotifs(u=>u+1)
+          }).subscribe()
+        return ()=>{ sb.removeChannel(channel) }
       }
     })
     const {data:{subscription}} = sb.auth.onAuthStateChange((_,session)=>{
@@ -55,12 +66,14 @@ export default function Navbar() {
         </div>
 
         <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
-          {user && pendingCount > 0 && (
-            <a href="/dashboard" style={{position:'relative',display:'flex',alignItems:'center',textDecoration:'none'}}>
-              <span style={{fontSize:'20px'}}></span>
-              <span style={{position:'absolute',top:'-4px',right:'-4px',background:'#ef4444',color:'#fff',fontSize:'10px',fontWeight:'800',borderRadius:'50%',width:'16px',height:'16px',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:'1'}}>
-                {pendingCount > 9 ? '9+' : pendingCount}
-              </span>
+          {user && (
+            <a href="/notifications" style={{position:'relative',display:'flex',alignItems:'center',textDecoration:'none'}} onClick={()=>setUnreadNotifs(0)}>
+              <span style={{fontSize:'20px'}}>🔔</span>
+              {unreadNotifs > 0 && (
+                <span style={{position:'absolute',top:'-4px',right:'-4px',background:'#ef4444',color:'#fff',fontSize:'9px',fontWeight:'800',borderRadius:'50%',minWidth:'16px',height:'16px',display:'flex',alignItems:'center',justifyContent:'center',padding:'0 3px'}}>
+                  {unreadNotifs > 9 ? '9+' : unreadNotifs}
+                </span>
+              )}
             </a>
           )}
 

@@ -8,7 +8,8 @@ export default function BottomNav() {
   const path = usePathname()
   const [user, setUser] = useState<any>(null)
   const [avatar, setAvatar] = useState<string|null>(null)
-  const [unreadCount, setUnreadCount] = useState(0)
+  const [unreadCount, setUnreadCount] = useState(0) // notifications
+  const [unreadCount2, setUnreadCount2] = useState(0) // messages
 
   useEffect(() => {
     const sb = createClient()
@@ -27,6 +28,14 @@ export default function BottomNav() {
             .then(({ count }) => setUnreadCount(count || 0))
         }
         fetchUnread()
+
+        // Unread notifications
+        sb.from('notifications').select('id',{count:'exact',head:true}).eq('user_id',user.id).eq('read',false)
+          .then(({count})=>setUnreadCount(count||0))
+        sb.channel('notif-badge')
+          .on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:`user_id=eq.${user.id}`},()=>{
+            setUnreadCount(u=>u+1)
+          }).subscribe()
 
         // Realtime unread updates
         const channel = sb.channel('unread-nav')
@@ -47,6 +56,11 @@ export default function BottomNav() {
     return () => subscription.unsubscribe()
   }, [])
 
+  // Reset notification count when on notifications page
+  useEffect(() => {
+    if (path.startsWith('/notifications')) setUnreadCount(0)
+  }, [path])
+
   // Reset unread when on chat page
   useEffect(() => {
     if (path.startsWith('/chat')) setUnreadCount(0)
@@ -56,7 +70,8 @@ export default function BottomNav() {
 
   const navItems = [
     { href: '/discover', label: 'Home', icon: HomeIcon },
-    { href: '/chat', label: 'Chat', icon: ChatIcon, badge: unreadCount },
+    { href: '/notifications', label: 'Alerts', icon: BellIcon, badge: unreadCount > 0 ? unreadCount : null },
+    { href: '/chat', label: 'Chat', icon: ChatIcon, badge: unreadCount2 },
     { href: '/pricing', label: 'Coins', icon: CoinIcon },
     { href: user ? '/dashboard' : '/login', label: user ? 'Me' : 'Login', icon: null, isProfile: true },
   ]
@@ -128,6 +143,14 @@ function HomeIcon({ active }: { active: boolean }) {
     <svg width={22} height={22} viewBox="0 0 24 24" fill={active?'#f97316':'none'} stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
       <polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+  )
+}
+function BellIcon({ active }: { active: boolean }) {
+  const c = active ? '#f97316' : '#94a3b8'
+  return (
+    <svg width={22} height={22} viewBox="0 0 24 24" fill={active?'#f97316':'none'} stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
     </svg>
   )
 }

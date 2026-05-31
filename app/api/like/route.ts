@@ -48,6 +48,16 @@ export async function POST(req: NextRequest) {
       }).catch(() => {})
     }
 
+    // Save notification
+    const { data: sender } = await sb.from('profiles').select('full_name, avatar_url').eq('id', senderId).maybeSingle()
+    const notifType = isMatch ? 'match' : 'like'
+    const notifTitle = isMatch ? `💞 You matched with ${sender?.full_name || 'someone'}!` : `❤️ ${sender?.full_name || 'Someone'} liked you`
+    const notifBody = isMatch ? 'You both liked each other — say hello!' : 'Tap to view their profile'
+    await sb.from('notifications').insert([{
+      user_id: receiverId, type: notifType, title: notifTitle, body: notifBody,
+      from_user_id: senderId, url: `/profile/${senderId}`
+    }]).catch(() => {})
+
     return NextResponse.json({ success: true, isMatch })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })

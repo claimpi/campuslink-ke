@@ -37,6 +37,14 @@ export async function POST(req: NextRequest) {
       description: `Day ${streak} login reward${streak===7?' — Week streak bonus!':streak===3?' — 3-day streak bonus!':''}`
     }])
 
+    // Save in-app notification
+    await sb.from('notifications').insert([{
+      user_id: userId, type: 'daily_reward',
+      title: streak === 7 ? '🔥 Week streak! +30 coins' : streak === 3 ? '🔥 3-day streak! +15 coins' : `🎁 Daily reward! +${coins} coins`,
+      body: `Day ${streak} streak${streak===7?' — you are on fire!':''} · Balance: ${(profile?.coins||0)+coins} coins`,
+      url: '/pricing'
+    }]).catch(() => {})
+
     return NextResponse.json({ success: true, coins, streak, newBalance: (profile?.coins || 0) + coins })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
