@@ -330,18 +330,7 @@ export default function DiscoverPage(){
                         fontSize:14,fontWeight:800,cursor:'pointer',display:'flex',alignItems:'center',gap:5,
                         boxShadow:locked?'none':'0 3px 12px rgba(249,115,22,0.45)',minWidth:64,justifyContent:'center'}}>
                       <span style={{fontSize:16}}>💬</span> Hi
-                    </button>
-                    {/* Super Like ⭐ */}
-                    <button onClick={e=>locked?router.push('/register'):superLike(e,s.id,name)}
-                      title="Super Like — 10 coins"
-                      style={{width:34,height:34,borderRadius:'50%',
-                        border:`1.5px solid ${superLiked.has(s.id)?'#f59e0b':'#e2e8f0'}`,
-                        background:superLiked.has(s.id)?'linear-gradient(135deg,#f59e0b,#d97706)':'#fff',
-                        cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,
-                        boxShadow:superLiked.has(s.id)?'0 2px 8px rgba(245,158,11,0.4)':'none'}}>
-                      ⭐
-                    </button>
-                    {/* Like */}
+                    </button>                    {/* Like */}
                     <button onClick={e=>locked?router.push('/register'):like(e,s.id,name)}
                       style={{width:34,height:34,borderRadius:'50%',
                         border:`1.5px solid ${isMatch||isLiked?'#ec4899':'#e2e8f0'}`,
