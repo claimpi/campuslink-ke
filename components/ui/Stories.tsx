@@ -213,11 +213,17 @@ export default function Stories({ myId }: { myId: string | null }) {
                   {isLiked ? '❤️' : '🤍'} {isLiked ? 'Liked' : 'Like'}
                 </button>
               )}
-              {/* Chat */}
+              {/* Chat / Reply */}
               {!isOwner && (
-                <button onClick={() => { setViewing(null); router.push(`/chat/${story.user_id}`) }}
+                <button onClick={() => {
+                  setViewing(null)
+                  // Pass story image as reply context via URL param
+                  const storyImg = encodeURIComponent(story.media_url)
+                  const caption = story.caption ? encodeURIComponent(story.caption) : ''
+                  router.push(`/chat/${story.user_id}?storyReply=${storyImg}&storyCaption=${caption}`)
+                }}
                   style={{ background: 'rgba(249,115,22,0.9)', border: 'none', color: '#fff', borderRadius: 20, padding: '8px 16px', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  💬 Reply
+                  💬 Reply to Story
                 </button>
               )}
               {/* Owner sees views */}

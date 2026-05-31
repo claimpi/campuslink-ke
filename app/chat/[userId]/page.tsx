@@ -1,15 +1,19 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import { detectViolation, VIOLATION_MESSAGES } from '@/lib/content-filter'
+import { Suspense } from 'react'
 
 const FREE_MSGS = 10
 const COINS_PER_MSG = 5
 
-export default function ChatPage() {
+function ChatInner() {
   const { userId: otherId } = useParams<{ userId: string }>()
   const router = useRouter()
+  const sp = useSearchParams()
+  const storyReplyUrl = sp.get('storyReply') ? decodeURIComponent(sp.get('storyReply')!) : null
+  const storyReplyCaption = sp.get('storyCaption') ? decodeURIComponent(sp.get('storyCaption')!) : null
   const [me, setMe] = useState<any>(null)
   const [other, setOther] = useState<any>(null)
   const [messages, setMessages] = useState<any[]>([])
@@ -22,6 +26,11 @@ export default function ChatPage() {
   const [policyViolation, setPolicyViolation] = useState<{reason:string,message:string}|null>(null)
   const [showBuy, setShowBuy] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  // Pre-fill reply text when coming from a story reply
+  useEffect(() => {
+    if (storyReplyUrl) setText('Replied to your story 👆')
+  }, [storyReplyUrl])
 
   useEffect(() => {
     const sb = createClient()
@@ -90,10 +99,15 @@ export default function ChatPage() {
       return
     }
 
+    // If replying to story, prepend story context in message
+    const finalContent = storyReplyUrl
+      ? `[story_reply:${storyReplyUrl}]\n${text.trim()}`
+      : text.trim()
+
     setSending(true); setError('')
     const res = await fetch('/api/message', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ senderId: me.id, receiverId: otherId, content: text.trim() })
+      body: JSON.stringify({ senderId: me.id, receiverId: otherId, content: finalContent })
     })
     const data = await res.json()
     if (data.error === 'content_violation') {
@@ -107,6 +121,7 @@ export default function ChatPage() {
     }
     if (!data.success) { setError(data.error || 'Failed'); setSending(false); return }
     setText('')
+    if (storyReplyUrl) router.replace(`/chat/${otherId}`)
     // Update local coin count
     setMe((p: any) => ({ ...p, coins: data.coinsLeft, free_messages_used: p.free_messages_used + (data.isFree ? 1 : 0) }))
     setSending(false)
@@ -214,11 +229,30 @@ export default function ChatPage() {
                 <div style={{
                   background: isMine ? 'linear-gradient(135deg,#f97316,#ea580c)' : '#fff',
                   color: isMine ? '#fff' : '#0f172a',
-                  padding: '10px 14px', borderRadius: isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                  padding: msg.content?.startsWith('[story_reply:') ? '6px' : '10px 14px',
+                  borderRadius: isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
                   fontSize: 14, lineHeight: 1.5,
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.08)'
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+                  overflow: 'hidden'
                 }}>
-                  {msg.content}
+                  {msg.content?.startsWith('[story_reply:') ? (() => {
+                    const match = msg.content.match(/^\[story_reply:(.*?)\]\n?(.*)/s)
+                    const imgUrl = match?.[1] || ''
+                    const replyText = match?.[2] || ''
+                    return (
+                      <div>
+                        {/* Story image highlight */}
+                        <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', marginBottom: replyText ? 6 : 0 }}>
+                          <img src={imgUrl} style={{ width: '100%', maxHeight: 140, objectFit: 'cover', display: 'block' }} alt="story" />
+                          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.15)' }} />
+                          <div style={{ position: 'absolute', top: 6, left: 8, background: 'rgba(0,0,0,0.5)', borderRadius: 10, padding: '2px 8px' }}>
+                            <span style={{ color: '#fff', fontSize: 10, fontWeight: 600 }}>↩ Story</span>
+                          </div>
+                        </div>
+                        {replyText && <div style={{ padding: '2px 8px 4px', fontSize: 13 }}>{replyText}</div>}
+                      </div>
+                    )
+                  })() : msg.content}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 3, justifyContent: isMine ? 'flex-end' : 'flex-start' }}>
                   <span style={{ fontSize: 10, color: '#94a3b8' }}>{formatTime(msg.created_at)}</span>
@@ -238,6 +272,21 @@ export default function ChatPage() {
         <div style={{ background: '#fef2f2', border: '1px solid #fecaca', margin: '0 12px', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#dc2626', flexShrink: 0 }}>
           {error}
           {showBuy && <button onClick={() => router.push('/pricing')} style={{ marginLeft: 8, background: '#f97316', color: '#fff', border: 'none', borderRadius: 8, padding: '4px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Buy Coins</button>}
+        </div>
+      )}
+
+      {/* Story reply banner */}
+      {storyReplyUrl && (
+        <div style={{ background: '#fff7ed', borderTop: '1px solid #fed7aa', padding: '8px 12px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 48, height: 48, borderRadius: 8, overflow: 'hidden', flexShrink: 0, border: '2px solid #f97316' }}>
+            <img src={storyReplyUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="story" />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: '#f97316', margin: '0 0 2px' }}>↩ Replying to story</p>
+            {storyReplyCaption && <p style={{ fontSize: 11, color: '#92400e', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{storyReplyCaption}</p>}
+          </div>
+          <button onClick={() => router.replace(`/chat/${otherId}`)}
+            style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 18, cursor: 'pointer', flexShrink: 0 }}>✕</button>
         </div>
       )}
 
@@ -326,5 +375,18 @@ export default function ChatPage() {
         </button>
       </div>
     </div>
+  )
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={
+      <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100dvh'}}>
+        <div style={{width:36,height:36,border:'3px solid #fed7aa',borderTop:'3px solid #f97316',borderRadius:'50%',animation:'spin 0.8s linear infinite'}}/>
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      </div>
+    }>
+      <ChatInner/>
+    </Suspense>
   )
 }
