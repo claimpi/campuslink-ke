@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import { toast } from '@/components/Toast'
+import Stories from '@/components/ui/Stories'
 
 function initials(n:string){return(n||'?').split(' ').map((x:string)=>x[0]).join('').toUpperCase().slice(0,2)}
 function calcDist(lat1:number,lon1:number,lat2:number,lon2:number){
@@ -28,6 +29,8 @@ export default function DiscoverPage(){
   const [liked,setLiked]=useState<Set<string>>(new Set())
   const [matched,setMatched]=useState<Set<string>>(new Set())
   const [matchPop,setMatchPop]=useState<any>(null)
+  const [superLiked,setSuperLiked]=useState<Set<string>>(new Set())
+  const [dailyReward,setDailyReward]=useState<{coins:number,streak:number}|null>(null)
 
   useEffect(()=>{
     const sb=createClient()
@@ -86,6 +89,14 @@ export default function DiscoverPage(){
           if(sent) setMatched(new Set(sent.filter((l:any)=>rSet.has(l.receiver_id)).map((l:any)=>l.receiver_id)))
         })
       })
+      // Load super likes sent
+      sb.from('super_likes').select('receiver_id').eq('sender_id',user.id)
+        .then(({data})=>{ if(data) setSuperLiked(new Set(data.map((l:any)=>l.receiver_id))) })
+      // Claim daily reward
+      fetch('/api/daily-reward',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:user.id})})
+        .then(r=>r.json()).then(data=>{
+          if(data.success) setDailyReward({coins:data.coins,streak:data.streak})
+        })
       sb.from('profiles').update({last_seen:new Date().toISOString()}).eq('id',user.id)
       const t=setInterval(()=>sb.from('profiles').update({last_seen:new Date().toISOString()}).eq('id',user.id),180000)
       return()=>clearInterval(t)
@@ -103,6 +114,22 @@ export default function DiscoverPage(){
       setMatched(p=>new Set([...p,rid]))
       setMatchPop({id:rid,name})
       setTimeout(()=>setMatchPop(null),5000)
+    }
+  }
+
+  async function superLike(e:React.MouseEvent, rid:string, name:string){
+    e.stopPropagation()
+    if(!me){router.push('/register');return}
+    if(superLiked.has(rid)) return
+    setSuperLiked(p=>new Set([...p,rid]))
+    const res=await fetch('/api/super-like',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({senderId:me,receiverId:rid})})
+    const data=await res.json()
+    if(data.error==='insufficient_coins'){
+      setSuperLiked(p=>{ const n=new Set(p); n.delete(rid); return n })
+      toast(`Need 10 coins to Super Like. You have ${data.coinsHave}.`,'error')
+      setTimeout(()=>router.push('/pricing'),1500)
+    } else if(data.success){
+      toast(`⭐ Super Like sent to ${name}!`,'success')
     }
   }
 
@@ -139,6 +166,34 @@ export default function DiscoverPage(){
         </div>
       )}
 
+      {/* Daily reward popup */}
+      {dailyReward&&(
+        <div onClick={()=>setDailyReward(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.75)',zIndex:9998,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+          <div style={{background:'#fff',borderRadius:24,padding:'32px 24px',textAlign:'center',maxWidth:280,width:'100%'}}>
+            <div style={{fontSize:52,marginBottom:8}}>🎁</div>
+            <h2 style={{fontSize:20,fontWeight:900,color:'#0f172a',marginBottom:4}}>Daily Reward!</h2>
+            <p style={{fontSize:13,color:'#64748b',marginBottom:16}}>Day {dailyReward.streak} streak</p>
+            <div style={{background:'linear-gradient(135deg,#f97316,#ea580c)',borderRadius:16,padding:'16px',marginBottom:16}}>
+              <p style={{color:'#fff',fontSize:32,fontWeight:900,margin:0}}>+{dailyReward.coins} 🪙</p>
+              <p style={{color:'rgba(255,255,255,0.85)',fontSize:12,margin:'4px 0 0'}}>
+                {dailyReward.streak===7?'🔥 Week streak bonus!':dailyReward.streak===3?'🔥 3-day streak bonus!':'Coins added to your wallet'}
+              </p>
+            </div>
+            {/* Streak dots */}
+            <div style={{display:'flex',gap:6,justifyContent:'center',marginBottom:16}}>
+              {[1,2,3,4,5,6,7].map(d=>(
+                <div key={d} style={{width:28,height:28,borderRadius:'50%',background:d<=dailyReward.streak?'#f97316':'#f1f5f9',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:d<=dailyReward.streak?'#fff':'#94a3b8'}}>
+                  {d===7?'🔥':d}
+                </div>
+              ))}
+            </div>
+            <button onClick={()=>setDailyReward(null)} style={{width:'100%',background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',border:'none',borderRadius:12,padding:'12px',fontSize:14,fontWeight:700,cursor:'pointer',boxShadow:'0 4px 14px rgba(249,115,22,0.4)'}}>
+              Awesome! 🎉
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Top bar */}
       <div style={{position:'sticky',top:0,zIndex:100,background:'#fafaf7',borderBottom:'1px solid #ece9df'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px 0'}}>
@@ -164,7 +219,10 @@ export default function DiscoverPage(){
         )}
       </div>
 
-      {/* Location prompt for logged in users without location */}
+      {/* Stories strip */}
+      <Stories myId={me}/>
+
+      {/* Location prompt */}
       {me&&!loc&&!loading&&(
         <div style={{background:'#f0fdf4',borderBottom:'1px solid #bbf7d0',padding:'8px 16px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
           <p style={{fontSize:12,color:'#166534',fontWeight:600,margin:0}}>📍 Allow location to see people near you</p>
@@ -272,6 +330,16 @@ export default function DiscoverPage(){
                         fontSize:14,fontWeight:800,cursor:'pointer',display:'flex',alignItems:'center',gap:5,
                         boxShadow:locked?'none':'0 3px 12px rgba(249,115,22,0.45)',minWidth:64,justifyContent:'center'}}>
                       <span style={{fontSize:16}}>💬</span> Hi
+                    </button>
+                    {/* Super Like ⭐ */}
+                    <button onClick={e=>locked?router.push('/register'):superLike(e,s.id,name)}
+                      title="Super Like — 10 coins"
+                      style={{width:34,height:34,borderRadius:'50%',
+                        border:`1.5px solid ${superLiked.has(s.id)?'#f59e0b':'#e2e8f0'}`,
+                        background:superLiked.has(s.id)?'linear-gradient(135deg,#f59e0b,#d97706)':'#fff',
+                        cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,
+                        boxShadow:superLiked.has(s.id)?'0 2px 8px rgba(245,158,11,0.4)':'none'}}>
+                      ⭐
                     </button>
                     {/* Like */}
                     <button onClick={e=>locked?router.push('/register'):like(e,s.id,name)}
