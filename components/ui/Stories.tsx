@@ -184,7 +184,7 @@ export default function Stories({ myId }: { myId: string | null }) {
                 <p style={{ color: '#fff', fontWeight: 700, fontSize: 13, margin: 0 }}>{prof?.full_name}</p>
                 <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 11, margin: 0 }}>
                   {Math.max(0, Math.round((Date.now() - new Date(story.created_at).getTime()) / 3600000))}h ago
-                  {story.views > 0 && <span> · 👁 {story.views}</span>}
+                  {isOwner && story.views > 0 && <span> · 👁 {story.views}</span>}
                 </p>
               </div>
               {isOwner && (
