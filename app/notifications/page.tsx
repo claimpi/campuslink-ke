@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase-browser'
 const ICONS: Record<string, string> = {
   like: '❤️', match: '💞', follow: '👤',
   daily_reward: '🎁', gift: '🎁', message: '💬',
-  super_like: '⭐', coin_transfer: '🪙', referral: '🪙'
+ coin_transfer: '🪙', referral: '🪙'
 }
 
 function timeAgo(ts: string) {

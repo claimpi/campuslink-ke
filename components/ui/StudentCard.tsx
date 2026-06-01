@@ -10,7 +10,7 @@ function getInitials(name: string) { return name.split(' ').map(n=>n[0]).join(''
 
 export default function StudentCard({ id, full_name, location_name, interests=[], is_premium, is_featured, is_top_student }: Props) {
   const bannerBg = is_top_student ? 'linear-gradient(135deg,#f97316,#ea580c)' : is_featured ? 'linear-gradient(135deg,#8b5cf6,#7c3aed)' : null
-  const bannerText = is_top_student ? '⭐ TOP STUDENT' : is_featured ? '✨ FEATURED' : null
+  const bannerText = is_top_student ? ' TOP STUDENT' : is_featured ? '✨ FEATURED' : null
   const borderColor = is_featured ? '#c4b5fd' : is_top_student ? '#fed7aa' : '#f3f4f6'
   return (
     <div style={{background:'white',borderRadius:'20px',border:`1px solid ${borderColor}`,boxShadow:'0 4px 20px rgba(0,0,0,0.07)',overflow:'hidden',transition:'all 0.3s'}}
