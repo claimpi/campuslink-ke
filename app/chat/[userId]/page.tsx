@@ -34,12 +34,12 @@ function ChatInner() {
 
   useEffect(() => {
     const sb = createClient()
-    sb.auth.getUser().then(({ data: { user } }) => {
+    sb.auth.getUser().then(({ data: { user } }: any) => {
       if (!user) { router.push('/login'); return }
       sb.from('profiles').select('id,full_name,avatar_url,coins,free_messages_used').eq('id', user.id).maybeSingle()
-        .then(({ data }) => { setMe(data); setCoins(data?.coins || 0) })
+        .then(({ data }: any) => { setMe(data); setCoins(data?.coins || 0) })
       sb.from('profiles').select('id,full_name,avatar_url,is_premium,is_verified,last_seen').eq('id', otherId).maybeSingle()
-        .then(({ data }) => setOther(data))
+        .then(({ data }: any) => setOther(data))
 
       // Load existing messages - use two separate queries and merge
       const loadMessages = async () => {
@@ -64,7 +64,7 @@ function ChatInner() {
 
       // Realtime subscription
       const channel = sb.channel(`chat-${[user.id, otherId].sort().join('-')}`)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload: any) => {
           const msg = payload.new as any
           if (
             (msg.sender_id === user.id && msg.receiver_id === otherId) ||
@@ -236,7 +236,7 @@ function ChatInner() {
                   overflow: 'hidden'
                 }}>
                   {msg.content?.startsWith('[story_reply:') ? (() => {
-                    const match = msg.content.match(/^\[story_reply:(.*?)\]\n?(.*)/s)
+                    const match = msg.content.match(/^\[story_reply:([\s\S]*?)\]\n?([\s\S]*)/)
                     const imgUrl = match?.[1] || ''
                     const replyText = match?.[2] || ''
                     return (

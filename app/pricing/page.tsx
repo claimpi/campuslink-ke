@@ -27,7 +27,7 @@ export default function PricingPage() {
 
   useEffect(()=>{
     const sb = createClient()
-    sb.auth.getUser().then(({data:{user}})=>{
+    sb.auth.getUser().then(({data:{user}}:any)=>{
       if(!user) return
       sb.from('profiles').select('coins,free_messages_used').eq('id',user.id).maybeSingle()
         .then(({data})=>{

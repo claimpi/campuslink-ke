@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     if (existing) return NextResponse.json({ error: 'Already referred' }, { status: 400 })
 
     // Credit coins to referrer
-    await sb.from('profiles').update({ coins: (referrer.coins || 0) + REFERRAL_COINS }).eq('id', referrer.id)
+    try{ await sb.from('profiles').update({ coins: (referrer.coins || 0) + REFERRAL_COINS }).eq('id', referrer.id)
 
     // Log coin transaction
     await sb.from('coin_transactions').insert([{
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/push-notify`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: referrer.id, title: `🪙 You earned ${REFERRAL_COINS} coins!`, body: 'Someone joined CampusLink KE using your referral link', url: '/dashboard' })
-    }).catch(() => {})
+    }) }catch{}
 
     return NextResponse.json({ success: true, coinsEarned: REFERRAL_COINS })
   } catch (e: any) {

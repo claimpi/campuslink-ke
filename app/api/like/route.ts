@@ -53,10 +53,10 @@ export async function POST(req: NextRequest) {
     const notifType = isMatch ? 'match' : 'like'
     const notifTitle = isMatch ? `💞 You matched with ${sender?.full_name || 'someone'}!` : `❤️ ${sender?.full_name || 'Someone'} liked you`
     const notifBody = isMatch ? 'You both liked each other — say hello!' : 'Tap to view their profile'
-    await sb.from('notifications').insert([{
+    try{ await sb.from('notifications').insert([{
       user_id: receiverId, type: notifType, title: notifTitle, body: notifBody,
       from_user_id: senderId, url: `/profile/${senderId}`
-    }]).catch(() => {})
+    }]) }catch{}
 
     return NextResponse.json({ success: true, isMatch })
   } catch (e: any) {

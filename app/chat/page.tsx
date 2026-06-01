@@ -11,7 +11,7 @@ export default function ChatListPage() {
 
   useEffect(() => {
     const sb = createClient()
-    sb.auth.getUser().then(async ({ data: { user } }) => {
+    sb.auth.getUser().then(async ({ data: { user } }: any) => {
       if (!user) { router.push('/login'); return }
       const { data: profile } = await sb.from('profiles').select('id,full_name,coins,free_messages_used').eq('id', user.id).maybeSingle()
       setMe(profile)
@@ -39,7 +39,7 @@ export default function ChatListPage() {
         const ids = convos.map(c => c.partnerId)
         const { data: profiles } = await sb.from('profiles').select('id,full_name,avatar_url,last_seen').in('id', ids)
         const profileMap: Record<string, any> = {}
-        profiles?.forEach(p => profileMap[p.id] = p)
+        profiles?.forEach((p: any) => profileMap[p.id] = p)
         setConversations(convos.map(c => ({ ...c, partner: profileMap[c.partnerId] })))
       }
       setLoading(false)

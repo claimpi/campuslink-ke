@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Insert message
-    await sb.from('messages').insert([{
+    try{ await sb.from('messages').insert([{
       sender_id: senderId, receiver_id: receiverId,
       content: content.trim(),
       is_free: isFree,
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/push-notify`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: receiverId, title: `💬 ${sender.full_name || 'Someone'}`, body: content.slice(0, 80), url: `/chat/${senderId}` })
-    }).catch(() => {})
+    }) }catch{}
 
     return NextResponse.json({
       success: true,

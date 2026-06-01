@@ -56,7 +56,7 @@ export default function DiscoverPage(){
       }
     },()=>{})
 
-    sb.auth.getUser().then(({data:{user}})=>{
+    sb.auth.getUser().then(({data:{user}}:any)=>{
       if(!user){
         // Not logged in — show all profiles, actions locked
         sb.from('profiles')
@@ -339,4 +339,3 @@ export default function DiscoverPage(){
     </div>
   )
 }
-// cache bust Mon Jun  1 18:01:11 UTC 2026

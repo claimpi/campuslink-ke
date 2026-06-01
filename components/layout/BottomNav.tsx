@@ -13,7 +13,7 @@ export default function BottomNav() {
 
   useEffect(() => {
     const sb = createClient()
-    sb.auth.getUser().then(({ data: { user } }) => {
+    sb.auth.getUser().then(({ data: { user } }: any) => {
       setUser(user)
       if (user) {
         sb.from('profiles').select('avatar_url').eq('id', user.id).maybeSingle()

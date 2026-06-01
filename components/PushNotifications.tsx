@@ -67,7 +67,7 @@ export async function setupPush(userId: string) {
 export default function PushNotifications() {
   useEffect(() => {
     const sb = createClient()
-    sb.auth.getUser().then(({ data: { user } }) => {
+    sb.auth.getUser().then(({ data: { user } }: any) => {
       if (user) setupPush(user.id)
     })
   }, [])

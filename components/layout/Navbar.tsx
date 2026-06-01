@@ -9,7 +9,6 @@ function initials(n:string){return n.split(' ').map(x=>x[0]).join('').toUpperCas
 export default function Navbar() {
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [pendingCount, setPendingCount] = useState(0)
   const [drop, setDrop] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)

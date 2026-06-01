@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     if (!receiver) return NextResponse.json({ error: 'Receiver not found' }, { status: 404 })
 
     // Deduct from sender
-    await sb.from('profiles').update({ coins: (sender.coins || 0) - gift.coins }).eq('id', senderId)
+    try{ await sb.from('profiles').update({ coins: (sender.coins || 0) - gift.coins }).eq('id', senderId)
 
     // Log gift
     await sb.from('gifts').insert([{
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
         body: `${sender.full_name} sent you a ${gift.label} gift`,
         url: `/chat/${senderId}`
       })
-    }).catch(() => {})
+    }) }catch{}
 
     return NextResponse.json({
       success: true,

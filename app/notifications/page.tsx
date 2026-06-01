@@ -26,7 +26,7 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     const sb = createClient()
-    sb.auth.getUser().then(({ data: { user } }) => {
+    sb.auth.getUser().then(({ data: { user } }: any) => {
       if (!user) { router.push('/login'); return }
 
       // Load notifications

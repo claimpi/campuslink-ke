@@ -26,7 +26,7 @@ export default function EditProfile(){
 
   useEffect(()=>{
     const sb=createClient()
-    sb.auth.getUser().then(({data:{user}})=>{
+    sb.auth.getUser().then(({data:{user}}:any)=>{
       if(!user){router.push('/login');return}
       setUserId(user.id)
       setUserEmail(user.email||'')

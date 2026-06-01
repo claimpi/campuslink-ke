@@ -10,42 +10,36 @@ export async function POST(req: NextRequest) {
 
     const today = new Date().toISOString().split('T')[0]
 
-    // Check already claimed today
     const { data: existing } = await sb.from('daily_rewards')
       .select('id').eq('user_id', userId).eq('rewarded_at', today).maybeSingle()
     if (existing) return NextResponse.json({ alreadyClaimed: true })
 
-    // Get yesterday's reward to calculate streak
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
     const { data: yesterdayReward } = await sb.from('daily_rewards')
       .select('streak').eq('user_id', userId).eq('rewarded_at', yesterday).maybeSingle()
 
     const streak = (yesterdayReward?.streak || 0) + 1
-    // Streak bonuses: day 3 = 15 coins, day 7 = 30 coins, else 5 coins
     const coins = streak === 7 ? 30 : streak === 3 ? 15 : 5
 
-    // Insert reward
     await sb.from('daily_rewards').insert([{ user_id: userId, rewarded_at: today, coins_earned: coins, streak }])
 
-    // Credit coins
     const { data: profile } = await sb.from('profiles').select('coins').eq('id', userId).maybeSingle()
     await sb.from('profiles').update({ coins: (profile?.coins || 0) + coins }).eq('id', userId)
 
-    // Log transaction
     await sb.from('coin_transactions').insert([{
       user_id: userId, amount: coins, type: 'daily_reward',
-      description: `Day ${streak} login reward${streak===7?' — Week streak bonus!':streak===3?' — 3-day streak bonus!':''}`
+      description: `Day ${streak} login reward${streak === 7 ? ' — Week streak bonus!' : streak === 3 ? ' — 3-day streak bonus!' : ''}`
     }])
 
-    // Save in-app notification
-    await sb.from('notifications').insert([{
+    // Save notification (non-blocking)
+    sb.from('notifications').insert([{
       user_id: userId, type: 'daily_reward',
       title: streak === 7 ? '🔥 Week streak! +30 coins' : streak === 3 ? '🔥 3-day streak! +15 coins' : `🎁 Daily reward! +${coins} coins`,
-      body: `Day ${streak} streak${streak===7?' — you are on fire!':''} · Balance: ${(profile?.coins||0)+coins} coins`,
+      body: `Day ${streak} streak · +${coins} coins earned`,
       url: '/pricing'
-    }]).catch(() => {})
+    }]).then(() => {})
 
-    return NextResponse.json({ success: true, coins, streak, newBalance: (profile?.coins || 0) + coins })
+    return NextResponse.json({ success: true, coins, streak })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }

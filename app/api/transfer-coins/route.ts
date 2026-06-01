@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     if (!receiver) return NextResponse.json({ error: 'Receiver not found' }, { status: 404 })
 
     // Deduct from sender
-    await sb.from('profiles').update({ coins: (sender.coins || 0) - amount }).eq('id', senderId)
+    try{ await sb.from('profiles').update({ coins: (sender.coins || 0) - amount }).eq('id', senderId)
     // Credit receiver
     await sb.from('profiles').update({ coins: (receiver.coins || 0) + amount }).eq('id', receiverId)
 
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/push-notify`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: receiverId, title: `🪙 ${sender.full_name} sent you ${amount} coins!`, body: message || 'You received coins!', url: `/chat/${senderId}` })
-    }).catch(() => {})
+    }) }catch{}
 
     return NextResponse.json({ success: true, senderCoins: (sender.coins || 0) - amount })
   } catch (e: any) {

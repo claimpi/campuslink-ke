@@ -35,7 +35,7 @@ export default function ProfilePage(){
     const sb=createClient()
     if(navigator.geolocation) navigator.geolocation.getCurrentPosition(p=>setLoc({lat:p.coords.latitude,lng:p.coords.longitude}),()=>{})
     sb.from('profiles').select('*').eq('id',id).maybeSingle().then(({data})=>{ setProfile(data); setLoading(false) })
-    sb.auth.getUser().then(({data:{user}})=>{
+    sb.auth.getUser().then(({data:{user}}:any)=>{
       if(!user) return
       setMe(user)
       sb.from('likes').select('id').eq('sender_id',user.id).eq('receiver_id',id).maybeSingle().then(({data})=>setLiked(!!data))

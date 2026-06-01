@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 function AnnouncementsList(){
   const [anns,setAnns]=useState<any[]>([])
   useEffect(()=>{
-    createClient().from('announcements').select('*').order('created_at',{ascending:false}).then(({data})=>setAnns(data||[]))
+    createClient().from('announcements').select('*').order('created_at',{ascending:false}).then(({data}:any)=>setAnns(data||[]))
   },[])
   async function del(id:string){
     await createClient().from('announcements').delete().eq('id',id)
