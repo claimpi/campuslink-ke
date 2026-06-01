@@ -208,7 +208,7 @@ export default function DiscoverPage(){
         <div style={{background:'linear-gradient(135deg,#0f172a,#1e293b)',padding:'14px 16px'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,marginBottom:10}}>
             <div>
-              <p style={{color:'#fff',fontWeight:900,fontSize:15,margin:'0 0 2px'}}>Meet people near you 🇰🇪</p>
+              <p style={{color:'#fff',fontWeight:900,fontSize:15,margin:'0 0 2px'}}>Meet people near you</p>
               <p style={{color:'rgba(255,255,255,0.65)',fontSize:12,margin:0}}>Free to join · Chat · Connect · Date</p>
             </div>
             <button onClick={()=>router.push('/register')}
