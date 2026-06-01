@@ -6,16 +6,32 @@ import ThemeProvider from '@/components/ThemeProvider'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'CampusLink KE — Meet People in Kenya',
-  description: 'Connect with students and young professionals near you in Kenya.',
+  title: 'CampusLink KE — Meet People Near You in Kenya',
+  description: 'Meet, chat and connect with people near you in Kenya. Dating, friendships and networking for young Kenyans. Join free — no subscriptions needed.',
+  keywords: ['dating Kenya', 'meet people Kenya', 'Nairobi dating app', 'Kenyan social app', 'meet singles Kenya', 'campuslink'],
   manifest: '/manifest.json',
   icons: { apple: '/icon-192.png' },
+  metadataBase: new URL('https://www.campuslink.co.ke'),
+  alternates: { canonical: 'https://www.campuslink.co.ke' },
   openGraph: {
-    title: 'CampusLink KE',
-    description: 'Meet people near you in Kenya',
+    title: 'CampusLink KE — Meet People Near You in Kenya',
+    description: 'Meet, chat and connect with people near you in Kenya. Join free today.',
     url: 'https://www.campuslink.co.ke',
     siteName: 'CampusLink KE',
     type: 'website',
+    locale: 'en_KE',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'CampusLink KE — Meet People Near You' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'CampusLink KE — Meet People Near You in Kenya',
+    description: 'Meet, chat and connect with people near you in Kenya. Join free.',
+    images: ['/og-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
   },
 }
 
