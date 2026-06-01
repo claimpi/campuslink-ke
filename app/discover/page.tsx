@@ -205,13 +205,8 @@ export default function DiscoverPage(){
 
       {/* Logged out banner */}
       {!me&&!loading&&(
-        <div style={{background:'linear-gradient(135deg,#f97316,#ea580c)',padding:'10px 16px',
-          display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
-          <p style={{color:'#fff',fontWeight:700,fontSize:13,margin:0}}>👀 Sign up free to chat & connect</p>
-          <div style={{display:'flex',gap:6,flexShrink:0}}>
-            <button onClick={()=>router.push('/login')} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'1px solid rgba(255,255,255,0.5)',borderRadius:20,padding:'5px 12px',fontSize:12,fontWeight:700,cursor:'pointer'}}>Login</button>
-            <button onClick={()=>router.push('/register')} style={{background:'#fff',color:'#f97316',border:'none',borderRadius:20,padding:'5px 12px',fontSize:12,fontWeight:800,cursor:'pointer'}}>Join Free</button>
-          </div>
+        <div style={{background:'linear-gradient(135deg,#f97316,#ea580c)',padding:'9px 16px',textAlign:'center'}}>
+          <p style={{color:'#fff',fontWeight:700,fontSize:13,margin:0}}>👀 Join free to chat & connect with people near you</p>
         </div>
       )}
 
