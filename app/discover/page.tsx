@@ -251,7 +251,6 @@ export default function DiscoverPage(){
             const distLabel=distKm!==null?(distKm<0.1?'<0.1km':`${distKm.toFixed(1)}km`):null
             const isLiked=liked.has(s.id)
             const isMatch=matched.has(s.id)
-            const online=isOnline(s.last_seen)
             const extras:string[]=Array.isArray(s.photos)?s.photos.filter((p:string)=>p&&p!==s.avatar_url).slice(0,4):[]
             const name=(s.full_name||'User').split(' ')[0]
             const locked=!me // not logged in
