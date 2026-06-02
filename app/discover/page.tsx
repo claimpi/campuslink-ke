@@ -204,32 +204,6 @@ export default function DiscoverPage(){
       <Stories myId={me}/>
 
       {/* Logged out banner */}
-      {!me&&!loading&&filtered.length>0&&(
-        <div style={{background:'linear-gradient(135deg,#0f172a,#1e293b)',padding:'14px 16px'}}>
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,marginBottom:10}}>
-            <div>
-              <p style={{color:'#fff',fontWeight:900,fontSize:15,margin:'0 0 2px'}}>Meet people near you</p>
-              <p style={{color:'rgba(255,255,255,0.65)',fontSize:12,margin:0}}>Free to join · Chat · Connect · Date</p>
-            </div>
-            <button onClick={()=>router.push('/register')}
-              style={{background:'linear-gradient(135deg,#f97316,#ea580c)',color:'#fff',border:'none',
-                borderRadius:20,padding:'9px 18px',fontSize:13,fontWeight:800,cursor:'pointer',
-                boxShadow:'0 3px 10px rgba(249,115,22,0.5)',flexShrink:0,whiteSpace:'nowrap'}}>
-              Join Free →
-            </button>
-          </div>
-          {/* Social proof */}
-          <div style={{display:'flex',gap:16}}>
-            {[
-              {icon:'👥',label:`${filtered.length}+ people`},
-              {icon:'💬',label:'Free messages'},
-              {icon:'📍',label:'Near you'},
-            ].map(s=>(
-              <div key={s.label} style={{display:'flex',alignItems:'center',gap:4}}>
-                <span style={{fontSize:13}}>{s.icon}</span>
-                <span style={{fontSize:11,color:'rgba(255,255,255,0.7)',fontWeight:600}}>{s.label}</span>
-              </div>
-            ))}
           </div>
         </div>
       )}
