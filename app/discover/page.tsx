@@ -271,8 +271,7 @@ export default function DiscoverPage(){
                           color:'#fff',fontSize:24,fontWeight:900}}>{initials(s.full_name)}</div>
                       }
                     </div>
-                    <div style={{position:'absolute',bottom:2,right:2,width:12,height:12,borderRadius:'50%',
-                      background:online?'#22c55e':'#d1d5db',border:'2.5px solid #fff'}}/>
+
                     {s.is_premium&&(
                       <div style={{position:'absolute',bottom:-8,left:'50%',transform:'translateX(-50%)',
                         background:'linear-gradient(135deg,#22c55e,#16a34a)',color:'#fff',
@@ -293,18 +292,7 @@ export default function DiscoverPage(){
                       {s.looking_for&&<span style={{background:'#ede9fe',color:'#7c3aed',fontSize:11,padding:'3px 8px',borderRadius:20,fontWeight:600}}>
                         {s.looking_for==='relationship'?'💕 Dating':s.looking_for==='friendship'?'🤝 Friends':s.looking_for==='study'?'📚 Study':'🌐 Network'}
                       </span>}
-                      {online
-                        ?<span style={{background:'#f0fdf4',color:'#16a34a',fontSize:11,padding:'3px 8px',borderRadius:20,fontWeight:700}}>🟢 Online</span>
-                        :s.last_seen&&<span style={{background:'#f1f5f9',color:'#64748b',fontSize:11,padding:'3px 8px',borderRadius:20,fontWeight:600}}>
-                          🕐 {(()=>{
-                            const m=Math.floor((Date.now()-new Date(s.last_seen).getTime())/60000)
-                            if(m<60) return `${m}m ago`
-                            const h=Math.floor(m/60)
-                            if(h<24) return `${h}h ago`
-                            return `${Math.floor(h/24)}d ago`
-                          })()}
-                        </span>
-                      }
+
                     </div>
                   </div>
 
