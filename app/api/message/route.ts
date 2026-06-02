@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
+export const dynamic = 'force-dynamic'
 import { createClient } from '@supabase/supabase-js'
 import { detectViolation, VIOLATION_MESSAGES } from '@/lib/content-filter'
 
-const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+function getSb() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+}
 
 const FREE_MESSAGES = 10
 const COINS_PER_MSG = 5
 
 export async function POST(req: NextRequest) {
   try {
+    const sb = getSb()
     const { senderId, receiverId, content } = await req.json()
     if (!senderId || !receiverId || !content?.trim())
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 })

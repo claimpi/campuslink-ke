@@ -1,15 +1,17 @@
+export const dynamic = 'force-dynamic'
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const sbAdmin = createClient(
+const getSbAdmin = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
   { auth: { autoRefreshToken: false, persistSession: false } }
 )
 
 export async function GET(request: NextRequest) {
+  const sbAdmin = getSbAdmin()
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   const errorParam = searchParams.get('error')
@@ -64,6 +66,7 @@ export async function GET(request: NextRequest) {
 }
 
 async function ensureProfile(user: any, request?: NextRequest) {
+  const sbAdmin = getSbAdmin()
   try {
     const { data: existing } = await sbAdmin
       .from('profiles').select('id').eq('id', user.id).maybeSingle()

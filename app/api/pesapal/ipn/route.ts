@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+export const dynamic = 'force-dynamic'
 import { createClient } from '@supabase/supabase-js'
 import { getToken, COIN_AMOUNTS } from '@/lib/pesapal'
 
-const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+function getSb() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+}
 
 async function getStatus(token:string, id:string){
   const res=await fetch(`${process.env.PESAPAL_BASE_URL}/api/Transactions/GetTransactionStatus?orderTrackingId=${id}`,
@@ -12,6 +14,7 @@ async function getStatus(token:string, id:string){
 
 export async function GET(req: NextRequest) {
   try {
+    const sb = getSb()
     const {searchParams}=new URL(req.url)
     const orderTrackingId=searchParams.get('OrderTrackingId')
     if(!orderTrackingId) return NextResponse.json({status:200})
@@ -37,6 +40,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function processPayment(orderTrackingId:string){
+  const sb = getSb()
   const {data:payment}=await sb.from('payment_requests').select('*').eq('order_tracking_id',orderTrackingId).maybeSingle()
   if(!payment||payment.status==='approved') return
   await sb.from('payment_requests').update({status:'approved'}).eq('order_tracking_id',orderTrackingId)

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+export const dynamic = 'force-dynamic'
+const getSb = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 export async function DELETE(req: NextRequest) {
   try {
@@ -8,16 +10,11 @@ export async function DELETE(req: NextRequest) {
     if (!adminCookie || adminCookie.value !== process.env.ADMIN_PASSWORD) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
     const { userId } = await req.json()
     if (!userId) return NextResponse.json({ error: 'Missing userId' }, { status: 400 })
 
     // Use service role - bypasses ALL RLS
-    const sb = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    )
+    const sb = getSb()
 
     // Delete related data first to avoid FK constraints
     await sb.from('payment_requests').delete().eq('user_id', userId)

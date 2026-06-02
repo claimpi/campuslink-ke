@@ -203,10 +203,7 @@ export default function DiscoverPage(){
       {/* Stories strip */}
       <Stories myId={me}/>
 
-      {/* Logged out banner */}
-          </div>
-        </div>
-      )}
+
 
       {/* List */}
       <div>

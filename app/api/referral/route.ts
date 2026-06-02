@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
+export const dynamic = 'force-dynamic'
 import { createClient } from '@supabase/supabase-js'
 
-const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+function getSb() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+}
 
 const REFERRAL_COINS = 50 // coins earned per referral
 
 export async function POST(req: NextRequest) {
   try {
+    const sb = getSb()
     const { referralCode, newUserId } = await req.json()
     if (!referralCode || !newUserId) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
 
