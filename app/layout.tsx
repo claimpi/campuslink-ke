@@ -10,7 +10,14 @@ export const metadata: Metadata = {
   description: 'Meet, chat and connect with people near you in Kenya. Dating, friendships and networking for young Kenyans. Join free — no subscriptions needed.',
   keywords: ['dating Kenya', 'meet people Kenya', 'Nairobi dating app', 'Kenyan social app', 'meet singles Kenya', 'campuslink'],
   manifest: '/manifest.json',
-  icons: { apple: '/icon-192.png' },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: '16x16 32x32' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
+    shortcut: '/favicon.ico',
+  },
   metadataBase: new URL('https://www.campuslink.co.ke'),
   alternates: { canonical: 'https://www.campuslink.co.ke' },
   openGraph: {
