@@ -4,6 +4,7 @@ import BottomNav from '@/components/layout/BottomNav'
 import ToastContainer from '@/components/Toast'
 import ThemeProvider from '@/components/ThemeProvider'
 import './globals.css'
+import InstallPrompt from '@/components/ui/InstallPrompt'
 
 export const metadata: Metadata = {
   title: 'CampusLink KE — Meet People Near You in Kenya',
@@ -62,6 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <BottomNav />
           <ToastContainer />
         </ThemeProvider>
+        <InstallPrompt/>
       </body>
     </html>
   )

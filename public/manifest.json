@@ -1,17 +1,30 @@
 {
   "name": "CampusLink KE",
   "short_name": "CampusLink",
-  "description": "Meet People in Kenya",
-  "start_url": "/",
+  "description": "Meet people near you in Kenya. Chat, connect and date.",
+  "start_url": "/discover",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#f97316",
-  "orientation": "portrait",
+  "categories": ["social", "dating", "lifestyle"],
+  "lang": "en-KE",
   "icons": [
-    { "src": "/icon-48.png", "sizes": "48x48", "type": "image/png" },
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "/icon-48.png",  "sizes": "48x48",   "type": "image/png", "purpose": "any" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    { "name": "Discover", "url": "/discover", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Chat",     "url": "/chat",     "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Profile",  "url": "/dashboard","icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
+  ],
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=ke.campuslink.app",
+      "id": "ke.campuslink.app"
+    }
   ]
 }
