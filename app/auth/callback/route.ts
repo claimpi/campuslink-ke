@@ -16,13 +16,7 @@ export async function GET(request: NextRequest) {
   )
   const { data: { user }, error } = await sb.auth.exchangeCodeForSession(code)
   if (error || !user) return NextResponse.redirect(new URL('/login', request.url))
-  // Ensure profile exists
-  const { data: existing } = await sb.from('profiles').select('id').eq('id', user.id).maybeSingle()
-  if (!existing) {
-    const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User'
-    const code2 = user.id.replace(/-/g,'').slice(0,8).toUpperCase()
-    await sb.from('profiles').insert({ id: user.id, email: user.email, full_name: name, avatar_url: user.user_metadata?.avatar_url || null, referral_code: code2, coins: 10 })
-    return NextResponse.redirect(new URL('/register?step=2', request.url))
-  }
+  const { data: existing } = await sb.from('profiles').select('id,nickname').eq('id', user.id).maybeSingle()
+  if (!existing || !existing.nickname) return NextResponse.redirect(new URL('/onboarding', request.url))
   return NextResponse.redirect(new URL(next, request.url))
 }

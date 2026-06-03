@@ -4,14 +4,14 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 
 const SLIDES = [
-  { bg: 'linear-gradient(160deg,#f97316,#ea580c)', icon: '💕', title: 'Find Your Match', sub: 'Swipe through real people near you in Kenya' },
-  { bg: 'linear-gradient(160deg,#ec4899,#be185d)', icon: '💬', title: 'Chat & Connect',  sub: 'Send messages, gifts and coins to people you like' },
-  { bg: 'linear-gradient(160deg,#7c3aed,#6d28d9)', icon: '🇰🇪', title: 'Made for Kenya', sub: 'M-Pesa payments, local connections, real people' },
+  { bg: '#c2185b', emoji: '💕', title: 'Find Your Match', body: 'Swipe through real people near you in Kenya' },
+  { bg: '#7b1fa2', emoji: '💬', title: 'Chat & Connect', body: 'Send messages and gifts to people you like' },
+  { bg: '#0288d1', emoji: '🇰🇪', title: 'Made for Kenya', body: 'M-Pesa payments, local connections, real people' },
 ]
 
-export default function SplashPage() {
+export default function Splash() {
   const router = useRouter()
-  const [idx, setIdx] = useState(0)
+  const [i, setI] = useState(0)
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
@@ -23,44 +23,39 @@ export default function SplashPage() {
 
   useEffect(() => {
     if (!ready) return
-    const t = setInterval(() => setIdx(i => (i + 1) % SLIDES.length), 3200)
+    const t = setInterval(() => setI(x => (x + 1) % SLIDES.length), 3000)
     return () => clearInterval(t)
   }, [ready])
 
   if (!ready) return (
-    <div style={{ height: '100dvh', background: 'linear-gradient(160deg,#f97316,#ea580c)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ height: '100dvh', background: '#c2185b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 64, marginBottom: 12, animation: 'heartbeat 1.5s ease infinite' }}>💕</div>
-        <p style={{ color: '#fff', fontWeight: 900, fontSize: 22, letterSpacing: '-0.5px' }}>CampusLink KE</p>
+        <div style={{ fontSize: 72, animation: 'pulse 1.4s ease infinite' }}>💕</div>
+        <p style={{ color: '#fff', fontWeight: 900, fontSize: 22, marginTop: 12 }}>CampusLink KE</p>
       </div>
     </div>
   )
 
-  const s = SLIDES[idx]
+  const s = SLIDES[i]
   return (
-    <div style={{ height: '100dvh', background: s.bg, display: 'flex', flexDirection: 'column', transition: 'background 0.6s ease', overflow: 'hidden' }}>
-      {/* Illustration area */}
+    <div style={{ height: '100dvh', background: s.bg, display: 'flex', flexDirection: 'column', transition: 'background 0.5s' }}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 32px', textAlign: 'center' }}>
-        <div key={idx} style={{ fontSize: 100, marginBottom: 28, animation: 'pop 0.5s ease' }}>{s.icon}</div>
-        <h1 style={{ color: '#fff', fontSize: 32, fontWeight: 900, marginBottom: 14, letterSpacing: '-0.5px', lineHeight: 1.15 }}>{s.title}</h1>
-        <p style={{ color: 'rgba(255,255,255,0.82)', fontSize: 16, lineHeight: 1.65, maxWidth: 300 }}>{s.sub}</p>
+        <div key={i} style={{ fontSize: 96, marginBottom: 28, animation: 'pop 0.45s ease' }}>{s.emoji}</div>
+        <h1 style={{ color: '#fff', fontSize: 30, fontWeight: 900, marginBottom: 14, letterSpacing: '-0.5px' }}>{s.title}</h1>
+        <p style={{ color: 'rgba(255,255,255,0.82)', fontSize: 16, lineHeight: 1.6, maxWidth: 300 }}>{s.body}</p>
       </div>
-
-      {/* Dots */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, paddingBottom: 28 }}>
-        {SLIDES.map((_, i) => (
-          <div key={i} onClick={() => setIdx(i)} style={{ height: 8, width: i === idx ? 28 : 8, borderRadius: 4, background: i === idx ? '#fff' : 'rgba(255,255,255,0.35)', transition: 'all 0.3s', cursor: 'pointer' }} />
+      <div style={{ display: 'flex', gap: 7, justifyContent: 'center', paddingBottom: 24 }}>
+        {SLIDES.map((_, j) => (
+          <div key={j} onClick={() => setI(j)} style={{ height: 8, width: j === i ? 26 : 8, borderRadius: 4, background: j === i ? '#fff' : 'rgba(255,255,255,0.35)', transition: 'all 0.3s', cursor: 'pointer' }} />
         ))}
       </div>
-
-      {/* Buttons */}
-      <div style={{ padding: '0 24px', paddingBottom: 'max(40px,env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <button onClick={() => router.push('/register')}
-          style={{ width: '100%', padding: '17px', borderRadius: 50, background: '#fff', color: '#f97316', fontSize: 17, fontWeight: 900, boxShadow: '0 6px 24px rgba(0,0,0,0.18)', letterSpacing: '-0.3px' }}>
+      <div style={{ padding: '0 24px', paddingBottom: 'max(44px,env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <button onClick={() => router.push('/onboarding')}
+          style={{ width: '100%', padding: '17px', borderRadius: 50, background: '#fff', color: s.bg, fontSize: 17, fontWeight: 900, boxShadow: '0 6px 24px rgba(0,0,0,0.2)' }}>
           Create Free Account
         </button>
         <button onClick={() => router.push('/login')}
-          style={{ width: '100%', padding: '16px', borderRadius: 50, border: '2px solid rgba(255,255,255,0.55)', background: 'transparent', color: '#fff', fontSize: 16, fontWeight: 700 }}>
+          style={{ width: '100%', padding: '16px', borderRadius: 50, border: '2px solid rgba(255,255,255,0.5)', background: 'transparent', color: '#fff', fontSize: 16, fontWeight: 700 }}>
           Sign In
         </button>
       </div>

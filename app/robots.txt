@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /admin
-Disallow: /api/
-Sitemap: https://www.campuslink.co.ke/sitemap.xml
