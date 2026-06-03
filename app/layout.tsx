@@ -1,69 +1,30 @@
-import type { Metadata, Viewport } from 'next'
-import Navbar from '@/components/layout/Navbar'
-import BottomNav from '@/components/layout/BottomNav'
-import ToastContainer from '@/components/Toast'
-import ThemeProvider from '@/components/ThemeProvider'
+import type { Metadata } from 'next'
 import './globals.css'
-import InstallPrompt from '@/components/ui/InstallPrompt'
 
 export const metadata: Metadata = {
   title: 'CampusLink KE — Meet People Near You in Kenya',
-  description: 'Meet, chat and connect with people near you in Kenya. Dating, friendships and networking for young Kenyans. Join free — no subscriptions needed.',
-  keywords: ['dating Kenya', 'meet people Kenya', 'Nairobi dating app', 'Kenyan social app', 'meet singles Kenya', 'campuslink'],
+  description: 'Meet, chat and connect with people near you in Kenya. Dating, friendships and networking. Join free.',
+  keywords: ['dating Kenya','meet people Kenya','Nairobi dating app','Kenyan social app'],
   manifest: '/manifest.json',
-  icons: {
-    icon: [
-      { url: '/favicon.ico', sizes: '16x16 32x32' },
-      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-    ],
-    apple: '/apple-touch-icon.png',
-    shortcut: '/favicon.ico',
-  },
   metadataBase: new URL('https://www.campuslink.co.ke'),
-  alternates: { canonical: 'https://www.campuslink.co.ke' },
+  icons: { icon: '/favicon.ico', apple: '/apple-touch-icon.png' },
   openGraph: {
     title: 'CampusLink KE — Meet People Near You in Kenya',
-    description: 'Meet, chat and connect with people near you in Kenya. Join free today.',
+    description: 'Meet, chat and connect with people near you in Kenya. Join free.',
     url: 'https://www.campuslink.co.ke',
     siteName: 'CampusLink KE',
     type: 'website',
-    locale: 'en_KE',
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'CampusLink KE — Meet People Near You' }],
   },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'CampusLink KE — Meet People Near You in Kenya',
-    description: 'Meet, chat and connect with people near you in Kenya. Join free.',
-    images: ['/og-image.png'],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
-  },
-}
-
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  themeColor: '#f97316',
+  robots: { index: true, follow: true },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body style={{margin:0,padding:0,background:'#f8fafc',fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"}}>
-        <ThemeProvider>
-          <Navbar />
-          <main style={{minHeight:'100vh'}}>
-            {children}
-          </main>
-          <BottomNav />
-          <ToastContainer />
-        </ThemeProvider>
-        <InstallPrompt/>
+    <html lang="en">
+      <body>
+        <main style={{ maxWidth: 480, margin: '0 auto', minHeight: '100dvh', position: 'relative' }}>
+          {children}
+        </main>
       </body>
     </html>
   )

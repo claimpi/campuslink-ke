@@ -1,125 +1,28 @@
 export const dynamic = 'force-dynamic'
 import { createServerClient } from '@supabase/ssr'
-import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const getSbAdmin = () => createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-)
-
 export async function GET(request: NextRequest) {
-  const sbAdmin = getSbAdmin()
-  const { searchParams, origin } = new URL(request.url)
+  const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
-  const errorParam = searchParams.get('error')
-  const errorDesc = searchParams.get('error_description')
-  const next = searchParams.get('next') ?? '/dashboard'
-
-  const forwardedHost = request.headers.get('x-forwarded-host')
-  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https'
-  const baseUrl = forwardedHost
-    ? `${forwardedProto}://${forwardedHost}`
-    : origin
-
-  // OAuth error returned
-  if (errorParam) {
-    return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent(errorDesc || errorParam)}`)
+  const next = searchParams.get('next') || '/home'
+  if (!code) return NextResponse.redirect(new URL('/login', request.url))
+  const cookieStore = await cookies()
+  const sb = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { getAll: () => cookieStore.getAll(), setAll: (c) => c.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) } }
+  )
+  const { data: { user }, error } = await sb.auth.exchangeCodeForSession(code)
+  if (error || !user) return NextResponse.redirect(new URL('/login', request.url))
+  // Ensure profile exists
+  const { data: existing } = await sb.from('profiles').select('id').eq('id', user.id).maybeSingle()
+  if (!existing) {
+    const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User'
+    const code2 = user.id.replace(/-/g,'').slice(0,8).toUpperCase()
+    await sb.from('profiles').insert({ id: user.id, email: user.email, full_name: name, avatar_url: user.user_metadata?.avatar_url || null, referral_code: code2, coins: 10 })
+    return NextResponse.redirect(new URL('/register?step=2', request.url))
   }
-
-  // PKCE flow (email magic links, etc.)
-  if (code) {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() { return cookieStore.getAll() },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options))
-            } catch {}
-          },
-        },
-      }
-    )
-
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-
-    if (error) {
-      return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent(error.message)}`)
-    }
-
-    if (data?.user) {
-      await ensureProfile(data.user, request)
-      return NextResponse.redirect(`${baseUrl}${next}?welcome=true`)
-    }
-  }
-
-  // Implicit flow — token is in the URL hash (#access_token=...)
-  // Browser handles this client-side, so redirect to a client page that processes it
-  return NextResponse.redirect(`${baseUrl}/auth/confirm?next=${encodeURIComponent(next)}`)
-}
-
-async function ensureProfile(user: any, request?: NextRequest) {
-  const sbAdmin = getSbAdmin()
-  try {
-    const { data: existing } = await sbAdmin
-      .from('profiles').select('id').eq('id', user.id).maybeSingle()
-
-    if (!existing) {
-      const fullName = user.user_metadata?.full_name
-        || user.user_metadata?.name
-        || user.email?.split('@')[0]
-        || 'New User'
-      const avatarUrl = user.user_metadata?.avatar_url
-        || user.user_metadata?.picture
-        || null
-      const newRefCode = user.id.replace(/-/g, '').substring(0, 8).toUpperCase()
-
-      await sbAdmin.from('profiles').insert({
-        id: user.id,
-        email: user.email,
-        full_name: fullName,
-        avatar_url: avatarUrl,
-        referral_code: newRefCode,
-        referral_earnings: 0,
-        coins: 0,
-      })
-
-      // Credit referrer if ref_code cookie exists
-      const refCode = request?.cookies?.get?.('ref_code')?.value
-      if (refCode) {
-        const { data: referrer } = await sbAdmin.from('profiles')
-          .select('id, coins, full_name').eq('referral_code', refCode.toUpperCase()).maybeSingle()
-        if (referrer && referrer.id !== user.id) {
-          await sbAdmin.from('profiles').update({
-            coins: (referrer.coins || 0) + 50
-          }).eq('id', referrer.id)
-          await sbAdmin.from('profiles').update({
-            referred_by: referrer.id, referral_credited: true
-          }).eq('id', user.id)
-          await sbAdmin.from('coin_transactions').insert([{
-            user_id: referrer.id, amount: 50, type: 'referral',
-            description: `${fullName} joined via your referral link (Google)`
-          }])
-          try {
-            await sbAdmin.from('referrals').insert([{
-              referrer_id: referrer.id, referred_id: user.id, amount: 50, status: 'credited'
-            }])
-          } catch {}
-          fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/push-notify`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: referrer.id, title: '🪙 You earned 50 coins!', body: `${fullName} joined using your referral link`, url: '/dashboard' })
-          }).catch(() => {})
-        }
-      }
-    }
-  } catch (e) {
-    console.error('ensureProfile error:', e)
-  }
+  return NextResponse.redirect(new URL(next, request.url))
 }
